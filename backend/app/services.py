@@ -4072,6 +4072,7 @@ class HairAiService:
         boss_name: str | None = None,
         boss_phone: str | None = None,
         boss_openid: str | None = None,
+        boss_is_manager: bool = True,
         manager_name: str | None = None,
         manager_phone: str | None = None,
         manager_openid: str | None = None,
@@ -4093,6 +4094,7 @@ class HairAiService:
         clean_manager_name = (manager_name or f"{clean_store_name} 店长").strip()
         clean_boss_openid = (boss_openid or f"{clean_tenant_code}_boss").strip()
         clean_manager_openid = (manager_openid or f"{clean_tenant_code}_{clean_store_code}_manager").strip()
+        create_separate_manager = not boss_is_manager
 
         with self.store.transaction() as conn:
             cur = conn.execute(
@@ -4133,31 +4135,38 @@ class HairAiService:
             boss_cur = conn.execute(
                 """
                 INSERT INTO users (tenant_id, store_id, openid, phone, nickname, role)
-                VALUES (?, NULL, ?, ?, ?, 'boss')
+                VALUES (?, ?, ?, ?, ?, 'boss')
                 """,
-                (tenant_id, clean_boss_openid, boss_phone, clean_boss_name),
+                (tenant_id, store_id if boss_is_manager else None, clean_boss_openid, boss_phone, clean_boss_name),
             )
             boss_id = boss_cur.lastrowid
-            manager_cur = conn.execute(
-                """
-                INSERT INTO users (tenant_id, store_id, openid, phone, nickname, role)
-                VALUES (?, ?, ?, ?, ?, 'manager')
-                """,
-                (tenant_id, store_id, clean_manager_openid, manager_phone, clean_manager_name),
-            )
-            manager_id = manager_cur.lastrowid
+            manager_id = boss_id
+            manager_display_name = clean_boss_name
+            manager_role_label = "老板兼店长"
+            if create_separate_manager:
+                manager_cur = conn.execute(
+                    """
+                    INSERT INTO users (tenant_id, store_id, openid, phone, nickname, role)
+                    VALUES (?, ?, ?, ?, ?, 'manager')
+                    """,
+                    (tenant_id, store_id, clean_manager_openid, manager_phone, clean_manager_name),
+                )
+                manager_id = manager_cur.lastrowid
+                manager_display_name = clean_manager_name
+                manager_role_label = "店长"
             conn.execute(
                 """
                 INSERT INTO staff_profiles
                 (tenant_id, store_id, staff_id, display_name, title, directions,
                  skill_tags, availability_status, is_enabled, is_recommended, sort_order)
-                VALUES (?, ?, ?, ?, '店长', ?, ?, 'available', 1, 1, 10)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'available', 1, 1, 10)
                 """,
                 (
                     tenant_id,
                     store_id,
                     manager_id,
-                    clean_manager_name,
+                    manager_display_name,
+                    manager_role_label,
                     json.dumps(["female", "male", "neutral"], ensure_ascii=False),
                     json.dumps(["剪发", "染发", "烫发", "造型"], ensure_ascii=False),
                 ),
@@ -4168,6 +4177,7 @@ class HairAiService:
             "store": dict(self.store.row("SELECT * FROM stores WHERE id = ?", (store_id,))),
             "boss": self.get_user(tenant_id, boss_id),
             "manager": self.get_user(tenant_id, manager_id),
+            "boss_is_manager": boss_is_manager,
             "ai_account": dict(self.store.row("SELECT * FROM tenant_ai_accounts WHERE tenant_id = ?", (tenant_id,))),
         }
 

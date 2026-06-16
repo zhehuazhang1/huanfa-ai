@@ -440,6 +440,7 @@ class TenantOnboardingPayload(BaseModel):
     boss_name: str | None = None
     boss_phone: str | None = None
     boss_openid: str | None = None
+    boss_is_manager: bool = True
     manager_name: str | None = None
     manager_phone: str | None = None
     manager_openid: str | None = None
@@ -2370,6 +2371,7 @@ def create_tenant_onboarding(payload: TenantOnboardingPayload,
             boss_name=payload.boss_name,
             boss_phone=payload.boss_phone,
             boss_openid=payload.boss_openid,
+            boss_is_manager=payload.boss_is_manager,
             manager_name=payload.manager_name,
             manager_phone=payload.manager_phone,
             manager_openid=payload.manager_openid,

@@ -365,6 +365,23 @@
       margin-top: 12px; padding: 10px 12px; border-radius: 6px;
       background: #fae7e3; color: var(--red); font-size: 13px;
     }
+    .check-row {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8faf7;
+      font-weight: 800;
+      color: var(--green);
+    }
+    .check-row input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+    }
     .logout-btn {
       background: none; border: 1px solid rgba(255,255,255,0.25);
       border-radius: 6px; color: rgba(255,255,255,0.7);
@@ -930,15 +947,19 @@
           <label>老板 OpenID</label>
           <input type="text" id="newBossOpenid" placeholder="可后续绑定，空则自动生成">
         </div>
-        <div class="field">
+        <label class="check-row">
+          <input type="checkbox" id="newBossIsManager" checked onchange="toggleManagerFields()">
+          <span>老板兼任店长，单店默认选这个</span>
+        </label>
+        <div class="field manager-field">
           <label>店长姓名</label>
           <input type="text" id="newManagerName" placeholder="可选">
         </div>
-        <div class="field">
+        <div class="field manager-field">
           <label>店长手机号</label>
           <input type="text" id="newManagerPhone" placeholder="可选，便于识别">
         </div>
-        <div class="field">
+        <div class="field manager-field">
           <label>店长 OpenID</label>
           <input type="text" id="newManagerOpenid" placeholder="测试可空，正式需绑定微信">
         </div>
@@ -948,7 +969,7 @@
         </div>
       </div>
       <div class="notice" style="margin-top:12px">
-        开户会同时创建：商家、默认门店、老板账号、店长账号、AI额度账户。OpenID 为空时会生成占位账号，后续再绑定真实微信。
+        开户会同时创建：商家、默认门店、老板账号、AI额度账户。单店可让老板兼任店长；OpenID 为空时会生成占位账号，后续再绑定真实微信。
       </div>
       <div id="addTenantErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -1639,11 +1660,13 @@
       document.getElementById("newBossName").value = "";
       document.getElementById("newBossPhone").value = "";
       document.getElementById("newBossOpenid").value = "";
+      document.getElementById("newBossIsManager").checked = true;
       document.getElementById("newManagerName").value = "";
       document.getElementById("newManagerPhone").value = "";
       document.getElementById("newManagerOpenid").value = "";
       document.getElementById("newTenantNotes").value = "";
       document.getElementById("addTenantErr").classList.add("hidden");
+      toggleManagerFields();
       document.getElementById("addTenantModal").classList.remove("hidden");
     }
     function closeAddTenantModal() {
@@ -1663,6 +1686,13 @@
         .replace(/[^a-z0-9]+/g, "_")
         .replace(/^_+|_+$/g, "");
       return base || fallback;
+    }
+
+    function toggleManagerFields() {
+      const bossIsManager = document.getElementById("newBossIsManager").checked;
+      document.querySelectorAll(".manager-field").forEach(el => {
+        el.style.display = bossIsManager ? "none" : "";
+      });
     }
 
     async function doCreateTenant() {
@@ -1698,6 +1728,7 @@
             boss_name: document.getElementById("newBossName").value.trim() || null,
             boss_phone: document.getElementById("newBossPhone").value.trim() || null,
             boss_openid: document.getElementById("newBossOpenid").value.trim() || null,
+            boss_is_manager: document.getElementById("newBossIsManager").checked,
             manager_name: document.getElementById("newManagerName").value.trim() || null,
             manager_phone: document.getElementById("newManagerPhone").value.trim() || null,
             manager_openid: document.getElementById("newManagerOpenid").value.trim() || null
@@ -1707,8 +1738,12 @@
         closeAddTenantModal();
         const tenant = data.tenant || {};
         const store = data.store || {};
+        const boss = data.boss || {};
         const manager = data.manager || {};
-        alert(`开户成功：${tenant.name || name}\n商家ID：${tenant.id || "—"}\n门店ID：${store.id || "—"}\n店长账号：${manager.nickname || "—"}\n店长OpenID：${manager.openid || "—"}`);
+        const roleLine = data.boss_is_manager
+          ? `老板兼店长：${boss.nickname || "—"}\n老板OpenID：${boss.openid || "—"}`
+          : `老板账号：${boss.nickname || "—"}\n店长账号：${manager.nickname || "—"}\n店长OpenID：${manager.openid || "—"}`;
+        alert(`开户成功：${tenant.name || name}\n商家ID：${tenant.id || "—"}\n门店ID：${store.id || "—"}\n${roleLine}`);
         loadTenants();
         loadDashboard();
       } catch (e) {
