@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>美发AI小程序展示小样 v2</title>
+  <style>
+    :root {
+      --ink: #191614;
+      --muted: #756a60;
+      --line: #dfd4c8;
+      --paper: #f7f0e7;
+      --panel: #fffaf3;
+      --dark: #24201c;
+      --red: #b94f55;
+      --green: #177a72;
+      --blue: #466b8a;
+      --gold: #b8812e;
+      --shadow: 0 22px 60px rgba(41, 32, 24, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(185, 79, 85, 0.12), transparent 34%),
+        linear-gradient(230deg, rgba(23, 122, 114, 0.12), transparent 38%),
+        var(--paper);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, select, input { font: inherit; }
+    button { min-height: 44px; border: 0; cursor: pointer; }
+
+    .shell {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 26px 0 42px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 860px;
+      font-size: clamp(1.8rem, 4.2vw, 4rem);
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 780px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .phone-frame {
+      width: min(100%, 420px);
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 32px;
+      background: #181512;
+      box-shadow: var(--shadow);
+    }
+
+    .phone {
+      overflow: hidden;
+      min-height: 760px;
+      border-radius: 24px;
+      background: var(--panel);
+    }
+
+    .phone-head {
+      padding: 16px 16px 18px;
+      color: #fff;
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.52)),
+        url("https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80") center/cover;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 34px;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .phone-head h2 {
+      margin: 0;
+      font-size: 1.55rem;
+      line-height: 1.2;
+    }
+
+    .phone-head p {
+      margin: 8px 0 0;
+      color: rgba(255, 255, 255, 0.86);
+      line-height: 1.5;
+      font-size: 0.88rem;
+    }
+
+    .phone-body { padding: 15px; }
+
+    .step-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .step-title b { font-size: 0.96rem; }
+    .step-title span { color: var(--muted); font-size: 0.78rem; }
+
+    .block {
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .chips.two { grid-template-columns: repeat(2, 1fr); }
+
+    .chip {
+      border-radius: 8px;
+      color: var(--ink);
+      background: #f0e5da;
+      font-weight: 800;
+      font-size: 0.86rem;
+    }
+
+    .chip.active {
+      color: #fff;
+      background: var(--green);
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tile {
+      overflow: hidden;
+      min-height: 112px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #f0e5da;
+      text-align: left;
+    }
+
+    .tile.active { border-color: var(--green); }
+    .tile img { width: 100%; height: 78px; object-fit: cover; display: block; }
+    .tile span { display: block; padding: 7px; font-size: 0.74rem; font-weight: 800; }
+
+    .photo-box {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px dashed #c8b8a7;
+      border-radius: 8px;
+      background: #fff8ef;
+    }
+
+    .photo-box img {
+      width: 86px;
+      height: 108px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .photo-box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .primary {
+      width: 100%;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--red);
+      font-weight: 900;
+      box-shadow: 0 14px 30px rgba(185, 79, 85, 0.25);
+    }
+
+    .result {
+      display: none;
+      margin-top: 12px;
+      animation: rise 260ms ease-out;
+    }
+
+    .result.show { display: grid; gap: 12px; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .preview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .preview-card {
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .preview-card img {
+      width: 100%;
+      height: 168px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .preview-card span {
+      display: block;
+      padding: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .recommend-card {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .recommend-card img {
+      width: 82px;
+      height: 102px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .recommend-card h3 {
+      margin: 0 0 4px;
+      font-size: 0.95rem;
+    }
+
+    .recommend-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: var(--green);
+      background: rgba(23, 122, 114, 0.1);
+      font-size: 0.7rem;
+      font-weight: 900;
+    }
+
+    .side {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 243, 0.86);
+      box-shadow: var(--shadow);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 1.15rem;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .flow div {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .flow b { color: var(--ink); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.35rem;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .script {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .script li {
+      padding: 12px;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    .script b { color: var(--ink); }
+
+    @media (min-width: 860px) {
+      .layout { grid-template-columns: 440px 1fr; }
+      .phone-frame { position: sticky; top: 22px; }
+      .flow { grid-template-columns: repeat(4, 1fr); }
+      .metrics { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 520px) {
+      .phone { min-height: 720px; }
+      .preview-card img { height: 140px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <h1>选性别、发色、发型，拍照后AI同步生成</h1>
+      <p>这版按客户真实想看的主流程做：顾客先选自己想要的风格性别、目标发色和发型，再拍照生成预览，同时系统给出两个备选推荐发型和擅长该风格的发型师。</p>
+    </header>
+
+    <section class="layout">
+      <div class="phone-frame">
+        <div class="phone">
+          <div class="phone-head">
+            <div class="status"><span>9:41</span><span>AI同步换发</span></div>
+            <h2>先试效果，再约发型师</h2>
+            <p>顾客看到自己的预览效果，同时得到备选方案和擅长发型师。</p>
+          </div>
+
+          <div class="phone-body">
+            <div class="block">
+              <div class="step-title"><b>1. 想要的发型性别</b><span>男性 / 女性 / 中性</span></div>
+              <div class="chips" data-group="targetGender">
+                <button class="chip" data-value="male">男性</button>
+                <button class="chip active" data-value="female">女性</button>
+                <button class="chip" data-value="neutral">中性</button>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="step-title"><b>2. 选择目标发色</b><span>与预览SDK的 color_id 对应</span></div>
+              <div class="chips" data-group="color">
+                <button class="chip active" data-value="tea">黑茶色</button>
+                <button class="chip" data-value="brown">冷棕色</button>
+                <button class="chip" data-value="ash">亚麻灰</button>
+              </div>
+            </div>
+
+            <div class="block">
+              <div class="step-title"><b>3. 选择目标发型</b><span>与预览SDK的 style_id 对应</span></div>
+              <div class="gallery" id="styleGallery"></div>
+            </div>
+
+            <div class="block">
+              <div class="step-title"><b>4. 拍照或上传照片</b><span>演示版使用样例图</span></div>
+              <div class="photo-box">
+                <img id="userPhoto" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=420&q=80" alt="顾客照片样例">
+                <p>正式版会先弹隐私授权，再调用拍照/选图。本平台不保存顾客照片，只保存发型和发色ID。</p>
+              </div>
+            </div>
+
+            <button class="primary" id="generateBtn">拍照并AI同步生成</button>
+
+            <div class="result" id="result">
+              <div class="preview">
+                <div class="preview-card">
+                  <img id="beforeImg" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=420&q=80" alt="生成前">
+                  <span>原始照片</span>
+                </div>
+                <div class="preview-card">
+                  <img id="afterImg" src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=420&q=80" alt="AI生成后">
+                  <span id="afterText">AI预览：女性 · 黑茶色 · 韩系锁骨发</span>
+                </div>
+              </div>
+
+              <div class="recommend-card" id="mainStylist"></div>
+              <div id="twoRecommendations"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="section">
+          <h2>客户要看的核心闭环</h2>
+          <div class="flow">
+            <div><b>选择</b><br>顾客选想要的男性、女性或中性风格，再选发色和发型。</div>
+            <div><b>拍照</b><br>先弹隐私授权，再拍照或上传照片，照片不进数据库。</div>
+            <div><b>生成</b><br>AI同步生成换发预览，前端展示生成结果。</div>
+            <div><b>推荐</b><br>同时推荐2个备选发型和擅长该风格的发型师。</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>15店版可行数据</h2>
+          <div class="metrics">
+            <div class="metric"><strong>15</strong><span>门店</span></div>
+            <div class="metric"><strong>15000</strong><span>月顾客量</span></div>
+            <div class="metric"><strong>2</strong><span>同步备选发型</span></div>
+            <div class="metric"><strong>0</strong><span>照片入库</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>给客户讲解重点</h2>
+          <ul class="script">
+            <li><b>主入口不是纯问答。</b>客户先自己选想要的性别风格、发色、发型，再拍照看效果。</li>
+            <li><b>AI同步做两件事。</b>一边生成顾客本人换发效果，一边根据选择结果推荐两个备选发型。</li>
+            <li><b>同时推荐发型师。</b>系统按门店、技能标签、服务性别、作品风格，推荐擅长这个发型的发型师。</li>
+            <li><b>隐私要前置。</b>正式版必须先弹授权，照片只用于本次生成，不进入后端数据库。</li>
+          </ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      targetGender: "female",
+      color: "tea",
+      styleId: "female_01"
+    };
+
+    const styles = {
+      female: [
+        {
+          id: "female_01",
+          name: "韩系锁骨发",
+          img: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=420&q=80"
+        },
+        {
+          id: "female_02",
+          name: "法式层次卷",
+          img: "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=420&q=80"
+        },
+        {
+          id: "female_03",
+          name: "自然内扣",
+          img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=420&q=80"
+        }
+      ],
+      male: [
+        {
+          id: "male_01",
+          name: "男士纹理短发",
+          img: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1614890085618-0e1054da74f8?auto=format&fit=crop&w=420&q=80"
+        },
+        {
+          id: "male_02",
+          name: "商务侧分",
+          img: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=420&q=80"
+        },
+        {
+          id: "male_03",
+          name: "韩系微分",
+          img: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=420&q=80"
+        }
+      ],
+      neutral: [
+        {
+          id: "neutral_01",
+          name: "中性层次短发",
+          img: "https://images.unsplash.com/photo-1523264766116-1e09b3145b84?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=420&q=80"
+        },
+        {
+          id: "neutral_02",
+          name: "清爽狼尾",
+          img: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?auto=format&fit=crop&w=420&q=80"
+        },
+        {
+          id: "neutral_03",
+          name: "自然碎短发",
+          img: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=420&q=80",
+          after: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=420&q=80"
+        }
+      ]
+    };
+
+    const colors = {
+      tea: "黑茶色",
+      brown: "冷棕色",
+      ash: "亚麻灰"
+    };
+
+    const stylists = {
+      female: { name: "Mia", title: "擅长女士层次剪、韩系烫染", tags: ["女性风格", "锁骨发", "染发"] },
+      male: { name: "Kevin", title: "擅长男士短发、商务侧分", tags: ["男性风格", "短发", "剪发"] },
+      neutral: { name: "Allen", title: "擅长中性短发、潮流层次", tags: ["中性风格", "层次", "造型"] }
+    };
+
+    function renderGallery() {
+      const current = styles[state.targetGender];
+      if (!current.some((item) => item.id === state.styleId)) {
+        state.styleId = current[0].id;
+      }
+      document.querySelector("#styleGallery").innerHTML = current.map((item) => `
+        <button class="tile ${item.id === state.styleId ? "active" : ""}" data-style-id="${item.id}">
+          <img src="${item.img}" alt="${item.name}">
+          <span>${item.name}</span>
+        </button>
+      `).join("");
+    }
+
+    function selectedStyle() {
+      return styles[state.targetGender].find((item) => item.id === state.styleId) || styles[state.targetGender][0];
+    }
+
+    function genderLabel() {
+      return { male: "男性", female: "女性", neutral: "中性" }[state.targetGender];
+    }
+
+    function renderResult() {
+      const style = selectedStyle();
+      document.querySelector("#afterImg").src = style.after;
+      document.querySelector("#afterText").textContent = `AI预览：${genderLabel()} · ${colors[state.color]} · ${style.name}`;
+
+      const stylist = stylists[state.targetGender];
+      document.querySelector("#mainStylist").innerHTML = `
+        <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=420&q=80" alt="${stylist.name}">
+        <div>
+          <h3>推荐发型师：${stylist.name}</h3>
+          <p>${stylist.title}。系统按门店、技能、服务性别和作品风格匹配。</p>
+          <div class="tags">${stylist.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
+        </div>
+      `;
+
+      const alternatives = styles[state.targetGender].filter((item) => item.id !== style.id).slice(0, 2);
+      document.querySelector("#twoRecommendations").innerHTML = alternatives.map((item, index) => `
+        <article class="recommend-card">
+          <img src="${item.img}" alt="${item.name}">
+          <div>
+            <h3>备选推荐${index + 1}：${item.name}</h3>
+            <p>同属${genderLabel()}风格，适配当前选择的${colors[state.color]}，可作为到店沟通备选。</p>
+            <div class="tags"><span class="tag">备选发型</span><span class="tag">${genderLabel()}</span><span class="tag">${colors[state.color]}</span></div>
+          </div>
+        </article>
+      `).join("");
+
+      document.querySelector("#result").classList.add("show");
+    }
+
+    document.querySelectorAll(".chips").forEach((group) => {
+      group.addEventListener("click", (event) => {
+        const button = event.target.closest(".chip");
+        if (!button) return;
+        group.querySelectorAll(".chip").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        state[group.dataset.group] = button.dataset.value;
+        if (group.dataset.group === "targetGender") {
+          renderGallery();
+        }
+      });
+    });
+
+    document.querySelector("#styleGallery").addEventListener("click", (event) => {
+      const tile = event.target.closest(".tile");
+      if (!tile) return;
+      state.styleId = tile.dataset.styleId;
+      renderGallery();
+    });
+
+    document.querySelector("#generateBtn").addEventListener("click", renderResult);
+    renderGallery();
+  </script>
+</body>
+</html>

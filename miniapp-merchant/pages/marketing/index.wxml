@@ -1,0 +1,88 @@
+﻿<view class="page">
+  <view class="header-title">营销套餐</view>
+  <view class="muted">会员充值、消费扣减、剪发次卡和染烫护理套餐都在这里处理。</view>
+
+  <view class="form-card recharge-card">
+    <view class="form-title">会员充值</view>
+    <view class="muted small-muted">输入顾客手机号后充值，顾客端会员余额和流水会同步更新。</view>
+    <view class="field-grid">
+      <view class="field">
+        <view class="field-label">顾客手机号</view>
+        <input class="field-input" value="{{rechargeForm.customer_id}}" bindinput="inputRechargeCustomer" placeholder="例如：13800000000" />
+      </view>
+      <view class="field">
+        <view class="field-label">金额</view>
+        <input class="field-input" type="digit" value="{{rechargeForm.amount}}" bindinput="inputRechargeAmount" placeholder="例如：500" />
+      </view>
+    </view>
+    <view class="field">
+      <view class="field-label">备注</view>
+      <input class="field-input" value="{{rechargeForm.note}}" bindinput="inputRechargeNote" placeholder="例如：线下微信收款 / 门店活动充值" />
+    </view>
+    <view class="settle-actions">
+      <button class="primary-button settle-action" loading="{{rechargeSubmitting}}" data-type="recharge" bindtap="submitMembershipTransaction">充值</button>
+      <button class="secondary-button settle-action" loading="{{rechargeSubmitting}}" data-type="consume" bindtap="submitMembershipTransaction">扣减</button>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">新增套餐</view>
+    <view class="field">
+      <view class="field-label">套餐名称</view>
+      <input class="field-input" value="{{form.name}}" bindinput="inputName" placeholder="例如：剪发 10 次卡" />
+    </view>
+    <view class="field-grid">
+      <view class="field">
+        <view class="field-label">套餐类型</view>
+        <picker range="{{packageTypes}}" range-key="label" value="{{packageTypeIndex}}" bindchange="changePackageType">
+          <view class="picker-value">{{packageTypes[packageTypeIndex].label}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <view class="field-label">关联服务</view>
+        <picker range="{{serviceNames}}" value="{{serviceIndex}}" bindchange="changeService">
+          <view class="picker-value">{{serviceNames[serviceIndex] || '暂无服务'}}</view>
+        </picker>
+      </view>
+    </view>
+    <view class="field-grid">
+      <view class="field">
+        <view class="field-label">售卖价格</view>
+        <input class="field-input" type="digit" value="{{form.sale_price}}" bindinput="inputPrice" placeholder="例如：599" />
+      </view>
+      <view class="field">
+        <view class="field-label">包含次数</view>
+        <input class="field-input" type="number" value="{{form.included_count}}" bindinput="inputCount" placeholder="例如：10" />
+      </view>
+    </view>
+    <view class="field">
+      <view class="field-label">有效期天数</view>
+      <input class="field-input" type="number" value="{{form.validity_days}}" bindinput="inputValidity" placeholder="例如：180" />
+    </view>
+    <button class="primary-button add-button" loading="{{submitting}}" bindtap="createPackage">保存套餐</button>
+  </view>
+
+  <view class="section-title">已配置套餐</view>
+  <view wx:if="{{packages.length === 0}}" class="empty">暂无营销套餐</view>
+  <view wx:for="{{packages}}" wx:key="id" class="package-card {{item.is_enabled ? '' : 'disabled'}}">
+    <view class="package-main">
+      <view class="package-top">
+        <view class="package-name">{{item.name}}</view>
+        <view class="status-pill">{{item.statusText}}</view>
+      </view>
+      <view class="package-price">¥{{item.sale_price}} <text>/ {{item.validity_days}}天</text></view>
+      <view class="package-meta">{{item.typeText}} · {{item.itemText}}</view>
+    </view>
+    <button class="small-button {{item.is_enabled ? 'secondary-button' : 'primary-button'}}" data-id="{{item.id}}" data-enabled="{{item.is_enabled}}" bindtap="togglePackage">
+      {{item.is_enabled ? '停用' : '启用'}}
+    </button>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item active"><text class="nav-icon">套</text>套餐</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

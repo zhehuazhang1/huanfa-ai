@@ -1,0 +1,16 @@
+<svg viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+<defs>
+  <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8A5CFF"/><stop offset="1" stop-color="#5B8BFF"/></linearGradient>
+  <clipPath id="clip"><circle cx="90" cy="90" r="58"/></clipPath>
+</defs>
+<circle cx="90" cy="90" r="58" fill="#ffffff" stroke="#E6E0FF" stroke-width="2"/>
+<g clip-path="url(#clip)">
+  <rect x="90" y="32" width="58" height="116" fill="#F0EAFF"/>
+  <path d="M83,50 C56,50 48,78 52,102 C55,124 67,136 83,139 L83,50 Z" fill="#BCB2E0"/>
+  <path d="M97,47 C127,49 138,76 133,106 C130,126 118,138 97,140 C113,121 113,92 108,74 C105,61 101,53 97,47 Z" fill="url(#hg)"/>
+  <line x1="90" y1="32" x2="90" y2="148" stroke="#ffffff" stroke-width="3"/>
+</g>
+<g transform="translate(126,52)" fill="#C56BFF"><path d="M0,-10 L2.7,-2.7 L10,0 L2.7,2.7 L0,10 L-2.7,2.7 L-10,0 L-2.7,-2.7 Z"/></g>
+<text x="180" y="98" font-size="48" font-weight="800" fill="#2A2342" letter-spacing="4">焕发</text>
+<text x="182" y="126" font-size="12" fill="#9A93B8" letter-spacing="3">AI 美发连锁 SaaS · 看见焕新后的自己</text>
+</svg>

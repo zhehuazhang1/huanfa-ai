@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焕发 · 图标配色方案</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#0f1d18;min-height:100vh;padding:48px 24px;color:#f0f7f5}
+h1{font-size:24px;font-weight:700;text-align:center;margin-bottom:10px}
+.sub{color:#9fb8ae;font-size:14px;text-align:center;max-width:640px;margin:0 auto 40px;line-height:1.8}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;max-width:1100px;margin:0 auto}
+.card{background:#16261f;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:28px;text-align:center}
+.card .swatch-light, .card .swatch-dark{display:flex;align-items:center;justify-content:center;border-radius:12px;padding:24px;margin-bottom:16px}
+.card .swatch-light{background:#f0f7f5}
+.card .swatch-dark{background:#01261f}
+.card svg{width:96px;height:96px}
+.card h2{font-size:16px;font-weight:700;margin-bottom:6px}
+.card p{font-size:12px;color:#9fb8ae;line-height:1.7}
+.row{display:flex;gap:12px;justify-content:center}
+.ref-row{display:flex;justify-content:center;margin-bottom:40px}
+.ref-row .box{background:#fff;border-radius:16px;padding:24px;text-align:center}
+.ref-row img{width:120px;height:120px;display:block;margin:0 auto 8px}
+.ref-row p{font-size:12px;color:#bdb2a0}
+</style>
+</head>
+<body>
+<h1>焕发 · 图标配色方案</h1>
+<p class="sub">
+  按照你给的参考图形（圆环 + 左侧色块 + 右侧渐变月牙 + 右上角星芒），
+  换成与宣传网页一致的品牌配色。每个方案分别在浅色卡片和深色卡片背景下展示，方便看实际效果。
+</p>
+<div class="grid">
+
+  <div class="card">
+    <div class="row">
+      <div class="swatch-light">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradA" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#01261f"/>
+              <stop offset="100%" stop-color="#4ade80"/>
+            </linearGradient>
+            <mask id="maskA"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#cfe3da" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#cfe3da"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradA)" mask="url(#maskA)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#d8b97a"/>
+        </svg>
+      </div>
+      <div class="swatch-dark">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradA2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0f3a2e"/>
+              <stop offset="100%" stop-color="#4ade80"/>
+            </linearGradient>
+            <mask id="maskA2"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#3a5a4f" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#3a5a4f"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradA2)" mask="url(#maskA2)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#d8b97a"/>
+        </svg>
+      </div>
+    </div>
+    <h2>方案 1 · 焕发绿</h2>
+    <p>主色墨绿 #01261f → 薄荷绿 #4ade80 渐变，星芒用古金 #d8b97a 点缀。最贴近现有品牌主色。</p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="swatch-light">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradB" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#01261f"/>
+              <stop offset="100%" stop-color="#2a9070"/>
+            </linearGradient>
+            <mask id="maskB"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#e6dcc6" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#e6dcc6"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradB)" mask="url(#maskB)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#d8b97a"/>
+        </svg>
+      </div>
+      <div class="swatch-dark">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradB2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0f3a2e"/>
+              <stop offset="100%" stop-color="#2a9070"/>
+            </linearGradient>
+            <mask id="maskB2"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#c9a368" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#c9a368"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradB2)" mask="url(#maskB2)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#f0f7f5"/>
+        </svg>
+      </div>
+    </div>
+    <h2>方案 2 · 墨绿鎏金</h2>
+    <p>渐变墨绿 #01261f → 灰绿 #2a9070，左侧色块用暖米色／古金，呼应"美发艺术"方向的高级质感。</p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="swatch-light">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradC" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4ade80"/>
+              <stop offset="100%" stop-color="#9fe0cb"/>
+            </linearGradient>
+            <mask id="maskC"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#cfe3da" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#01261f"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradC)" mask="url(#maskC)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#01261f"/>
+        </svg>
+      </div>
+      <div class="swatch-dark">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradC2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4ade80"/>
+              <stop offset="100%" stop-color="#9fe0cb"/>
+            </linearGradient>
+            <mask id="maskC2"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#4ade80" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#0f3a2e"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradC2)" mask="url(#maskC2)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#f0f7f5"/>
+        </svg>
+      </div>
+    </div>
+    <h2>方案 3 · 薄荷活力</h2>
+    <p>左侧深墨绿块，右侧薄荷绿渐变月牙，星芒用墨绿，对比更鲜明、更"App感"，活力气质更强。</p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="swatch-light">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradD" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#01261f"/>
+              <stop offset="100%" stop-color="#7fd4b8"/>
+            </linearGradient>
+            <mask id="maskD"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#01261f" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#b5e4d8"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradD)" mask="url(#maskD)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#01261f"/>
+        </svg>
+      </div>
+      <div class="swatch-dark">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gradD2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#9fe0cb"/>
+              <stop offset="100%" stop-color="#4ade80"/>
+            </linearGradient>
+            <mask id="maskD2"><rect width="320" height="320" fill="white"/><circle cx="140" cy="160" r="100" fill="black"/></mask>
+          </defs>
+          <circle cx="160" cy="160" r="138" fill="none" stroke="#7fd4b8" stroke-width="6"/>
+          <rect x="55" y="68" width="95" height="184" rx="47.5" fill="#7fd4b8"/>
+          <circle cx="195" cy="160" r="105" fill="url(#gradD2)" mask="url(#maskD2)"/>
+          <path d="M255 68 L263 92 L287 100 L263 108 L255 132 L247 108 L223 100 L247 92 Z" fill="#01261f"/>
+        </svg>
+      </div>
+    </div>
+    <h2>方案 4 · 墨绿主调</h2>
+    <p>墨绿 #01261f 与浅薄荷 #7fd4b8 / #9fe0cb 搭配，整体更沉稳、更接近现有网站的深绿基调。</p>
+  </div>
+
+</div>
+</body>
+</html>

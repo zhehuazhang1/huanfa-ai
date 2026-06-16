@@ -1,0 +1,34 @@
+{
+  "pages": [
+    "pages/workbench/index",
+    "pages/orders/index",
+    "pages/order-detail/index",
+    "pages/manual-service/index",
+    "pages/ai-quota/index",
+    "pages/membership/index",
+    "pages/performance/index",
+    "pages/customers/index",
+    "pages/customer-detail/index",
+    "pages/assets/index",
+    "pages/asset-detail/index",
+    "pages/staff/index",
+    "pages/services/index",
+    "pages/marketing/index",
+    "pages/sync/index",
+    "pages/store-settings/index",
+    "pages/knowledge/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "门店工作台",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F9F9F7"
+  },
+  "networkTimeout": {
+    "request": 600000,
+    "uploadFile": 600000,
+    "downloadFile": 600000
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

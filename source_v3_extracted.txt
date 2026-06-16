@@ -1,0 +1,777 @@
+美发AI小程序
+AI可执行落地方案 v3.0 完整版
+适用场景：5店连锁美发 · 无外包团队 · AI自主执行
+含：4大新模块 · 11项重要注意事项 · AI自验证规则
+版本：v3.0    日期：2025年    保密级别：项目内部
+
+TOC \h \o "1-3"
+
+
+第0章：AI执行规则与自验证机制
+本方案由AI执行。所有模块、接口、代码均需满足本章规则，执行前必须读完本章。
+0.1 执行前五问
+我是否读完了当前模块的全部代码和接口定义？
+当前操作是否会破坏已有的数据表或接口？
+隐私合规：是否有照片/人脸数据流向后端或数据库？
+权限检查：API是否正确过滤了store_id和role？
+是否已在本地/测试环境验证，再部署到生产环境？
+⚠️ 注意：以上5问如有任何一个回答[不确定]，必须停止并重新确认后再继续。
+0.2 AI自验证清单
+验证项
+验证方法
+通过标准
+服务启动
+curl http://localhost:8000/health
+返回 {status:ok}
+Dify连通性
+POST /v1/workflows/run 测试payload
+200响应带outputs字段
+数据库连接
+SELECT 1; SHOW TABLES;
+表结构完整，无报错
+Redis连接
+redis-cli ping
+返回PONG
+小程序接口
+wx.request测试每个API
+均返回200，数据格式正确
+权限隔离
+用不同role token调用API
+角色外数据返回403
+照片隐私
+检查数据库photo相关字段
+不存在任何照片URL字段
+0.3 部署顺序
+服务器环境准备（Nginx + SSL + MySQL + Redis）
+Docker Compose 部署 Dify
+FastAPI 后端部署
+飞书多维表格配置
+微信小程序开发与上线
+自动推送任务部署
+全链路测试
+
+第1章：整体架构与技术选型
+1.1 系统架构总览
+层级
+组件
+作用
+前端
+微信小程序（原生WXML）
+顾客端 + 商家端UI
+AI工作流
+Dify（Docker自部署）
+6大工作流，AI智能交互
+后端API
+Python FastAPI
+业务逻辑，鉴权，数据读写
+数据库
+MySQL 8.0
+核心业务数据持久化
+缓存
+Redis
+热数据缓存，会话管理
+数据后台
+飞书多维表格
+商家数据录入 + 可视化看板
+文件存储
+阿里云OSS
+发型师作品集，产品图片
+推送
+微信订阅消息
+生日/节日/预约提醒
+AI大模型
+通义千问（阿里云）
+NLP理解，推荐生成
+发型预览
+Face++ SDK（前端直传）
+虚拟换发，不经过后端
+1.2 数据流说明
+顾客操作 → 小程序 → FastAPI → MySQL / Redis / Dify
+商家录入 → 飞书多维表格 → Webhook → FastAPI同步MySQL
+发型预览 → 小程序直接调用Face++ SDK → 前端展示，不存储
+订阅推送 → Python定时任务 → 微信模板消息 API
+⚠️ 注意：架构扩展性：所有表均含store_id字段，新增门店只需插入stores表，无需改代码。
+
+第2章：服务器环境部署
+2.1 服务器配置要求
+⚠️ 注意：服务器必须选择16GB内存。Weaviate + MySQL + Redis + Nginx + Dify同时运行峰值6-7GB，8GB内存会导致OOM（内存溢出）系统崩溃。
+配置项
+最低要求
+推荐配置
+CPU
+4核
+8核
+内存
+16GB（必须）
+32GB
+硬盘
+100GB SSD
+200GB SSD
+带宽
+5Mbps
+10Mbps
+操作系统
+Ubuntu 22.04 LTS
+Ubuntu 22.04 LTS
+公网IP
+1个固定IP
+1个固定IP
+2.2 基础环境安装
+apt update && apt upgrade -y
+apt install -y nginx certbot python3-certbot-nginx python3.11 python3-pip mysql-server redis-server
+curl -fsSL https://get.docker.com | sh
+pip3 install fastapi uvicorn sqlalchemy pymysql redis python-multipart pydantic schedule
+2.3 MySQL初始化
+mysql -u root -p
+CREATE DATABASE hairsalon CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'hairapp'@'localhost' IDENTIFIED BY 'YourStrongPass123!';
+GRANT ALL PRIVILEGES ON hairsalon.* TO 'hairapp'@'localhost';
+FLUSH PRIVILEGES;
+2.4 Nginx + HTTPS配置
+# /etc/nginx/sites-available/hairsalon
+server {
+    listen 443 ssl;
+    server_name api.yourdomain.com;
+    ssl_certificate /etc/letsencrypt/live/api.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.yourdomain.com/privkey.pem;
+    location / { proxy_pass http://127.0.0.1:8000; proxy_set_header Host $host; }
+    location /dify/ { proxy_pass http://127.0.0.1:3000/; }
+}
+certbot --nginx -d api.yourdomain.com
+⚠️ 注意：HTTPS是微信小程序的强制要求。必须使用有效域名 + SSL证书，IP地址直接访问不被微信允许。
+
+第3章：Dify部署与6大工作流
+3.1 Dify Docker部署
+git clone https://github.com/langgenius/dify.git
+cd dify/docker
+cp .env.example .env
+# 编辑.env，设置以下关键参数：
+# SECRET_KEY=your-secret-key-32chars
+# DB_PASSWORD=YourDBPass
+# DIFY_WORKER_NUM=4   ← 必须设置！
+docker compose up -d
+⚠️ 注意：DIFY_WORKER_NUM=4 是必须设置的关键参数。默认值为1，并发任务多时会阻塞队列，导致顾客请求超时。不设置此值将严重影响性能。
+⚠️ 注意：Dify知识库不会自动同步数据库变化！每次更新发型、套餐、发型师数据后，必须手动触发知识库更新，或部署Webhook触发脚本。否则AI推荐将基于过时数据。
+3.2 推荐大模型配置
+💡 国内合规首选通义千问（阿里云）：低延迟，成本低，无需翻墙，数据不出境。
+用途
+推荐模型
+说明
+顾客AI推荐
+qwen-plus
+推理质量高，适合复杂问题
+商家AI录入解析
+qwen-turbo
+速度快，成本低
+数据分析总结
+qwen-plus
+需要准确的数学推理
+知识库检索
+text-embedding-v2
+阿里云嵌入模型
+3.3 工作流清单（WF-01 至 WF-06）
+WF-01：顾客AI发型推荐
+触发：顾客在小程序点击「AI帮我选」，输入3个问题答案
+Q1：您的脸型是？（圆/方/长/椭圆/心形）
+Q2：想要的风格？（日系/韩系/复古/时尚/自然）
+Q3：发长偏好？（短发/中发/长发/不限）
+输出：TOP3发型推荐 + 原因说明 + 适配发型师列表
+# Dify WF-01 调用示例
+POST https://api.yourdomain.com/dify/v1/workflows/run
+Authorization: Bearer {DIFY_WF01_API_KEY}
+{
+  "inputs": {
+    "face_type": "圆脸",
+    "style_pref": "韩系",
+    "length_pref": "中发"
+  },
+  "response_mode": "blocking",
+  "user": "wx_openid_xxx"
+}
+⚠️ 注意：Dify API Key绝对不能出现在小程序前端代码中。前端只调用自己的FastAPI，由FastAPI转发给Dify，API Key仅保存在服务器环境变量中。
+WF-02：商家AI录入解析
+触发：商家在飞书/小程序商家端，用自然语言描述新套餐/发型师/发型
+示例输入：「新增一个套餐，烫发+剪发，价格358元，适合卷发，30岁左右女性」
+输出：自动填充结构化表单字段，商家确认后一键保存
+WF-03：发型师智能匹配
+触发：顾客选定发型后，系统自动或顾客手动触发
+匹配逻辑：技能标签匹配 → 评分排序 → 可用时间过滤 → 返回TOP3
+WF-04：数据分析AI解读
+触发：老板/店长在看板点击「AI解读」，或定时自动生成
+输入：近30天收入、预约量、客单价、新客占比等数据
+输出：自然语言趋势分析 + 异常提醒 + 行动建议
+WF-05：会员智能问答
+触发：顾客在小程序点击「咨询客服」
+功能：知识库RAG问答（套餐/发型/价格/预约流程），无法回答时转人工
+⚠️ 注意：不支持iframe，小程序内的AI对话必须自行实现聊天UI，通过调用Dify Chat API实现，不能嵌入网页。
+WF-06：自动推送定时任务
+详见第9章。
+
+第4章：数据库设计
+4.1 核心表结构
+stores（门店表）
+CREATE TABLE stores (
+  id VARCHAR(20) PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  address TEXT,
+  manager_id INT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+users（用户表，含权限）
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  openid VARCHAR(64) UNIQUE NOT NULL,
+  nickname VARCHAR(50),
+  phone VARCHAR(20),
+  role ENUM('boss','manager','stylist','customer') DEFAULT 'customer',
+  store_id VARCHAR(20),
+  birthday DATE,
+  points INT DEFAULT 0,
+  subscribe_msg TINYINT DEFAULT 0,  -- 是否订阅消息
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+stylists（发型师表）
+CREATE TABLE stylists (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT,
+  store_id VARCHAR(20) NOT NULL,
+  name VARCHAR(30),
+  skill_tags JSON,   -- ['烫发','染发','剪发']
+  rating DECIMAL(2,1) DEFAULT 5.0,
+  intro TEXT,
+  avatar_url VARCHAR(255),
+  is_active TINYINT DEFAULT 1
+);
+packages（套餐表）
+CREATE TABLE packages (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  store_id VARCHAR(20),
+  name VARCHAR(100),
+  price DECIMAL(10,2),
+  description TEXT,
+  tags JSON,
+  is_active TINYINT DEFAULT 1
+);
+hairstyles（发型表）
+CREATE TABLE hairstyles (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100),
+  style_id VARCHAR(50),   -- 用于发型预览SDK
+  color_id VARCHAR(50),   -- 用于发型预览SDK
+  face_types JSON,        -- 适合脸型
+  style_tags JSON,        -- 风格标签
+  thumbnail_url VARCHAR(255),
+  is_active TINYINT DEFAULT 1
+);
+⚠️ 注意：hairstyles表中只保存style_id和color_id（文本字段），绝不保存用户照片URL。顾客照片仅在前端调用Face++ SDK时临时使用，不经过后端，不写入数据库。
+appointments（预约表）
+CREATE TABLE appointments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  customer_id INT,
+  stylist_id INT,
+  store_id VARCHAR(20),
+  package_id INT,
+  hairstyle_id INT,
+  appt_time DATETIME,
+  status ENUM('pending','confirmed','done','cancelled') DEFAULT 'pending',
+  style_id VARCHAR(50),
+  color_id VARCHAR(50),
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+members（会员积分表）
+CREATE TABLE members (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT UNIQUE,
+  store_id VARCHAR(20),
+  total_spent DECIMAL(10,2) DEFAULT 0,
+  visit_count INT DEFAULT 0,
+  points INT DEFAULT 0,
+  level ENUM('普通','银卡','金卡','钻石') DEFAULT '普通',
+  last_visit DATE
+);
+⚠️ 注意：充值/储值功能涉及预付款法律合规风险（需申请相关资质）。MVP阶段建议只做积分+优惠券，不做余额储值。若客户坚持要做，需先咨询法务。
+
+第5章：FastAPI后端与RBAC权限
+5.1 RBAC权限矩阵
+角色
+可见数据范围
+核心权限
+boss（老板）
+全部门店
+查看所有数据，AI看板，账号管理
+manager（店长）
+本店数据
+本店预约/收入/库存管理
+stylist（发型师）
+本人数据
+个人预约，作品集管理，业绩查看
+customer（顾客）
+本人数据
+预约，查看发型，AI推荐
+5.2 关键API接口清单
+# 认证
+POST /auth/wx-login          # 微信小程序登录，返回JWT
+
+# 发型推荐（代理Dify）
+POST /ai/recommend           # 顾客AI发型推荐
+POST /ai/parse-package       # 商家AI录入解析
+GET  /ai/data-analysis       # 数据分析AI解读
+
+# 预约
+POST /appointments           # 创建预约
+GET  /appointments           # 查询预约列表（按权限过滤）
+PUT  /appointments/{id}      # 更新预约状态
+
+# 发型师
+GET  /stylists               # 发型师列表
+POST /stylists/{id}/portfolio # 上传作品
+
+# 套餐
+GET  /packages               # 套餐列表
+POST /packages               # 新增套餐（manager/boss）
+
+# 产品库存
+GET  /products               # 产品列表
+POST /products/stock-adjust  # 库存调整
+GET  /products/low-stock     # 低库存预警
+
+# 统计看板
+GET  /stats/store/{id}       # 门店业绩统计
+GET  /stats/stylist/{id}     # 发型师业绩
+GET  /stats/overview         # 总体概览（boss）
+
+# 会员
+GET  /members/{id}           # 会员信息
+POST /members/points         # 积分操作
+
+# 外部平台（预留）
+POST /external/meituan/sync  # 美团数据同步（预留）
+POST /external/douyin/sync   # 抖音数据同步（预留）
+GET  /external/stats         # 外部平台汇总统计
+5.3 权限中间件核心逻辑
+# 每个API请求都经过权限过滤
+@app.middleware('http')
+async def rbac_middleware(request, call_next):
+    user = decode_jwt(request.headers.get('Authorization'))
+    if user.role == 'stylist':
+        request.state.filter_stylist_id = user.stylist_id
+    elif user.role == 'manager':
+        request.state.filter_store_id = user.store_id
+    elif user.role == 'boss':
+        pass  # 无过滤
+    return await call_next(request)
+⚠️ 注意：所有涉及store_id过滤的API，必须在服务端强制执行，不能仅依赖前端传参。前端传的store_id只作参考，服务端以JWT中的store_id为准。
+
+第6章：微信小程序前端
+6.1 页面结构
+页面路径
+功能
+用户角色
+pages/index/index
+首页/门店选择
+全部
+pages/ai-guide/index
+AI发型推荐（3问）
+顾客
+pages/browse/index
+手动浏览发型/套餐
+顾客
+pages/preview/index
+虚拟试发（Face++ SDK）
+顾客
+pages/appointment/index
+预约页面
+顾客
+pages/member/index
+会员中心/积分
+顾客
+pages/merchant/index
+商家后台首页
+管理员
+pages/merchant/ai-entry
+AI自然语言录入
+管理员
+pages/merchant/packages
+套餐管理
+manager/boss
+pages/merchant/stylists
+发型师管理
+manager/boss
+pages/merchant/portfolio
+发型师作品集管理
+stylist
+pages/merchant/products
+产品库存管理
+manager/boss
+pages/merchant/stats
+数据看板
+manager/boss
+6.2 隐私合规：发型预览
+⚠️ 注意：隐私弹窗是法规强制要求，不能绕过或简化。顾客必须主动点击「同意并继续」才能上传照片。
+// 正确流程：先弹窗，再上传
+showPrivacyDialog() {
+  wx.showModal({
+    title: "温馨提示",
+    content: "您的照片将发送至AI渲染服务进行发型预览，本平台不保存您的照片。",
+    confirmText: "同意并继续",
+    cancelText: "取消",
+    success: (res) => {
+      if (res.confirm) this.choosePhoto()
+    }
+  })
+}
+
+// 前端直传Face++ SDK CDN，不经过后端
+choosePhoto() {
+  wx.chooseMedia({ count: 1, mediaType: ['image'],
+    success: (res) => {
+      const tempPath = res.tempFiles[0].tempFilePath
+      // 直接调用Face++ SDK，不发给自己的服务器
+      FacePPSDK.virtualHairChange({ photo: tempPath, style_id, color_id })
+        .then(result => this.setData({ previewUrl: result.preview_url }))
+    }
+  })
+}
+6.3 订阅消息
+⚠️ 注意：微信订阅消息不能强制推送。必须在顾客完成某个操作（预约/消费）时，展示授权弹窗请求订阅，顾客主动勾选才能发送。
+⚠️ 注意：需要提前申请「本地服务-美容美发」类目的长期订阅资格，审核周期1-4周，务必提前申请，否则只能发一次性订阅消息。
+// 正确方式：在用户操作完成后请求订阅
+wx.requestSubscribeMessage({
+  tmplIds: [BIRTHDAY_TEMPLATE_ID, APPT_TEMPLATE_ID],
+  success(res) {
+    if (res[BIRTHDAY_TEMPLATE_ID] === 'accept') {
+      // 更新数据库subscribe_msg=1
+    }
+  }
+})
+
+第7章：飞书多维表格数据后台
+7.1 为什么用飞书
+零开发成本：拖拽创建表单，5分钟搭建数据录入界面
+移动端支持：老板手机上看实时数据，无需开发APP
+Dashboard：飞书内置仪表盘，5分钟刷新，图表自动生成
+权限管理：按人/按视图分享，不同角色看不同数据
+⚠️ 注意：飞书是数据展示和录入的辅助工具，MySQL才是系统的主数据库。飞书数据变更需通过Webhook同步到MySQL，否则两边数据会不一致。
+7.2 飞书表结构设计
+表名
+字段
+用途
+套餐表
+套餐名/价格/标签/门店/状态
+商家录入和管理套餐
+发型师表
+姓名/技能/评分/门店/在职状态
+发型师信息维护
+发型库
+发型名/风格/脸型/style_id/color_id
+发型选择素材库
+预约记录
+时间/顾客/发型师/套餐/状态
+只读，从MySQL同步
+业绩看板
+门店/日期/收入/预约量
+数据分析
+库存表
+产品名/当前库存/预警值/门店
+库存管理
+7.3 飞书Webhook同步配置
+# FastAPI接收飞书变更通知
+@app.post('/feishu/webhook')
+async def feishu_webhook(data: dict):
+    event_type = data.get('type')
+    if event_type == 'record.update':
+        table_id = data['table_id']
+        record = data['record']
+        await sync_to_mysql(table_id, record)
+    return {'code': 0}
+
+第8章：产品零售与库存管理（新模块）
+8.1 功能概述
+产品管理：录入洗发水/护发素/发膜等零售产品
+库存追踪：实时库存数量，支持多门店独立库存
+低库存预警：库存低于阈值自动提醒（每天08:00检查）
+销售记录：与预约/消费挂钩，自动扣减库存
+8.2 数据库表设计
+CREATE TABLE products (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  store_id VARCHAR(20) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  category VARCHAR(50),       -- 洗护/造型/护理
+  price DECIMAL(10,2),
+  cost_price DECIMAL(10,2),
+  stock INT DEFAULT 0,
+  low_stock_alert INT DEFAULT 10,  -- 低库存预警阈值
+  image_url VARCHAR(255),     -- 阿里云OSS图片URL
+  is_active TINYINT DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE stock_logs (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  product_id INT,
+  store_id VARCHAR(20),
+  change_type ENUM('in','out','adjust'),
+  quantity INT,
+  remark TEXT,
+  operator_id INT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+8.3 低库存预警逻辑
+# 每天08:00执行
+def run_stock_alert():
+    low_stock = db.query(
+        'SELECT * FROM products WHERE stock <= low_stock_alert AND is_active=1'
+    )
+    for product in low_stock:
+        manager = get_store_manager(product.store_id)
+        send_subscribe_msg(manager.openid, '库存预警', {
+            '产品': product.name,
+            '当前库存': product.stock,
+            '预警阈值': product.low_stock_alert
+        })
+💡 low_stock_alert字段默认值为10，各门店店长可在飞书表中自行调整各产品的预警阈值。
+
+第9章：发型师作品集（新模块）
+9.1 功能概述
+发型师在小程序上传自己的作品照片（顾客造型前后对比等）
+顾客浏览发型师时可查看其历史作品
+作品集帮助顾客选择匹配风格的发型师
+支持标签分类：烫发/染发/剪发/造型
+9.2 数据库表
+CREATE TABLE stylist_portfolios (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  stylist_id INT NOT NULL,
+  store_id VARCHAR(20),
+  image_url VARCHAR(255) NOT NULL,   -- 阿里云OSS
+  title VARCHAR(100),
+  tags JSON,                          -- ['烫发','韩系']
+  description TEXT,
+  is_public TINYINT DEFAULT 1,
+  sort_order INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+9.3 图片上传到阿里云OSS
+# FastAPI生成OSS临时上传凭证
+@app.get('/oss/upload-token')
+async def get_oss_token(current_user=Depends(get_current_user)):
+    sts_client = oss2.StsClient(...)
+    token = sts_client.assume_role(role_arn, 'portfolio-upload', 900)
+    return {
+        'access_key_id': token.credentials.access_key_id,
+        'access_key_secret': token.credentials.access_key_secret,
+        'security_token': token.credentials.security_token,
+        'bucket': 'hairsalon-portfolio',
+        'endpoint': 'oss-cn-shanghai.aliyuncs.com'
+    }
+⚠️ 注意：OSS的AccessKey Secret不能放在前端代码。必须通过STS临时凭证机制，由后端生成短时效（15分钟）的上传凭证给前端。
+💡 作品集图片建议压缩到1MB以内再上传，OSS支持图片处理URL参数（?x-oss-process=image/resize,w_800）实现自动压缩。
+
+第10章：会员生日/节日自动推送（新模块 WF-06）
+10.1 推送场景设计
+推送类型
+触发条件
+执行时间
+消息内容
+生日祝福
+当天生日的会员
+每天01:00
+生日优惠券+问候语
+节日问候
+元旦/春节/母亲节等
+节前1天01:30
+节日优惠活动推送
+召回提醒
+超过60天未访问
+每天02:00
+「想念您」+专属折扣
+库存预警
+产品库存<阈值
+每天08:00
+通知店长补货
+外部平台同步
+预留接口
+每天03:00
+美团/抖音数据同步（未来）
+⚠️ 注意：微信订阅消息不支持批量强制推送。发送前必须检查用户的subscribe_msg字段是否为1（已订阅），未订阅用户不能发送，否则违反微信规范，可能导致小程序被封。
+10.2 定时任务部署
+# push_tasks.py（独立进程，由systemd管理）
+import schedule, time
+from tasks import run_birthday_push, run_holiday_push
+from tasks import run_comeback_push, run_stock_alert, run_external_sync
+
+schedule.every().day.at('01:00').do(run_birthday_push)
+schedule.every().day.at('01:30').do(run_holiday_push)
+schedule.every().day.at('02:00').do(run_comeback_push)
+schedule.every().day.at('08:00').do(run_stock_alert)
+schedule.every().day.at('03:00').do(run_external_sync)  # 预留
+
+while True:
+    schedule.run_pending()
+    time.sleep(60)
+# systemd服务配置 /etc/systemd/system/hairpush.service
+[Unit]
+Description=Hair Salon Push Tasks
+After=network.target
+[Service]
+ExecStart=/usr/bin/python3 /opt/hairsalon/push_tasks.py
+Restart=always
+[Install]
+WantedBy=multi-user.target
+systemctl enable hairpush && systemctl start hairpush
+10.3 生日推送核心逻辑
+def run_birthday_push():
+    today = datetime.now()
+    members = db.query(
+        'SELECT * FROM users WHERE MONTH(birthday)=%s AND DAY(birthday)=%s AND subscribe_msg=1'
+        , (today.month, today.day)
+    )
+    for member in members:
+        coupon = create_birthday_coupon(member.id)
+        wx_send_subscribe_msg(member.openid, BIRTHDAY_TEMPLATE_ID, {
+          'thing1': '生日快乐！您的专属优惠券已到账',
+          'amount2': f'{coupon.discount}折优惠',
+          'time3': f'有效期至{coupon.expires}'
+        })
+
+第11章：抖音/美团/大众点评预留接口
+11.1 预留策略说明
+💡 当前阶段这些接口仅作占位，返回固定响应。当客户决定接入某平台时，只需实现对应函数，不影响其他模块。
+11.2 预留数据库表
+CREATE TABLE external_platform_data (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  platform ENUM('meituan','douyin','dianping') NOT NULL,
+  store_id VARCHAR(20) NOT NULL,
+  external_order_id VARCHAR(100),
+  amount DECIMAL(10,2),
+  customer_name VARCHAR(50),
+  service_name VARCHAR(100),
+  service_date DATE,
+  raw_json JSON,
+  synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+11.3 预留API接口（空实现）
+@app.post('/external/meituan/sync')
+async def meituan_sync(data: dict):
+    # 预留：美团数据同步
+    # TODO: 验证美团签名，解析订单数据，写入external_platform_data
+    return {'status': 'not_connected', 'msg': '美团接口未开通'}
+
+@app.post('/external/douyin/sync')
+async def douyin_sync(data: dict):
+    # 预留：抖音/团购数据同步
+    return {'status': 'not_connected', 'msg': '抖音接口未开通'}
+
+@app.post('/external/dianping/sync')
+async def dianping_sync(data: dict):
+    # 预留：大众点评同步
+    return {'status': 'not_connected', 'msg': '大众点评接口未开通'}
+
+@app.get('/external/stats')
+async def external_stats(store_id: str = None):
+    data = db.query(
+        'SELECT platform, COUNT(*) cnt, SUM(amount) total
+         FROM external_platform_data WHERE 1=1'
+    )
+    # 返回各平台汇总数据
+    return {'status': 'ok', 'data': data}
+11.4 接入各平台的前置条件
+平台
+前置条件
+预计工期
+美团
+美团商家开放平台申请，获取AppKey/AppSecret
+3-5天开发
+抖音团购
+抖音开放平台商家入驻，获取access_token
+3-5天开发
+大众点评
+大众点评商家授权，申请数据API
+2-3天开发
+
+第12章：⚠️ 重要注意事项汇总（AI必读）
+本章汇总了项目中所有重要的风险点、易错点和强制要求。AI执行每个模块时，必须先检查本章相关条目。
+12.1 服务器与基础设施
+⚠️ 注意：服务器内存必须是16GB。8GB内存在Dify+MySQL+Redis+Nginx+Weaviate全部运行时会OOM崩溃。选购服务器时这是第一优先级。
+⚠️ 注意：DIFY_WORKER_NUM=4 必须在.env中配置。默认值1在高并发时会让所有工作流请求排队，严重影响顾客体验。
+⚠️ 注意：HTTPS是微信小程序的强制要求。开发环境可用，生产环境必须有有效SSL证书和域名，不接受IP直接访问。
+12.2 AI工作流与知识库
+⚠️ 注意：Dify知识库不自动同步数据库。每次发型/套餐/发型师数据变更后，必须手动或通过脚本触发知识库更新，否则AI推荐结果会基于过时数据产生错误推荐。
+⚠️ 注意：Dify API Key和Face++ AppKey绝对不能出现在小程序前端代码中。前端代码可被反编译，泄露API Key会造成费用损失和安全风险。所有密钥仅保存在服务器环境变量中。
+💡 建议在服务器.env文件中统一管理：DIFY_API_KEY、FACEPP_API_KEY、OSS_ACCESS_KEY等所有密钥。
+12.3 隐私合规
+⚠️ 注意：顾客照片绝对不能存储。Face++虚拟换发功能必须使用前端SDK直传方式，照片不经过后端服务器，数据库中不保存任何照片URL。只保存style_id和color_id两个文本字段。
+⚠️ 注意：隐私弹窗不能跳过。在调用任何拍照/选图功能前，必须先弹出隐私说明弹窗，用户主动点击「同意」才能继续。这是法律合规要求。
+12.4 微信小程序限制
+⚠️ 注意：微信小程序不支持iframe。所有AI对话界面必须自行开发聊天UI，通过调用Dify Chat API实现消息交互，不能嵌入任何网页。
+⚠️ 注意：微信订阅消息不能强制批量发送。只能在用户主动操作时请求订阅授权，用户明确同意后才能发送。需提前申请「本地服务-美容美发」长期订阅资格，审核需1-4周，必须在上线前2个月申请。
+12.5 财务与法律风险
+⚠️ 注意：充值储值（余额充值/储值卡）有预付款合规风险，需申请相关资质。MVP阶段强烈建议改用积分+优惠券替代，规避法律风险。如客户坚持做储值功能，必须先咨询法律顾问。
+12.6 运营注意事项
+⚠️ 注意：飞书和MySQL的数据同步必须测试。飞书是展示和录入工具，MySQL是系统主数据库，两边必须保持一致。Webhook同步脚本需要单独部署和测试，确认每次飞书录入后MySQL能正确更新。
+⚠️ 注意：外部平台预留接口当前返回{status: not_connected}。这是正确行为，说明接口已预留但未接入。接入前不要修改这些接口的路由路径，以保证未来对接时URL不变。
+💡 新增管理员：在users表中插入用户记录，设置role和store_id字段即可。不需要改代码。
+💡 新增门店：在stores表中插入一条记录，相关API会自动支持新门店的数据隔离。
+
+第13章：测试与上线验收
+13.1 功能测试清单
+模块
+测试项
+验收标准
+微信登录
+小程序微信授权登录
+获取openid，JWT返回正常
+AI推荐
+输入脸型/风格/发长
+返回3个发型推荐，有理由说明
+手动浏览
+浏览发型/套餐列表
+数据加载正常，图片显示
+发型预览
+拍照上传虚拟试发
+隐私弹窗出现，预览图生成
+预约流程
+选发型→选发型师→选时间→确认
+预约记录写入数据库
+权限隔离
+不同role账号访问数据
+角色外数据返回403
+商家录入
+自然语言描述套餐
+AI正确解析为结构化字段
+数据看板
+boss账号查看全店数据
+图表正常显示，数据正确
+库存预警
+设置低阈值产品
+次日08:00收到推送通知
+生日推送
+设置当天生日会员
+次日01:00收到生日消息
+作品集上传
+发型师上传照片
+图片保存到OSS，可显示
+飞书同步
+飞书中录入新套餐
+MySQL中同步更新
+13.2 上线前必检
+所有API均有HTTPS，无HTTP接口暴露
+Dify API Key未出现在小程序代码包中
+数据库无photo/image_url字段存储顾客照片
+隐私弹窗在拍照前必弹，无法绕过
+DIFY_WORKER_NUM=4已配置
+订阅消息模板已申请并审核通过
+飞书Webhook同步已测试，MySQL数据一致
+各角色权限隔离测试通过
+服务器内存≥16GB
+Nginx + SSL证书配置正确
+13.3 运维监控
+服务器监控：宝塔面板（图形化监控CPU/内存/磁盘）
+错误日志：FastAPI日志 + Dify Docker logs
+数据库备份：每日自动备份MySQL到阿里云OSS
+飞书报警：通过飞书机器人发送服务器异常通知
+本方案至此完结。如需新增功能，参照以下扩展原则：
+新增模块：在FastAPI新增路由文件，在MySQL新建表，添加store_id字段
+新增门店：stores表插入记录，users表分配manager账号
+接入外部平台：实现/external/{platform}/sync接口的业务逻辑
+新增AI能力：在Dify创建新工作流，FastAPI新增代理接口
+扩展成本低，不影响已上线功能。

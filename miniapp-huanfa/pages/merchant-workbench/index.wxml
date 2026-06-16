@@ -1,0 +1,103 @@
+<view class="page">
+  <view class="workbench-hero">
+    <view class="role-pill">店长视角</view>
+    <view class="header-title">{{workbench.store_name || 'Mirror Hair Salon 人民广场店'}}</view>
+    <view class="muted">订单、顾客试发、团队状态和今日经营概览</view>
+  </view>
+
+  <view class="metric-grid">
+    <view class="metric-card">
+      <view class="metric-value">{{workbench.total_orders || 0}}</view>
+      <view class="metric-label">今日预约</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{workbench.completed_orders || 0}}</view>
+      <view class="metric-label">已完成服务</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{workbench.ai_success_jobs || 0}}</view>
+      <view class="metric-label">AI 成功试发</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{workbench.ai_converted_orders || 0}}</view>
+      <view class="metric-label">AI 转化订单</view>
+    </view>
+  </view>
+
+  <view class="revenue-card">
+    <view>
+      <view class="revenue-label">今日成交金额</view>
+      <view class="revenue-desc">今日已完成服务记录，与数据看板同步</view>
+    </view>
+    <view class="revenue-value">¥{{workbench.actual_revenue || 0}}</view>
+  </view>
+
+  <view class="merchant-grid">
+    <view class="merchant-tile" bindtap="goManualService">
+      <view class="tile-icon">录</view>
+      <view class="manage-title">补录服务</view>
+      <view class="manage-desc">散客剪染烫也进看板</view>
+    </view>
+    <view class="merchant-tile" bindtap="goStaff">
+      <view class="tile-icon">团</view>
+      <view class="manage-title">团队</view>
+      <view class="manage-desc">主理人和赠送次数</view>
+    </view>
+    <view class="merchant-tile" bindtap="goServices">
+      <view class="tile-icon">项</view>
+      <view class="manage-title">服务项目</view>
+      <view class="manage-desc">剪染烫造型护理</view>
+    </view>
+    <view class="merchant-tile" bindtap="goMarketing">
+      <view class="tile-icon">套</view>
+      <view class="manage-title">营销套餐</view>
+      <view class="manage-desc">次卡、组合套餐</view>
+    </view>
+    <view class="merchant-tile" bindtap="goQuota">
+      <view class="tile-icon">次</view>
+      <view class="manage-title">AI 次数</view>
+      <view class="manage-desc">赠送和门店余量</view>
+    </view>
+    <view class="merchant-tile" bindtap="goMembership">
+      <view class="tile-icon">会</view>
+      <view class="manage-title">会员套餐</view>
+      <view class="manage-desc">版本权益、账单和升级</view>
+    </view>
+    <view class="merchant-tile" bindtap="goSync">
+      <view class="tile-icon">飞</view>
+      <view class="manage-title">飞书同步</view>
+      <view class="manage-desc">订单和经营数据同步</view>
+    </view>
+    <view class="merchant-tile" bindtap="goStoreSettings">
+      <view class="tile-icon">店</view>
+      <view class="manage-title">门店设置</view>
+      <view class="manage-desc">首页文案和轮播图</view>
+    </view>
+  </view>
+
+  <view class="today-panel">
+    <view class="section-title">今日待处理</view>
+    <view class="appointment-row">
+      <view>
+        <view class="appointment-name">顾客 AI 试发预约</view>
+        <view class="muted">带着方案图到店沟通，优先确认发色和层次</view>
+      </view>
+      <view class="appointment-status">待确认</view>
+    </view>
+    <view class="appointment-row">
+      <view>
+        <view class="appointment-name">主理人状态</view>
+        <view class="muted">在店 / 忙碌 / 不在店影响推荐排序</view>
+      </view>
+      <view class="appointment-status muted-status">查看</view>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item active"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

@@ -1,0 +1,101 @@
+services:
+  hair-ai-api:
+    build:
+      context: ./backend
+    container_name: hair-ai-api
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      HAIR_AI_DB_PATH: ${HAIR_AI_DB_PATH:-/data/hair_ai.sqlite3}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/hair_ai.sqlite3}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    volumes:
+      - hair_ai_data:/data
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  hair-ai-worker:
+    build:
+      context: ./backend
+    container_name: hair-ai-worker
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      HAIR_AI_DB_PATH: ${HAIR_AI_DB_PATH:-/data/hair_ai.sqlite3}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/hair_ai.sqlite3}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    command: ["python", "-m", "app.worker"]
+    volumes:
+      - hair_ai_data:/data
+    depends_on:
+      - hair-ai-api
+
+  redis:
+    image: redis:7-alpine
+    container_name: hair-ai-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  mysql:
+    image: mysql:8.4
+    container_name: hair-ai-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: change_this_root_password
+      MYSQL_DATABASE: hair_ai
+      MYSQL_USER: hair_ai
+      MYSQL_PASSWORD: change_this_password
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - hair_ai_mysql:/var/lib/mysql
+
+  landing-web:
+    image: nginx:alpine
+    container_name: hair-ai-landing
+    restart: unless-stopped
+    volumes:
+      - ./landing:/usr/share/nginx/html:ro
+      - ./landing/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+
+  admin-web:
+    image: nginx:alpine
+    container_name: hair-ai-admin-web
+    restart: unless-stopped
+    volumes:
+      - ./admin:/usr/share/nginx/html:ro
+      - ./admin/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8090:80"
+    depends_on:
+      - hair-ai-api
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: hair-ai-pma
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: Admin123
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_this_root_password}
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8888:80"
+    depends_on:
+      - mysql
+
+volumes:
+  hair_ai_data:
+  hair_ai_mysql:

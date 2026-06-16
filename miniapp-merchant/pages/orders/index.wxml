@@ -1,0 +1,54 @@
+<view class="page">
+  <view class="header-title">订单管理</view>
+  <view class="muted">确认预约，到店后直接完成结算</view>
+
+  <view class="view-tabs">
+    <view class="view-tab {{viewMode === 'today' ? 'active' : ''}}" data-mode="today" bindtap="changeView">今日</view>
+    <view class="view-tab {{viewMode === 'history' ? 'active' : ''}}" data-mode="history" bindtap="changeView">历史</view>
+  </view>
+
+  <view wx:if="{{viewMode === 'history'}}" class="date-range">
+    <picker mode="date" value="{{dateFrom}}" end="{{dateTo}}" bindchange="onDateFromChange">
+      <view class="date-picker">{{dateFrom}}</view>
+    </picker>
+    <text class="date-sep">至</text>
+    <picker mode="date" value="{{dateTo}}" start="{{dateFrom}}" end="{{todayLabel}}" bindchange="onDateToChange">
+      <view class="date-picker">{{dateTo}}</view>
+    </picker>
+  </view>
+
+  <view class="status-tabs">
+    <view wx:for="{{statuses}}" wx:key="value" class="status-tab {{status === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="changeStatus">{{item.label}}</view>
+  </view>
+
+  <view wx:if="{{orders.length === 0}}" class="empty">暂无订单</view>
+
+  <view wx:for="{{orders}}" wx:key="id" class="order-card">
+    <view class="order-head">
+      <view class="order-title">订单 #{{item.id}}</view>
+      <view class="order-status">{{statusText[item.status] || item.status}}</view>
+    </view>
+    <view class="order-line">顾客：{{item.customer_name || '顾客'}} {{item.customer_phone || ''}}</view>
+    <view class="order-line">主理人：{{item.stylist_name || '未分配'}}</view>
+    <view class="order-line">预约时间：{{item.appointment_time || '到店沟通'}}</view>
+    <view class="order-line">发型：{{item.hairstyleText}} / 发色：{{item.hairColorText}}</view>
+    <view class="order-line">服务项目：{{item.serviceItemText}}</view>
+    <view class="order-line">来源：{{item.is_ai_converted ? 'AI试发转化' : '普通下单'}}</view>
+    <view class="talk-card">{{item.notes || '沟通重点：确认顾客试发方案、刘海长度、两侧层次、发色是否需要漂发。'}}</view>
+
+    <view class="button-row">
+      <button class="small-button secondary-button" data-id="{{item.id}}" bindtap="showOrderDetail">详情</button>
+      <button wx:if="{{item.status === 'pending'}}" class="small-button primary-button" data-id="{{item.id}}" data-status="confirmed" bindtap="updateStatus">确认</button>
+      <button wx:if="{{item.status === 'confirmed' || item.status === 'arrived' || item.status === 'serving'}}" class="small-button primary-button settle-button" data-id="{{item.id}}" data-stylist-id="{{item.stylist_id}}" bindtap="completeOrder">完成结算</button>
+      <button wx:if="{{item.status !== 'completed' && item.status !== 'cancelled'}}" class="small-button secondary-button" data-id="{{item.id}}" data-status="cancelled" bindtap="updateStatus">取消</button>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item active"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

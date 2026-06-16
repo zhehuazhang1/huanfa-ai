@@ -1,0 +1,279 @@
+.detail-page {
+  padding-bottom: 64rpx;
+}
+
+.profile-card,
+.record-card {
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 88rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: #01261f;
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  color: #1a1c1b;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.profile-sub {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 24rpx;
+}
+
+.visit-pill {
+  flex: 0 0 auto;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #f1f2f0;
+  color: #717976;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.visit-pill.active {
+  background: rgba(197, 234, 223, 0.55);
+  color: #01261f;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.action-row.single-row {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 16rpx;
+}
+
+.action-button {
+  height: 84rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.action-button.primary {
+  background: #01261f;
+  color: #fff;
+}
+
+.action-button.secondary {
+  background: #eef3ef;
+  color: #01261f;
+}
+
+.membership-card {
+  margin-top: 24rpx;
+  padding: 26rpx;
+  border-radius: 26rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.membership-top,
+.membership-stats,
+.membership-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.membership-label {
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.membership-level {
+  margin-top: 6rpx;
+  color: #1a1c1b;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.membership-balance {
+  margin-top: 18rpx;
+  color: #01261f;
+  font-size: 50rpx;
+  font-weight: 900;
+}
+
+.membership-stats {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.membership-actions {
+  margin-top: 20rpx;
+}
+
+.membership-upgrade {
+  margin-top: 20rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: #f5f0e0;
+  color: #8a6a00;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.mini-action {
+  flex: 1;
+  min-width: 0;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.mini-action.primary {
+  background: #01261f;
+  color: #fff;
+}
+
+.mini-action.secondary {
+  background: #eef3ef;
+  color: #01261f;
+}
+
+/* 停用状态 */
+.avatar-disabled {
+  background: #b0b8b4;
+}
+
+.disabled-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  background: #ffe4e4;
+  color: #d14343;
+  font-size: 20rpx;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.disabled-banner {
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  background: #ffe4e4;
+  color: #d14343;
+  font-size: 24rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* 账号管理操作行 */
+.manage-row {
+  margin-top: 14rpx;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.btn-disable {
+  background: #f5f0e0;
+  color: #a07800;
+}
+
+.btn-delete {
+  background: #fde8e8;
+  color: #d14343;
+}
+
+.section-title {
+  margin-top: 34rpx;
+  color: #01261f;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.empty-line {
+  margin-top: 16rpx;
+  padding: 22rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  color: #717976;
+  font-size: 24rpx;
+}
+
+.record-card {
+  margin-top: 16rpx;
+}
+
+.record-card.compact {
+  padding: 20rpx 24rpx;
+}
+
+.record-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.record-title {
+  min-width: 0;
+  color: #1a1c1b;
+  font-size: 28rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-status {
+  flex: 0 0 auto;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(197, 234, 223, 0.5);
+  color: #01261f;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.record-line {
+  margin-top: 12rpx;
+  color: #414846;
+  font-size: 24rpx;
+  line-height: 1.4;
+}

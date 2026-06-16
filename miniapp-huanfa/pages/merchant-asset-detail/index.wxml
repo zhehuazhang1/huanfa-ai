@@ -1,0 +1,94 @@
+<view class="page detail-page">
+  <view class="detail-hero">
+    <image wx:if="{{type === 'style' && asset.thumbnail_url}}" class="hero-image" src="{{asset.thumbnail_url}}" mode="aspectFit" />
+    <image wx:if="{{type === 'color' && asset.thumbnail_url}}" class="hero-image" src="{{asset.thumbnail_url}}" mode="aspectFit" />
+    <view wx:if="{{type === 'color' && !asset.thumbnail_url}}" class="hero-color" style="background: {{asset.color_swatch || '#6b4a38'}}"></view>
+    <view class="hero-main">
+      <view class="type-pill">{{type === 'style' ? '发型' : '发色'}}</view>
+      <view class="detail-title">{{displayName}}</view>
+      <view class="muted">{{type === 'style' ? '维护发型名称、客户描述、参数和参考图' : '维护发色名称、标签、漂发和色块'}}</view>
+    </view>
+  </view>
+
+  <view class="detail-card">
+    <view class="detail-row {{editingField === 'name' ? 'editing' : ''}}">
+      <view class="detail-main">
+        <view class="row-title">名称</view>
+        <input wx:if="{{editingField === 'name'}}" class="inline-input" value="{{draftText}}" bindinput="onDraftInput" placeholder="请输入名称" />
+        <view wx:else class="row-value">{{displayName}}</view>
+        <view wx:if="{{editingField === 'name'}}" class="inline-actions">
+          <button class="row-button primary-button" bindtap="saveInlineEdit">保存</button>
+          <button class="row-button secondary-button" bindtap="cancelInlineEdit">取消</button>
+        </view>
+      </view>
+      <button wx:if="{{editingField !== 'name'}}" class="row-button secondary-button" data-field="name" bindtap="startInlineEdit">修改</button>
+    </view>
+    <view wx:if="{{type === 'style'}}" class="detail-row {{editingField === 'description' ? 'editing' : ''}}">
+      <view class="detail-main">
+        <view class="row-title">客户描述</view>
+        <textarea wx:if="{{editingField === 'description'}}" class="inline-textarea" value="{{draftText}}" bindinput="onDraftInput" auto-height placeholder="请输入给客户看的描述" />
+        <view wx:else class="row-value">{{asset.customer_description || '暂未填写'}}</view>
+        <view wx:if="{{editingField === 'description'}}" class="inline-actions">
+          <button class="row-button primary-button" bindtap="saveInlineEdit">保存</button>
+          <button class="row-button secondary-button" bindtap="cancelInlineEdit">取消</button>
+        </view>
+      </view>
+      <button wx:if="{{editingField !== 'description'}}" class="row-button secondary-button" data-field="description" bindtap="startInlineEdit">编辑</button>
+    </view>
+    <view wx:if="{{type === 'style'}}" class="detail-row {{editingField === 'parameters' ? 'editing' : ''}}">
+      <view class="detail-main">
+        <view class="row-title">发型参数</view>
+        <textarea wx:if="{{editingField === 'parameters'}}" class="inline-textarea param-textarea" value="{{draftText}}" bindinput="onDraftInput" auto-height placeholder="例如：发长：中发&#10;刘海：八字刘海" />
+        <view wx:else class="row-value preline">{{parameterText}}</view>
+        <view wx:if="{{editingField === 'parameters'}}" class="inline-actions">
+          <button class="row-button primary-button" bindtap="saveInlineEdit">保存</button>
+          <button class="row-button secondary-button" bindtap="cancelInlineEdit">取消</button>
+        </view>
+      </view>
+      <button wx:if="{{editingField !== 'parameters'}}" class="row-button secondary-button" data-field="parameters" bindtap="startInlineEdit">编辑</button>
+    </view>
+    <view wx:if="{{type === 'style'}}" class="detail-row">
+      <view class="detail-main">
+        <view class="row-title">发长</view>
+        <view class="row-value">{{asset.hairLengthLabel || '中发'}}</view>
+      </view>
+      <button class="row-button secondary-button" bindtap="editLength">设置</button>
+    </view>
+    <view wx:if="{{type === 'style'}}" class="detail-row">
+      <view class="detail-main">
+        <view class="row-title">参考图</view>
+        <view class="row-value">用于顾客选择和 AI 参考</view>
+      </view>
+      <button class="row-button secondary-button" bindtap="replaceImage">替换</button>
+    </view>
+    <view wx:if="{{type === 'color'}}" class="detail-row {{editingField === 'colorTags' ? 'editing' : ''}}">
+      <view class="detail-main">
+        <view class="row-title">发色标签</view>
+        <input wx:if="{{editingField === 'colorTags'}}" class="inline-input" value="{{draftText}}" bindinput="onDraftInput" placeholder="例如：冷棕、显白、无需漂发" />
+        <view wx:else class="tag-row">
+          <text wx:for="{{asset.tagList}}" wx:key="*this" class="mini-tag">{{item}}</text>
+        </view>
+        <view wx:if="{{editingField === 'colorTags'}}" class="inline-actions">
+          <button class="row-button primary-button" bindtap="saveInlineEdit">保存</button>
+          <button class="row-button secondary-button" bindtap="cancelInlineEdit">取消</button>
+        </view>
+      </view>
+      <button wx:if="{{editingField !== 'colorTags'}}" class="row-button secondary-button" data-field="colorTags" bindtap="startInlineEdit">编辑</button>
+    </view>
+    <view wx:if="{{type === 'color'}}" class="detail-row">
+      <view class="detail-main">
+        <view class="row-title">漂发要求</view>
+        <view class="row-value">{{asset.need_bleach ? '需要漂发' : '无需漂发'}}</view>
+      </view>
+      <button class="row-button secondary-button" bindtap="toggleBleach">切换</button>
+    </view>
+  </view>
+
+  <view class="danger-card">
+    <view class="detail-main">
+      <view class="row-title">{{type === 'style' ? '删除发型' : '删除发色'}}</view>
+      <view class="row-value">删除后顾客端不再展示，历史订单不受影响。</view>
+    </view>
+    <button class="delete-button" bindtap="removeAsset">删除</button>
+  </view>
+</view>

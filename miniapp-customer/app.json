@@ -1,0 +1,25 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/style/index",
+    "pages/result/index",
+    "pages/booking/index",
+    "pages/orders/index",
+    "pages/member/index",
+    "pages/me/index",
+    "pages/ai-chat/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "焕发",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F9F9F7"
+  },
+  "networkTimeout": {
+    "request": 600000,
+    "uploadFile": 600000,
+    "downloadFile": 600000
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

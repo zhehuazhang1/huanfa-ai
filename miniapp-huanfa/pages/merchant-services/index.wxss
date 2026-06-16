@@ -1,0 +1,194 @@
+.add-button {
+  height: 82rpx;
+  font-size: 28rpx;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 24rpx;
+}
+
+.status-tab {
+  min-height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  color: #72786f;
+  font-size: 24rpx;
+}
+
+.status-tab.active {
+  background: #225d52;
+  color: #fff;
+  font-weight: 800;
+}
+
+.add-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.picker-button {
+  min-height: 74rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  background: #dfe6db;
+  color: #171a17;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.service-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+  border-radius: 18rpx;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  box-shadow: 0 8rpx 24rpx rgba(31, 42, 35, 0.08);
+}
+
+.service-main {
+  min-width: 0;
+}
+
+.service-card.disabled {
+  opacity: 0.68;
+}
+
+.service-name {
+  font-size: 30rpx;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-meta {
+  margin-top: 8rpx;
+  color: #72786f;
+  font-size: 24rpx;
+}
+
+.small-button {
+  height: 62rpx;
+  min-width: 112rpx;
+  margin: 0;
+  padding: 0 22rpx;
+  font-size: 24rpx;
+}
+
+.service-actions {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  flex-shrink: 0;
+}
+
+.action-link {
+  color: #01261f;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.empty {
+  margin-top: 120rpx;
+  color: #72786f;
+  text-align: center;
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36rpx;
+  box-sizing: border-box;
+  background: rgba(23, 26, 23, 0.48);
+}
+
+.service-dialog {
+  width: 100%;
+  padding: 34rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-shadow: 0 28rpx 80rpx rgba(1, 38, 31, 0.2);
+}
+
+.dialog-title {
+  color: #1a1c1b;
+  font-size: 34rpx;
+  font-weight: 900;
+  text-align: center;
+}
+
+.dialog-subtitle {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.dialog-field {
+  margin-top: 26rpx;
+}
+
+.dialog-label {
+  color: #1a1c1b;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.dialog-input,
+.dialog-picker {
+  box-sizing: border-box;
+  width: 100%;
+  height: 82rpx;
+  margin-top: 12rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
+  background: #f7f7f5;
+  color: #1a1c1b;
+  font-size: 27rpx;
+}
+
+.dialog-picker {
+  line-height: 82rpx;
+}
+
+.dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14rpx;
+  margin-top: 34rpx;
+}
+
+.dialog-button {
+  height: 76rpx;
+  border-radius: 999rpx;
+  font-size: 27rpx;
+  font-weight: 800;
+  line-height: 76rpx;
+  text-align: center;
+}
+
+.dialog-button.secondary {
+  background: #f4f4f2;
+  color: #46504c;
+}
+
+.dialog-button.primary {
+  background: #01261f;
+  color: #fff;
+}

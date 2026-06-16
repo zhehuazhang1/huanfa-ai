@@ -1,0 +1,42 @@
+{
+  "data": {
+    "outputs": {
+      "result": {
+        "status": "success",
+        "internal_api_cost": 0.88,
+        "images": [
+          {
+            "slot": "main",
+            "title": "Selected style",
+            "direction": "female",
+            "style_id": "style_010",
+            "style_name": "Korean Medium Hair",
+            "color_id": "color_003",
+            "color_name": "Cool Brown",
+            "temp_image_url": "https://temporary-result-url/main.jpg"
+          },
+          {
+            "slot": "natural",
+            "title": "Natural recommendation",
+            "direction": "female",
+            "style_id": "style_011",
+            "style_name": "Textured Short Hair",
+            "color_id": "color_003",
+            "color_name": "Cool Brown",
+            "temp_image_url": "https://temporary-result-url/natural.jpg"
+          },
+          {
+            "slot": "advanced",
+            "title": "Advanced recommendation",
+            "direction": "female",
+            "style_id": "style_010",
+            "style_name": "Korean Medium Hair",
+            "color_id": "color_004",
+            "color_name": "Black Tea Brown",
+            "temp_image_url": "https://temporary-result-url/advanced.jpg"
+          }
+        ]
+      }
+    }
+  }
+}

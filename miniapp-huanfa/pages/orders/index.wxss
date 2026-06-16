@@ -1,0 +1,138 @@
+.orders-page {
+  padding-bottom: 164rpx;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 26rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.new-booking-button {
+  width: 100%;
+  height: 88rpx;
+  margin: 26rpx 0 0;
+  padding: 0;
+  line-height: 88rpx;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.status-tab {
+  flex: 0 0 auto;
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  color: #717976;
+  font-size: 24rpx;
+}
+
+.status-tab.active {
+  background: #01261f;
+  color: #fff;
+  font-weight: 700;
+}
+
+.empty {
+  margin-top: 180rpx;
+  text-align: center;
+}
+
+.empty-title {
+  color: #1a1c1b;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  color: #717976;
+  font-size: 25rpx;
+}
+
+.empty-button {
+  width: 260rpx;
+  height: 82rpx;
+  margin-top: 28rpx;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.order-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 20rpx;
+  padding: 24rpx;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 24rpx;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.order-store {
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.order-source {
+  margin-top: 6rpx;
+  color: #717976;
+  font-size: 22rpx;
+}
+
+.order-status {
+  flex: 0 0 auto;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(197, 234, 223, 0.5);
+  color: #01261f;
+  font-size: 22rpx;
+}
+
+.order-line {
+  margin-top: 12rpx;
+  color: #414846;
+  font-size: 25rpx;
+}
+
+.order-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14rpx;
+  margin-top: 26rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.order-action {
+  width: auto;
+  min-width: 0;
+  height: 78rpx;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 78rpx;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  font-weight: 900;
+  box-sizing: border-box;
+}
+
+.detail-button,
+.contact-button {
+  color: #01261f;
+  background: #eef3ef;
+  border: 2rpx solid rgba(1, 38, 31, 0.12);
+}

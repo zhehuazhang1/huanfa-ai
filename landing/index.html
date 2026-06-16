@@ -1,0 +1,1229 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焕发 · AI 发型试穿 — 让顾客进店就能看见新的自己</title>
+<meta name="description" content="美发门店AI试发工具，顾客微信扫码上传自拍，快速生成换发参考图，支持飞书推送和定制开发。">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#01261f;--g1:#0a4035;--g2:#1a6b58;--g3:#2a9070;
+  --acc:#b5e4d8;--acc2:#4ade80;--gold:#c9972b;
+  --txt:#0f1512;--muted:#637068;--border:rgba(1,38,31,.09);
+  --bg:#f5f7f5;--white:#fff;--r:18px;
+  --sh:0 4px 24px rgba(1,38,31,.1);--sh2:0 20px 60px rgba(1,38,31,.18);
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;color:var(--txt);background:var(--white);overflow-x:hidden;line-height:1.65}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* ══ LOADER ══ */
+#loader{position:fixed;inset:0;background:var(--g);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .6s,visibility .6s}
+#loader.gone{opacity:0;visibility:hidden;pointer-events:none}
+.loader-logo{display:flex;align-items:center;gap:12px;animation:loaderPulse 1.2s ease infinite}
+.loader-logo svg{width:48px;height:48px}
+.loader-logo span{font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px}
+@keyframes loaderPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.03)}}
+
+/* ══ NAV ══ */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:68px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
+nav.scrolled{background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 1px 0 rgba(1,38,31,.08),0 4px 20px rgba(1,38,31,.06)}
+.nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.nav-logo-name{font-size:22px;font-weight:900;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--g),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;transition:all .3s}
+nav.scrolled .nav-logo-name{background:linear-gradient(135deg,var(--g),var(--g2));-webkit-background-clip:text;background-clip:text}
+nav:not(.scrolled) .nav-logo-name{background:linear-gradient(135deg,#fff,var(--acc));-webkit-background-clip:text;background-clip:text}
+nav:not(.scrolled) .nav-links a{color:rgba(255,255,255,.7)}
+nav:not(.scrolled) .nav-links a:hover{color:#fff}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a{font-size:14px;color:var(--muted);font-weight:500;transition:color .2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--g2);border-radius:1px;transform:scaleX(0);transition:transform .2s}
+.nav-links a:hover::after{transform:scaleX(1)}
+.nav-cta{height:40px;padding:0 22px;background:var(--g);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s;white-space:nowrap}
+nav:not(.scrolled) .nav-cta{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(8px)}
+nav:not(.scrolled) .nav-cta:hover{background:rgba(255,255,255,.25)}
+.nav-cta:hover{background:var(--g2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(1,38,31,.3)}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* ══ HERO ══ */
+.hero{min-height:100vh;position:relative;overflow:hidden;display:flex;align-items:center;padding:100px 5% 60px}
+/* 动态网格渐变背景 */
+.hero-bg{position:absolute;inset:0;background:var(--g);z-index:0}
+.hero-bg::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(42,144,112,.5) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 80% at 80% 20%,rgba(26,107,88,.6) 0%,transparent 55%),
+             radial-gradient(ellipse 50% 50% at 60% 80%,rgba(1,38,31,.8) 0%,transparent 50%);
+  animation:meshFloat 12s ease-in-out infinite;
+}
+.hero-bg::after{content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+@keyframes meshFloat{
+  0%,100%{background-position:0% 0%}
+  33%{background-position:3% 5%}
+  66%{background-position:-3% -3%}
+}
+/* 发光球 */
+.orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbFloat var(--dur,18s) ease-in-out infinite;pointer-events:none}
+.orb1{width:600px;height:600px;background:rgba(42,144,112,.18);top:-100px;right:-100px;--dur:20s}
+.orb2{width:400px;height:400px;background:rgba(181,228,216,.1);bottom:0;left:-80px;--dur:15s;animation-delay:-5s}
+.orb3{width:300px;height:300px;background:rgba(74,222,128,.07);top:40%;right:30%;--dur:25s;animation-delay:-10s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-30px) scale(1.05)}66%{transform:translate(-15px,20px) scale(.96)}}
+.hero-inner{position:relative;z-index:1;width:100%;max-width:1160px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+@media(max-width:960px){.hero-inner{grid-template-columns:1fr;gap:40px}}
+/* 左侧文字 */
+.hero-left{text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;margin-bottom:30px;background:rgba(181,228,216,.1);border:1px solid rgba(181,228,216,.22);border-radius:999px;color:var(--acc);font-size:13px;font-weight:600;backdrop-filter:blur(8px);animation:fadeUp .8s ease both}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--acc2);animation:bdPulse 2s infinite}
+@keyframes bdPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}
+.hero h1{font-size:clamp(44px,6vw,80px);font-weight:900;color:#fff;line-height:1.05;letter-spacing:-2px;margin-bottom:22px;animation:fadeUp .8s .1s ease both}
+.hero h1 .line2{color:var(--acc);position:relative;display:inline-block}
+.hero h1 .line2::after{content:'';position:absolute;left:0;bottom:-4px;right:0;height:3px;background:linear-gradient(90deg,var(--acc),transparent);border-radius:2px}
+.hero-sub{font-size:18px;color:rgba(255,255,255,.68);max-width:460px;line-height:1.75;margin:0 auto 38px;animation:fadeUp .8s .2s ease both}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:52px;animation:fadeUp .8s .3s ease both}
+.btn-glow{height:54px;padding:0 32px;background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:800;cursor:pointer;position:relative;overflow:hidden;transition:all .3s;box-shadow:0 0 0 0 rgba(42,144,112,.5)}
+.btn-glow::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);opacity:0;transition:opacity .3s}
+.btn-glow:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(42,144,112,.5),0 0 0 0 transparent}
+.btn-glow:hover::before{opacity:1}
+.btn-ghost{height:54px;padding:0 28px;background:transparent;color:rgba(255,255,255,.85);border:1.5px solid rgba(255,255,255,.28);border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;transition:all .3s;backdrop-filter:blur(8px)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.6);transform:translateY(-2px)}
+.hero-stats{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;animation:fadeUp .8s .4s ease both}
+.hstat{text-align:center}
+.hstat-num{font-size:34px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px}
+.hstat-label{font-size:12px;color:rgba(255,255,255,.45);margin-top:3px;font-weight:500}
+.hstat-divider{width:1px;background:rgba(255,255,255,.12);align-self:stretch}
+/* 右侧 */
+.hero-right-wrap{position:relative;animation:fadeUp .8s .2s ease both;display:flex;flex-direction:column;gap:14px}
+@media(max-width:960px){.hero-right-wrap{display:none}}
+/* 手机主卡 */
+.phone-card{background:rgba(255,255,255,.07);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:32px;padding:24px;box-shadow:0 40px 80px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12);animation:phoneFloat 6s ease-in-out infinite}
+@keyframes phoneFloat{0%,100%{transform:translateY(0) rotateX(0deg) rotateY(-3deg)}50%{transform:translateY(-14px) rotateX(2deg) rotateY(3deg)}}
+.phone-header{background:var(--g);border-radius:20px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.ph-icon{width:38px;height:38px;border-radius:12px;background:rgba(181,228,216,.18);display:flex;align-items:center;justify-content:center;font-size:20px}
+.ph-title{color:#fff;font-size:16px;font-weight:800}
+.ph-sub{color:rgba(255,255,255,.5);font-size:12px;margin-top:2px}
+.phone-upload{background:rgba(181,228,216,.08);border:1.5px dashed rgba(181,228,216,.3);border-radius:18px;height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;position:relative;overflow:hidden}
+.phone-upload::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(181,228,216,.05),transparent);animation:shimmer 3s ease infinite}
+@keyframes shimmer{0%,100%{opacity:0}50%{opacity:1}}
+.phone-upload span{font-size:32px}
+.phone-upload p{color:rgba(255,255,255,.6);font-size:13px;font-weight:600}
+.phone-label{color:rgba(255,255,255,.4);font-size:11px;text-align:center;letter-spacing:.5px;font-weight:600;margin-bottom:14px}
+.phone-results{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.pr-item{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;height:150px;overflow:hidden;position:relative;transition:all .3s;cursor:pointer}
+.pr-item:hover{border-color:rgba(181,228,216,.4);transform:scale(1.03)}
+.pr-item img{width:100%;height:100%;object-fit:cover;object-position:center 22%;transition:transform .4s}
+.pr-item:hover img{transform:scale(1.08)}
+.pr-item p{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(1,38,31,.85),transparent);color:rgba(255,255,255,.9);font-size:9px;font-weight:800;padding:6px 8px 5px;text-align:center}
+.phone-btn{background:linear-gradient(135deg,var(--g2),var(--g3));border-radius:16px;padding:14px;text-align:center;color:#fff;font-size:14px;font-weight:800;cursor:pointer;transition:all .3s}
+.phone-btn:hover{filter:brightness(1.15)}
+/* 浮动通知 */
+.hero-right{display:flex;flex-direction:column;gap:14px}
+.float-notif{background:rgba(15,35,28,.88);backdrop-filter:blur(16px);border:1px solid rgba(181,228,216,.2);border-radius:14px;padding:10px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);animation:notifFloat var(--nf-dur,5s) ease-in-out infinite;animation-delay:var(--nf-delay,0s);flex-shrink:0}
+@keyframes notifFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.float-notif .nf-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.float-notif .nf-icon{font-size:15px;flex-shrink:0}
+.float-notif .nf-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.9)}
+.float-notif .nf-body{font-size:11px;color:rgba(255,255,255,.5)}
+/* 顶部通知行（两个小chip并排） */
+.nf-row{display:flex;gap:10px}
+.nf-row .float-notif{flex:1}
+.nf1{--nf-dur:5s;--nf-delay:0s}
+.nf2{--nf-dur:6s;--nf-delay:-1.5s}
+.nf3{--nf-dur:7s;--nf-delay:-3s}
+
+/* ══ 通用 ══ */
+section{padding:100px 5%}
+.sec-inner{max-width:1160px;margin:0 auto}
+.stag{display:inline-block;padding:5px 14px;background:rgba(1,38,31,.06);color:var(--g2);border-radius:999px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px}
+.stag.light{background:rgba(181,228,216,.15);color:var(--acc)}
+.sec-title{font-size:clamp(30px,4vw,52px);font-weight:900;color:var(--g);line-height:1.1;letter-spacing:-1px}
+.sec-sub{font-size:17px;color:var(--muted);margin-top:14px;line-height:1.75;max-width:540px}
+.center{text-align:center}
+.center .sec-sub{margin:14px auto 0}
+
+/* 滚动动画 */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+.reveal-l{opacity:0;transform:translateX(-40px);transition:opacity .7s ease,transform .7s ease}
+.reveal-l.in{opacity:1;transform:none}
+.reveal-r{opacity:0;transform:translateX(40px);transition:opacity .7s ease,transform .7s ease}
+.reveal-r.in{opacity:1;transform:none}
+.d1{transition-delay:.07s}.d2{transition-delay:.14s}.d3{transition-delay:.21s}.d4{transition-delay:.28s}.d5{transition-delay:.35s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+/* ══ MARQUEE ══ */
+.marquee-sec{background:var(--g);padding:22px 0;overflow:hidden}
+.marquee-track{display:flex;gap:0;animation:marquee 22s linear infinite;width:max-content}
+.marquee-track:hover{animation-play-state:paused}
+.marquee-item{padding:0 40px;color:rgba(255,255,255,.5);font-size:14px;font-weight:600;letter-spacing:.5px;white-space:nowrap;display:flex;align-items:center;gap:10px}
+.marquee-item span{color:rgba(181,228,216,.6);font-size:18px}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ══ PAIN ══ */
+.pain{background:var(--bg)}
+.pain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-top:56px}
+.pain-card{background:var(--white);border-radius:24px;padding:34px;border:1px solid var(--border);position:relative;overflow:hidden;transition:all .35s cubic-bezier(.34,1.56,.64,1)}
+.pain-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f87171,#fb923c)}
+.pain-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(248,113,113,.04),transparent 60%);pointer-events:none}
+.pain-card:hover{transform:translateY(-8px) scale(1.01);box-shadow:0 24px 60px rgba(1,38,31,.12)}
+.pain-icon{margin-bottom:18px;width:48px;height:48px;background:linear-gradient(135deg,rgba(248,113,113,.12),rgba(251,146,60,.12));border:1px solid rgba(248,113,113,.2);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.pain-icon svg{width:24px;height:24px}
+.pain-card h3{font-size:19px;font-weight:900;margin-bottom:10px;color:var(--g)}
+.pain-card p{font-size:14px;color:var(--muted);line-height:1.75}
+
+/* ══ DEMO ══ */
+.demo{background:var(--white)}
+.demo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-top:56px}
+@media(max-width:900px){.demo-wrap{grid-template-columns:1fr}}
+.demo-steps{display:flex;flex-direction:column;gap:0}
+.demo-step{display:flex;gap:20px;padding:24px 0;position:relative}
+.demo-step:not(:last-child)::before{content:'';position:absolute;left:21px;top:68px;bottom:0;width:2px;background:linear-gradient(180deg,var(--acc),transparent)}
+.ds-num{flex-shrink:0;width:44px;height:44px;background:var(--g);color:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;box-shadow:0 6px 20px rgba(1,38,31,.2);transition:all .3s}
+.demo-step:hover .ds-num{background:var(--g2);transform:scale(1.1)}
+.ds-content h4{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--g)}
+.ds-content p{font-size:14px;color:var(--muted);line-height:1.7}
+/* 右侧设备展示 */
+.demo-device{position:relative}
+.dd-phone{background:linear-gradient(145deg,var(--g),#1a6b58);border-radius:40px;padding:28px 22px 36px;box-shadow:0 50px 100px rgba(1,38,31,.3),inset 0 1px 0 rgba(255,255,255,.15);transform:perspective(800px) rotateY(-8deg) rotateX(4deg);transition:transform .5s}
+.dd-phone:hover{transform:perspective(800px) rotateY(0deg) rotateX(0deg)}
+.dd-screen{background:#f4f6f4;border-radius:26px;overflow:hidden}
+.dd-top{background:var(--g);padding:16px 20px;display:flex;align-items:center;gap:10px}
+.dd-top-icon{width:34px;height:34px;border-radius:10px;background:rgba(181,228,216,.2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.dd-top-text{color:#fff}
+.dd-top-text strong{font-size:15px;display:block}
+.dd-top-text span{font-size:11px;opacity:.55}
+.dd-body{padding:16px}
+.dd-photos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.dd-photo{height:150px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden}
+.dd-photo.original{background:linear-gradient(135deg,#e0ede8,#c8ddd5)}
+.dd-photo.result{background:linear-gradient(135deg,#d4ede6,#b8d9ce);animation:resultAppear 3s ease-in-out infinite}
+@keyframes resultAppear{0%,100%{opacity:.7}50%{opacity:1}}
+.dd-photo .dd-badge{position:absolute;bottom:6px;left:6px;background:rgba(1,38,31,.7);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:999px}
+.dd-progress{background:#e8ede9;border-radius:999px;height:6px;margin-bottom:12px;overflow:hidden}
+.dd-progress-bar{height:100%;background:linear-gradient(90deg,var(--g2),var(--g3));border-radius:999px;width:70%;animation:progAnim 2.5s ease-in-out infinite}
+@keyframes progAnim{0%{width:0%}60%{width:85%}100%{width:70%}}
+.dd-ai-tag{background:linear-gradient(135deg,rgba(1,38,31,.08),rgba(26,107,88,.06));border:1px solid rgba(1,38,31,.1);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.dd-ai-tag span{font-size:20px}
+.dd-ai-tag p{font-size:12px;color:var(--g);font-weight:700}
+.dd-results-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.dd-result{background:linear-gradient(135deg,#eaf5f0,#d6ede5);border-radius:14px;height:120px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .2s}
+.dd-result:hover{transform:scale(1.05)}
+.dd-result span{font-size:26px}
+.dd-result p{font-size:10px;color:var(--g);font-weight:700}
+.dd-action{background:var(--g);border-radius:14px;margin-top:12px;padding:14px;text-align:center;color:#fff;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s}
+.dd-action:hover{background:var(--g2)}
+
+/* ══ FEATURES ══ */
+.features{background:var(--g);position:relative;overflow:hidden}
+.features::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.025) 1px,transparent 1px);background-size:36px 36px}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:56px;align-items:stretch}
+.feat-card{min-height:255px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:30px;transition:all .35s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;cursor:default;display:flex;flex-direction:column;align-items:flex-start}
+.feat-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top left,rgba(181,228,216,.06),transparent 60%);opacity:0;transition:opacity .3s}
+.feat-card:hover{background:rgba(255,255,255,.1);transform:translateY(-6px);border-color:rgba(181,228,216,.2)}
+.feat-card:hover::after{opacity:1}
+.feat-icon{margin-bottom:18px;display:block;width:42px;height:42px;background:rgba(255,255,255,.1);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.feat-icon svg{width:22px;height:22px}
+.feat-card h3{font-size:16px;font-weight:800;color:#fff;margin-bottom:8px}
+.feat-card p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7}
+.feat-tag{display:inline-block;margin-top:auto;padding:3px 10px;background:rgba(181,228,216,.12);color:var(--acc);border-radius:999px;font-size:11px;font-weight:700}
+.feat-card p + .feat-tag{margin-top:auto}
+
+/* ══ FEISHU ══ */
+.feishu{background:var(--bg)}
+.feishu-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-top:56px}
+@media(max-width:900px){.feishu-wrap{grid-template-columns:1fr}}
+.plat-chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.plat-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--white);border:1px solid var(--border);border-radius:999px;font-size:13px;font-weight:700;color:var(--g)}
+.plat-chip svg{width:14px;height:14px;flex-shrink:0}
+.plat-chip.more{background:transparent;border-style:dashed;color:var(--muted);font-weight:600}
+.plat-tabs{display:flex;gap:8px;margin-bottom:14px}
+.plat-tab{padding:6px 15px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--border);color:var(--muted);background:var(--white)}
+.plat-tab.active{background:var(--g);color:#fff;border-color:var(--g)}
+.feishu-points{display:flex;flex-direction:column;gap:22px;margin-top:32px}
+.fp-item{display:flex;gap:16px;align-items:flex-start}
+.fp-dot{flex-shrink:0;width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--g),var(--g2));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 6px 20px rgba(1,38,31,.2)}
+.fp-dot svg{width:22px;height:22px}
+.fp-item h4{font-size:15px;font-weight:800;color:var(--g);margin-bottom:4px}
+.fp-item p{font-size:13px;color:var(--muted);line-height:1.65}
+/* 飞书消息模拟卡 */
+.feishu-mock{position:relative}
+.feishu-app{background:#fff;border-radius:24px;border:1px solid var(--border);box-shadow:var(--sh2);overflow:hidden}
+.fa-titlebar{background:#1f2329;padding:12px 16px;display:flex;align-items:center;gap:8px}
+.fa-dots span{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:5px}
+.fa-dots .d-r{background:#ff5f57}
+.fa-dots .d-y{background:#febc2e}
+.fa-dots .d-g{background:#28c840}
+.fa-titlename{color:rgba(255,255,255,.5);font-size:12px;margin-left:8px;font-weight:500}
+.fa-body{display:flex;height:360px}
+.fa-sidebar{width:200px;background:#f5f6f7;border-right:1px solid #eee;padding:12px 0}
+.fa-sidebar-item{padding:8px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#666;cursor:pointer;transition:all .2s}
+.fa-sidebar-item.active{background:#e8f4ef;color:var(--g);font-weight:700}
+.fa-sidebar-item .si-icon{font-size:16px;width:22px;text-align:center}
+.fa-chat{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.fa-chat-header{padding:14px 16px;border-bottom:1px solid #eee;font-size:14px;font-weight:700;color:#333;display:flex;align-items:center;gap:8px}
+.fa-messages{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.fa-msg{display:flex;gap:10px;align-items:flex-start;animation:msgSlide .5s ease both}
+@keyframes msgSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.fa-avatar{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;font-weight:900}
+.fa-avatar.bot{background:linear-gradient(135deg,var(--g),var(--g2));color:#fff}
+.fa-bubble{max-width:240px}
+.fa-sender{font-size:11px;color:#999;margin-bottom:4px;font-weight:600}
+.fa-content{background:#fff;border:1px solid #eee;border-radius:0 14px 14px 14px;padding:12px 14px;font-size:13px;color:#333;line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.fa-card{background:#f0f8f4;border:1px solid #c8e6d5;border-radius:12px;padding:14px;margin-top:8px}
+.fa-card-title{font-size:13px;font-weight:800;color:var(--g);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fa-stat-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(1,38,31,.08);font-size:12px}
+.fa-stat-row:last-child{border-bottom:none}
+.fa-stat-row .k{color:#666}
+.fa-stat-row .v{font-weight:800;color:var(--g)}
+.fa-stat-row .v.up{color:#16a34a}
+
+/* ══ PROFIT ══ */
+.profit{background:var(--white)}
+.profit-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:56px;max-width:900px}
+@media(max-width:700px){.profit-grid{grid-template-columns:1fr}}
+.profit-card{border-radius:24px;padding:36px;border:1.5px solid var(--border);transition:all .3s}
+.profit-card:hover{transform:translateY(-4px);box-shadow:var(--sh2)}
+.profit-card.dark{background:var(--g);border-color:transparent}
+.ptag{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:14px}
+.profit-card:not(.dark) .ptag{background:rgba(1,38,31,.07);color:var(--g)}
+.profit-card.dark .ptag{background:rgba(181,228,216,.12);color:var(--acc)}
+.profit-card h3{font-size:22px;font-weight:900;margin-bottom:10px}
+.profit-card:not(.dark) h3{color:var(--g)}
+.profit-card.dark h3{color:#fff}
+.profit-card>p{font-size:14px;margin-bottom:22px;line-height:1.7}
+.profit-card:not(.dark)>p{color:var(--muted)}
+.profit-card.dark>p{color:rgba(255,255,255,.55)}
+.profit-rows{display:flex;flex-direction:column}
+.pr-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid}
+.pr-row:last-child{border-bottom:none;padding-bottom:0}
+.profit-card:not(.dark) .pr-row{border-color:rgba(1,38,31,.06)}
+.profit-card.dark .pr-row{border-color:rgba(255,255,255,.08)}
+.pr-row .lbl{font-size:13px}
+.profit-card:not(.dark) .lbl{color:var(--muted)}
+.profit-card.dark .lbl{color:rgba(255,255,255,.5)}
+.pr-row .val{font-size:15px;font-weight:800}
+.profit-card:not(.dark) .val{color:var(--g)}
+.profit-card.dark .val{color:#fff}
+
+/* ══ FLOW ══ */
+.flow{background:var(--bg)}
+.flow-row{display:grid;grid-template-columns:repeat(4,1fr);margin-top:60px;position:relative}
+.flow-row::after{content:'';position:absolute;top:35px;left:12.5%;right:12.5%;height:2px;background:linear-gradient(90deg,var(--acc),var(--g2));z-index:0;animation:flowLine 2s ease both .5s}
+@keyframes flowLine{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
+@media(max-width:720px){.flow-row{grid-template-columns:1fr 1fr;gap:24px}.flow-row::after{display:none}}
+.flow-step{text-align:center;padding:0 16px;position:relative;z-index:1}
+.flow-icon-wrap{width:72px;height:72px;border-radius:50%;background:var(--g);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 10px 30px rgba(1,38,31,.25);transition:all .4s cubic-bezier(.34,1.56,.64,1)}
+.flow-step:hover .flow-icon-wrap{transform:scale(1.15) translateY(-4px);box-shadow:0 18px 40px rgba(1,38,31,.35)}
+.flow-step h4{font-size:16px;font-weight:800;margin-bottom:7px;color:var(--g)}
+.flow-step p{font-size:13px;color:var(--muted);line-height:1.65}
+
+/* ══ PRICING ══ */
+.pricing{background:var(--white)}
+.price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:56px;max-width:1100px}
+@media(max-width:1080px){.price-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.price-grid{grid-template-columns:1fr}}
+.price-card{border-radius:26px;padding:38px;border:1.5px solid var(--border);position:relative;transition:all .35s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column}
+.price-card:hover{transform:translateY(-8px);box-shadow:var(--sh2)}
+.price-card.hot{border-color:var(--g);box-shadow:0 12px 40px rgba(1,38,31,.12)}
+.price-card.hot::before{content:'🔥 最受欢迎';position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--g);color:#fff;padding:5px 18px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.p-name{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px}
+.p-price-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:6px}
+.p-price{font-size:50px;font-weight:900;color:var(--g);line-height:1}
+.p-unit{font-size:13px;color:var(--muted);margin:0 0 4px}
+.p-count{font-size:13px;color:var(--muted);margin-bottom:26px}
+.p-list{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
+.price-grid{align-items:stretch}
+.p-btn{margin-top:auto}
+.p-list li{font-size:14px;color:var(--txt);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.p-list li::before{content:'✓';color:var(--g2);font-weight:900;flex-shrink:0;margin-top:1px}
+.p-btn{width:100%;height:48px;border-radius:999px;font-size:15px;font-weight:800;cursor:pointer;transition:all .25s;border:none}
+.p-btn.outline{background:transparent;border:2px solid var(--g);color:var(--g)}
+.p-btn.outline:hover{background:var(--g);color:#fff}
+.p-btn.fill{background:var(--g);color:#fff}
+.p-btn.fill:hover{background:var(--g2)}
+
+/* ══ CUSTOM DEV ══ */
+.custom-dev{background:linear-gradient(150deg,var(--g) 0%,#0c4a3a 60%,#0d5c48 100%);position:relative;overflow:hidden}
+.custom-dev::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.025) 1px,transparent 1px);background-size:40px 40px}
+.cd-inner{position:relative;z-index:1;max-width:1160px;margin:0 auto}
+.cd-header{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-bottom:56px}
+@media(max-width:800px){.cd-header{grid-template-columns:1fr}}
+.cd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1000px;margin:0 auto}
+@media(max-width:760px){.cd-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.cd-grid{grid-template-columns:1fr}}
+.cd-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:26px;transition:all .3s;cursor:default}
+.cd-card:hover{background:rgba(255,255,255,.1);transform:translateY(-4px);border-color:rgba(181,228,216,.25)}
+.cd-card-icon{margin-bottom:16px;width:46px;height:46px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:13px;display:flex;align-items:center;justify-content:center}
+.cd-card-icon svg{width:23px;height:23px}
+.cd-card h4{font-size:15px;font-weight:800;color:#fff;margin-bottom:7px}
+.cd-card p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.65}
+.cd-cta{margin-top:40px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.cd-cta-text{font-size:18px;font-weight:800;color:#fff}
+.cd-cta-sub{font-size:14px;color:rgba(255,255,255,.5);margin-top:3px}
+
+/* ══ FAQ ══ */
+.faq{background:var(--white)}
+.faq-list{max-width:720px;margin:52px auto 0;display:flex;flex-direction:column;gap:10px}
+.faq-item{border-radius:18px;border:1px solid var(--border);overflow:hidden;background:var(--bg);transition:box-shadow .3s}
+.faq-item.open{box-shadow:0 8px 30px rgba(1,38,31,.08)}
+.faq-q{padding:20px 24px;font-size:16px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;user-select:none;color:var(--g);transition:background .3s}
+.faq-q::after{content:'+';font-size:24px;color:var(--g2);flex-shrink:0;transition:transform .3s;font-weight:400;line-height:1}
+.faq-item.open .faq-q{background:rgba(1,38,31,.04)}
+.faq-item.open .faq-q::after{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.faq-a-in{padding:0 24px 20px;font-size:14px;color:var(--muted);line-height:1.8}
+.faq-item.open .faq-a{max-height:300px}
+
+/* ══ CTA ══ */
+.cta-sec{background:var(--g);text-align:center;padding:100px 5%;position:relative;overflow:hidden}
+.cta-sec::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(42,144,112,.3),transparent 70%)}
+.cta-sec h2{position:relative;font-size:clamp(30px,5.5vw,60px);font-weight:900;color:#fff;line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+.cta-sec>p{position:relative;font-size:18px;color:rgba(255,255,255,.62);margin-bottom:48px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.7}
+.cta-cards{position:relative;display:flex;justify-content:center;flex-wrap:wrap;gap:18px;max-width:920px;margin:0 auto 40px}
+.cta-card{flex:0 1 300px;min-height:156px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:26px 28px;text-align:center;backdrop-filter:blur(8px);transition:all .3s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cta-card:hover{background:rgba(255,255,255,.14);transform:translateY(-4px)}
+.cta-card-icon{font-size:30px;line-height:1;margin-bottom:12px}
+.cta-card h4{font-size:16px;font-weight:800;color:#fff;margin-bottom:8px}
+.cta-card p{max-width:220px;font-size:13px;color:rgba(255,255,255,.66);line-height:1.55}
+@media(max-width:760px){.cta-cards{grid-template-columns:1fr}.cta-card{min-height:138px}}
+.cta-btns{position:relative;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ══ FOOTER ══ */
+footer{background:#030f0c;color:rgba(255,255,255,.35);padding:44px 5%;text-align:center;font-size:13px}
+footer strong{color:rgba(255,255,255,.7)}
+footer a{color:rgba(255,255,255,.35);transition:color .2s}
+footer a:hover{color:rgba(255,255,255,.7)}
+.footer-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px}
+.footer-logo svg{opacity:.7}
+
+/* ══ AI 客服 ══ */
+#ai-fab{position:fixed;bottom:30px;right:30px;z-index:999;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--g2));border:none;cursor:pointer;box-shadow:0 8px 32px rgba(1,38,31,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .3s;font-size:26px;color:#fff}
+#ai-fab:hover{transform:scale(1.1);box-shadow:0 14px 40px rgba(1,38,31,.5)}
+#ai-fab .fab-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.5px}
+#chat-unread{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#ef4444;border:2px solid #fff;font-size:10px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center}
+#ai-panel{position:fixed;bottom:108px;right:30px;z-index:998;width:370px;height:530px;background:var(--white);border-radius:26px;box-shadow:0 30px 80px rgba(1,38,31,.22);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(20px) scale(.95);pointer-events:none;transition:all .35s cubic-bezier(.34,1.56,.64,1)}
+#ai-panel.open{opacity:1;transform:none;pointer-events:all}
+.cp-head{background:linear-gradient(135deg,var(--g),var(--g2));padding:18px 20px;display:flex;align-items:center;gap:12px}
+.cp-av{width:40px;height:40px;border-radius:14px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:22px}
+.cp-info h4{font-size:15px;font-weight:800;color:#fff}
+.cp-info p{font-size:11px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:5px;margin-top:2px}
+.cp-online{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0}
+.cp-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;transition:color .2s;padding:4px;line-height:1}
+.cp-close:hover{color:#fff}
+.cp-body{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:13px}
+.cp-body::-webkit-scrollbar{width:4px}
+.cp-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.cmsg{display:flex;gap:9px;align-items:flex-end;max-width:90%}
+.cmsg.bot{align-self:flex-start}
+.cmsg.user{align-self:flex-end;flex-direction:row-reverse}
+.cmsg-av{width:32px;height:32px;border-radius:10px;background:rgba(1,38,31,.07);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.cmsg-bubble{padding:11px 15px;border-radius:18px;font-size:14px;line-height:1.6}
+.cmsg.bot .cmsg-bubble{background:var(--bg);color:var(--txt);border-bottom-left-radius:4px}
+.cmsg.user .cmsg-bubble{background:var(--g);color:#fff;border-bottom-right-radius:4px}
+.cp-typing{display:flex;gap:5px;padding:11px 15px;background:var(--bg);border-radius:18px;border-bottom-left-radius:4px;align-self:flex-start}
+.tp-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:tp .9s infinite}
+.tp-dot:nth-child(2){animation-delay:.2s}.tp-dot:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.25);opacity:1}}
+.cp-quick{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px 12px}
+.cp-qbtn{padding:7px 13px;background:rgba(1,38,31,.05);color:var(--g);border:1px solid rgba(1,38,31,.1);border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.cp-qbtn:hover{background:var(--g);color:#fff}
+.cp-foot{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+#cp-input{flex:1;height:42px;padding:0 16px;border:1.5px solid var(--border);border-radius:999px;font-size:14px;outline:none;color:var(--txt);background:var(--bg);transition:border .2s}
+#cp-input:focus{border-color:var(--g)}
+#cp-send{width:42px;height:42px;border-radius:50%;background:var(--g);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;transition:all .2s;flex-shrink:0}
+#cp-send:hover{background:var(--g2);transform:scale(1.05)}
+@media(max-width:480px){#ai-panel{width:calc(100vw - 20px);right:10px;left:10px;bottom:100px}}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">
+    <svg width="48" height="48" viewBox="0 0 240 240" fill="none">
+      <defs>
+        <linearGradient id="hg_load" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DBB8A"/><stop offset="1" stop-color="#5FD39E"/></linearGradient>
+        <linearGradient id="bg_load" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E2A22"/><stop offset="1" stop-color="#16352A"/></linearGradient>
+        <clipPath id="clip_load"><circle cx="120" cy="115" r="72"/></clipPath>
+      </defs>
+      <rect x="0" y="0" width="240" height="240" rx="52" fill="url(#bg_load)"/>
+      <circle cx="120" cy="115" r="72" fill="#13241D" stroke="#2C4A3D" stroke-width="2"/>
+      <g clip-path="url(#clip_load)">
+        <rect x="120" y="43" width="72" height="144" fill="#1B3A2E"/>
+        <path d="M111,66 C77,66 66,101 72,131 C76,159 91,174 111,178 L111,66 Z" fill="#5B7A6C"/>
+        <path d="M129,62 C166,64 181,99 175,137 C171,163 156,178 129,180 C148,156 148,118 142,96 C138,79 134,70 129,62 Z" fill="url(#hg_load)"/>
+        <line x1="120" y1="43" x2="120" y2="187" stroke="#0E2A22" stroke-width="3.5"/>
+      </g>
+      <g transform="translate(168,66)" fill="#7FE3B5"><path d="M0,-12 L3,-3 L12,0 L3,3 L0,12 L-3,3 L-12,0 L-3,-3 Z"/></g>
+    </svg>
+    <span>焕发</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#top" class="nav-logo">
+    <svg width="34" height="34" viewBox="0 0 240 240" fill="none">
+      <defs>
+        <linearGradient id="hg_nav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DBB8A"/><stop offset="1" stop-color="#5FD39E"/></linearGradient>
+        <linearGradient id="bg_nav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E2A22"/><stop offset="1" stop-color="#16352A"/></linearGradient>
+        <clipPath id="clip_nav"><circle cx="120" cy="115" r="72"/></clipPath>
+      </defs>
+      <rect x="0" y="0" width="240" height="240" rx="52" fill="url(#bg_nav)"/>
+      <circle cx="120" cy="115" r="72" fill="#13241D" stroke="#2C4A3D" stroke-width="2"/>
+      <g clip-path="url(#clip_nav)">
+        <rect x="120" y="43" width="72" height="144" fill="#1B3A2E"/>
+        <path d="M111,66 C77,66 66,101 72,131 C76,159 91,174 111,178 L111,66 Z" fill="#5B7A6C"/>
+        <path d="M129,62 C166,64 181,99 175,137 C171,163 156,178 129,180 C148,156 148,118 142,96 C138,79 134,70 129,62 Z" fill="url(#hg_nav)"/>
+        <line x1="120" y1="43" x2="120" y2="187" stroke="#0E2A22" stroke-width="3.5"/>
+      </g>
+      <g transform="translate(168,66)" fill="#7FE3B5"><path d="M0,-12 L3,-3 L12,0 L3,3 L0,12 L-3,3 L-12,0 L-3,-3 Z"/></g>
+    </svg>
+    <span class="nav-logo-name">焕发</span>
+  </a>
+  <div class="nav-links">
+    <a href="#demo">产品演示</a>
+    <a href="#feishu">数据推送</a>
+    <a href="#pricing">定价</a>
+    <a href="#custom">定制开发</a>
+    <a href="#faq">常见问题</a>
+  </div>
+  <button class="nav-cta" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">免费体验 →</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        微信小程序 · 扫码即用 · 无需下载
+      </div>
+      <h1>让顾客进店就能<br><span class="line2">看见新的自己</span></h1>
+      <p class="hero-sub">智能发型试穿，顾客扫码上传自拍，快速生成换发参考图；预约、试发和成交数据可同步推送到门店工作群。</p>
+      <div class="hero-btns">
+        <button class="btn-glow" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">免费体验 14 天 →</button>
+        <button class="btn-ghost" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">▶ 查看演示</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-num" data-count="3" data-suffix="s">—</div><div class="hstat-label">智能生成效果图</div></div>
+        <div class="hstat-divider"></div>
+        <div class="hstat"><div class="hstat-num" data-count="3" data-prefix="+" data-suffix="单">—</div><div class="hstat-label">即可回本</div></div>
+        <div class="hstat-divider"></div>
+        <div class="hstat"><div class="hstat-num" data-count="1" data-suffix="天">—</div><div class="hstat-label">接入上线</div></div>
+        <div class="hstat-divider"></div>
+        <div class="hstat"><div class="hstat-num">0</div><div class="hstat-label">需要下载 App</div></div>
+      </div>
+    </div>
+    <div class="hero-right-wrap">
+      <!-- 顶部通知行（不再遮挡内容） -->
+      <div class="nf-row">
+        <div class="float-notif nf1">
+          <div class="nf-top"><span class="nf-icon">✨</span><span class="nf-title">智能生成完成</span></div>
+          <div class="nf-body">顾客 #4821 的 3 套方案就绪</div>
+        </div>
+        <div class="float-notif nf2">
+          <div class="nf-top"><span class="nf-icon">📊</span><span class="nf-title">今日试发</span></div>
+          <div class="nf-body">47 次 · 转化 +26%</div>
+        </div>
+      </div>
+      <!-- 手机卡 -->
+      <div class="phone-card">
+        <div class="phone-header">
+          <div class="ph-icon">
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><path d="M14 38 C14 24 20 14 24 10 C28 14 34 24 34 38" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="24" cy="10" r="3" fill="white"/><line x1="24" y1="4" x2="24" y2="7.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <div>
+            <div class="ph-title">焕发 · AI 发型试穿</div>
+            <div class="ph-sub">上传照片 · 秒看换发效果</div>
+          </div>
+        </div>
+        <div class="phone-upload">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(181,228,216,0.7)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="20" height="15" rx="3"/><circle cx="12" cy="12.5" r="4"/><path d="M2 9h2a2 2 0 002-2V5"/></svg>
+          <p>点击上传正面照</p>
+        </div>
+        <div class="phone-label">— 智能生成中，请稍候 —</div>
+        <div class="phone-results">
+          <div class="pr-item"><img loading="lazy" decoding="async" src="imgs/h_short_bob.jpg" alt="短发Bob款"><p>短发 Bob</p></div>
+          <div class="pr-item"><img loading="lazy" decoding="async" src="imgs/h_mid_wolf.jpg" alt="中发狼尾款"><p>中发狼尾</p></div>
+          <div class="pr-item"><img loading="lazy" decoding="async" src="imgs/h_long_korean.jpg" alt="长发韩式"><p>长发韩式</p></div>
+        </div>
+        <div class="phone-btn">查看效果图 · 预约剪发 →</div>
+      </div>
+      <!-- 底部通知 -->
+      <div class="float-notif nf3" style="align-self:flex-end">
+        <div class="nf-top"><span class="nf-icon">🔔</span><span class="nf-title">飞书报表已推送</span></div>
+        <div class="nf-body">本周汇总已发送至老板群</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-sec">
+  <div class="marquee-track" id="mtrack">
+    <div class="marquee-item"><span>✂️</span> 独立美发工作室</div>
+    <div class="marquee-item"><span>🏪</span> 连锁美发品牌</div>
+    <div class="marquee-item"><span>💇</span> 造型设计沙龙</div>
+    <div class="marquee-item"><span>👑</span> 高端美容美发</div>
+    <div class="marquee-item"><span>🌿</span> 形象管理中心</div>
+    <div class="marquee-item"><span>🎨</span> 发色专营店</div>
+    <div class="marquee-item"><span>⭐</span> 精品理发品牌</div>
+    <div class="marquee-item"><span>🏆</span> 知名连锁加盟</div>
+    <!-- 复制一份保证无缝 -->
+    <div class="marquee-item"><span>✂️</span> 独立美发工作室</div>
+    <div class="marquee-item"><span>🏪</span> 连锁美发品牌</div>
+    <div class="marquee-item"><span>💇</span> 造型设计沙龙</div>
+    <div class="marquee-item"><span>👑</span> 高端美容美发</div>
+    <div class="marquee-item"><span>🌿</span> 形象管理中心</div>
+    <div class="marquee-item"><span>🎨</span> 发色专营店</div>
+    <div class="marquee-item"><span>⭐</span> 精品理发品牌</div>
+    <div class="marquee-item"><span>🏆</span> 知名连锁加盟</div>
+  </div>
+</div>
+
+<!-- PAIN -->
+<section class="pain" id="pain">
+  <div class="sec-inner">
+    <div class="center">
+      <span class="stag reveal">行业痛点</span>
+      <h2 class="sec-title reveal d1">你是不是也遇到过这些？</h2>
+      <p class="sec-sub reveal d2">每位美发老板都面对同样的挑战，根源只有一个——顾客无法直观感受效果。</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card reveal d1">
+        <span class="pain-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ef5a5a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 015.4 1c0 1.8-2.7 2.7-2.7 2.7"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg></span>
+        <h3>顾客迟迟不敢剪</h3>
+        <p>看图片和自己距离太远，主理人只能凭感觉保证，顾客不信任，成交卡住了。</p>
+      </div>
+      <div class="pain-card reveal d2">
+        <span class="pain-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ef5a5a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></span>
+        <h3>主理人时间被浪费</h3>
+        <p>一次咨询少则 20 分钟，翻图、比脸型、解释，最后顾客"我再想想"，时间白费。</p>
+      </div>
+      <div class="pain-card reveal d3">
+        <span class="pain-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ef5a5a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 7 10 14 14 10 21 17"/><polyline points="21 12 21 17 16 17"/></svg></span>
+        <h3>进店流量难变现</h3>
+        <p>花钱引来了顾客，没有当场决策的工具，"看一看就走了"，转化断在最后一步。</p>
+      </div>
+      <div class="pain-card reveal d4">
+        <span class="pain-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ef5a5a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/><line x1="4" y1="20" x2="20" y2="4"/></svg></span>
+        <h3>老板看不到真实数据</h3>
+        <p>多家门店各自为政，老板不知道哪家转化高、哪个主理人效率好，无法科学决策。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo" id="demo">
+  <div class="sec-inner">
+    <div class="demo-wrap">
+      <div class="reveal-l">
+        <span class="stag">产品演示</span>
+        <h2 class="sec-title">门店专属小程序<br>顾客打开就能换发</h2>
+        <p class="sec-sub">不是一张临时二维码，而是属于你的微信小程序——可上线品牌专属版，也可直接套用焕发通用版快速开张。</p>
+        <div class="demo-steps">
+          <div class="demo-step">
+            <div class="ds-num">1</div>
+            <div class="ds-content">
+              <h4>商家拥有自己的小程序</h4>
+              <p>30 秒开通门店专属小程序：可做品牌定制版，或直接套用焕发通用版。带独立门店码与后台，数据自主可控。</p>
+            </div>
+          </div>
+          <div class="demo-step">
+            <div class="ds-num">2</div>
+            <div class="ds-content">
+              <h4>顾客多入口进店，上传照片试发</h4>
+              <p>扫码、微信搜一搜、公众号、分享链接都能进，老顾客下拉「最近使用」直接打开；上传正面照选发型发色，AI 会尽量保留五官、脸型和表情，仅调整发型发色。</p>
+            </div>
+          </div>
+          <div class="demo-step">
+            <div class="ds-num">3</div>
+            <div class="ds-content">
+              <h4>3 套效果图，当场拍板</h4>
+              <p>主推款 + 2 个延伸方案，顾客拿效果图和主理人确认，沟通成本降低 80%。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-r">
+        <div class="demo-device">
+          <div class="dd-phone">
+            <div class="dd-screen">
+              <div class="dd-top">
+                <div class="dd-top-icon">✨</div>
+                <div class="dd-top-text"><strong>AI 发型试穿</strong><span>焕发 · 幸福里门店</span></div>
+              </div>
+              <div style="padding:14px">
+                <div class="dd-photos">
+                  <div class="dd-photo original" style="background:none"><img loading="lazy" decoding="async" src="imgs/h_mid_korean.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center 20%" alt="before"><div class="dd-badge">原始照片</div></div>
+                  <div class="dd-photo result" style="background:none"><img loading="lazy" decoding="async" src="imgs/h_short_bob.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center 20%" alt="after"><div class="dd-badge">智能换发 ✨</div></div>
+                </div>
+                <div class="dd-ai-tag">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" stroke="#01261f" stroke-width="1.5"/><circle cx="9" cy="9" r="2" fill="#01261f"/><circle cx="15" cy="9" r="2" fill="#01261f"/><path d="M8 15 Q12 18 16 15" stroke="#01261f" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+                  <p>AI 正在生成 3 套方案… 请稍候</p>
+                </div>
+                <div class="dd-progress"><div class="dd-progress-bar"></div></div>
+                <div class="dd-results-row">
+                  <div class="dd-result" style="background:none;overflow:hidden;padding:0"><img loading="lazy" decoding="async" src="imgs/h_short_wolf.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center 18%" alt="short wolf"><p style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0,rgba(1,38,31,.8),transparent);color:#fff;font-size:9px;font-weight:800;padding:6px 4px 4px;text-align:center">短发狼尾</p></div>
+                  <div class="dd-result" style="background:none;overflow:hidden;padding:0;position:relative"><img loading="lazy" decoding="async" src="imgs/h_mid_wolf.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center 18%" alt="mid wolf"><p style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0,rgba(1,38,31,.8),transparent);color:#fff;font-size:9px;font-weight:800;padding:6px 4px 4px;text-align:center">中发蓬松</p></div>
+                  <div class="dd-result" style="background:none;overflow:hidden;padding:0;position:relative"><img loading="lazy" decoding="async" src="imgs/h_long_wolf.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center 18%" alt="long wolf"><p style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0,rgba(1,38,31,.8),transparent);color:#fff;font-size:9px;font-weight:800;padding:6px 4px 4px;text-align:center">长发飘逸</p></div>
+                </div>
+                <div class="dd-action">查看效果 · 预约剪发 →</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="sec-inner">
+    <div class="center reveal">
+      <span class="stag light">核心功能</span>
+      <h2 class="sec-title" style="color:#fff">不只是智能试发<br>更是完整的门店数字化工具</h2>
+      <p class="sec-sub" style="color:rgba(255,255,255,.55);margin:14px auto 0">从顾客进店到老板看报表，每个环节都有覆盖。</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card reveal d1"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M12 2C8 2 5 5 5 8c0 4 4 8 7 11 3-3 7-7 7-11 0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2"/><path d="M8 18c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5"/></svg></span><h3>AI 发型试穿</h3><p>上传照片生成 3 套效果图，尽量保留五官、脸型和表情，仅调整发型发色。</p><span class="feat-tag">核心功能</span></div>
+      <div class="feat-card reveal d2"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><circle cx="12" cy="17" r="1"/></svg></span><h3>微信小程序</h3><p>顾客端 + 商家管理端，无需 App，扫码即用。</p><span class="feat-tag">零门槛</span></div>
+      <div class="feat-card reveal d3"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><h3>多门店管理</h3><p>连锁版支持多门店独立数据、统一后台查看和汇总分析。</p><span class="feat-tag">连锁首选</span></div>
+      <div class="feat-card reveal d4"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg></span><h3>顾客档案</h3><p>自动记录试发历史、到店记录，主理人一眼掌握偏好。</p><span class="feat-tag">CRM</span></div>
+      <div class="feat-card reveal d1"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></span><h3>数据推送</h3><p>当前支持飞书推送，企微 / 钉钉可按需定制。</p><span class="feat-tag">老板必备</span></div>
+      <div class="feat-card reveal d2"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><h3>经营数据看板</h3><p>今日到店、试发次数、成交转化，实时数据驱动决策。</p><span class="feat-tag">数据驱动</span></div>
+      <div class="feat-card reveal d3"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></span><h3>赠送激励</h3><p>主理人可赠送试发次数，量化每位主理人真实贡献。</p><span class="feat-tag">激励</span></div>
+      <div class="feat-card reveal d4"><span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-9 8.4 9.5 9.5 0 01-4-.9L3 21l1.3-3.5A8.38 8.38 0 0112 3.5a8.5 8.5 0 019 8z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg></span><h3>智能客服助手</h3><p>小程序内置智能客服，自动解答顾客发型、预约、价格疑问，主理人不在也能接待。<br><em style="color:var(--acc);font-style:normal;font-size:12px">专业版及以上提供</em></p><span class="feat-tag">7×24 在线</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEISHU -->
+<section class="feishu" id="feishu">
+  <div class="sec-inner">
+    <div class="feishu-wrap">
+      <div class="reveal-l">
+        <span class="stag">数据推送</span>
+        <h2 class="sec-title">老板不用每天<br>登录后台看数据</h2>
+        <p class="sec-sub">系统自动生成日报、周报，直接推送到你常用的工作群。用哪个平台你来定，可多选、按需定制。</p>
+        <div class="plat-chips">
+          <span class="plat-chip"><svg viewBox="0 0 24 24" fill="none" stroke="#1a8f5e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>飞书已支持</span>
+          <span class="plat-chip"><svg viewBox="0 0 24 24" fill="none" stroke="#1a8f5e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>企业微信可定制</span>
+          <span class="plat-chip"><svg viewBox="0 0 24 24" fill="none" stroke="#1a8f5e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>钉钉可定制</span>
+          <span class="plat-chip more">短信 / 邮件 等可定制</span>
+        </div>
+        <div class="feishu-points">
+          <div class="fp-item">
+            <div class="fp-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg></div>
+            <div>
+              <h4>每日自动日报</h4>
+              <p>每天下班前自动推送当日数据：到店人数、试发次数、成交转化率。</p>
+            </div>
+          </div>
+          <div class="fp-item">
+            <div class="fp-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div>
+              <h4>多门店汇总报表</h4>
+              <p>连锁品牌各门店数据一张报表汇总，哪家门店表现突出一眼就看出来。</p>
+            </div>
+          </div>
+          <div class="fp-item">
+            <div class="fp-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.2a2 2 0 013.4 0l8 13.5a2 2 0 01-1.7 3H4a2 2 0 01-1.7-3z"/><line x1="12" y1="9" x2="12" y2="13.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg></div>
+            <div>
+              <h4>关键指标实时预警</h4>
+              <p>某门店今日试发量明显下滑，或某主理人转化率异常，第一时间推送到工作群即时通知。</p>
+            </div>
+          </div>
+          <div class="fp-item">
+            <div class="fp-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="#fff"/></svg></div>
+            <div>
+              <h4>主理人绩效统计</h4>
+              <p>每位主理人引导的试发次数、成交数量、顾客复购率，数据说话。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-r">
+        <div class="plat-tabs">
+          <span class="plat-tab active">飞书</span>
+          <span class="plat-tab">企业微信</span>
+          <span class="plat-tab">钉钉</span>
+        </div>
+        <div class="feishu-mock">
+          <div class="feishu-app">
+            <div class="fa-titlebar">
+              <div class="fa-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+              <span class="fa-titlename">焕发品牌管理群 · 每日数据播报</span>
+            </div>
+            <div class="fa-body">
+              <div class="fa-sidebar">
+                <div class="fa-sidebar-item"><span class="si-icon">💬</span>焕发管理群</div>
+                <div class="fa-sidebar-item active"><span class="si-icon">📊</span>数据播报</div>
+                <div class="fa-sidebar-item"><span class="si-icon">👥</span>主理人群</div>
+                <div class="fa-sidebar-item"><span class="si-icon">📋</span>门店周会</div>
+              </div>
+              <div class="fa-chat">
+                <div class="fa-chat-header">
+                  📊 焕发 · 每日数据播报
+                </div>
+                <div class="fa-messages" id="fa-msgs">
+                  <div class="fa-msg" style="animation-delay:.2s">
+                    <div class="fa-avatar bot">焕</div>
+                    <div class="fa-bubble">
+                      <div class="fa-sender">焕发助手 · 今天 18:00</div>
+                      <div class="fa-content">
+                        📅 <strong>2026-06-09 日报</strong>
+                        <div class="fa-card">
+                          <div class="fa-card-title">🏪 今日全品牌汇总</div>
+                          <div class="fa-stat-row"><span class="k">今日到店</span><span class="v up">↑ 83 人</span></div>
+                          <div class="fa-stat-row"><span class="k">智能试发</span><span class="v up">↑ 147 次</span></div>
+                          <div class="fa-stat-row"><span class="k">成交转化</span><span class="v up">↑ 34%</span></div>
+                          <div class="fa-stat-row"><span class="k">环比昨日</span><span class="v up">+18%</span></div>
+                        </div>
+                        <div style="margin-top:8px;font-size:12px;color:#666">🏆 今日最佳门店：幸福里店 · 成交 41 单</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROFIT -->
+<section class="profit" id="profit">
+  <div class="sec-inner">
+    <div class="reveal">
+      <span class="stag">盈利逻辑</span>
+      <h2 class="sec-title">3 单就回本</h2>
+      <p class="sec-sub">这不是成本，是一个能自己回本的获客增长工具。</p>
+    </div>
+    <div class="profit-grid">
+      <div class="profit-card reveal d1">
+        <div class="ptag">顾客使用逻辑</div>
+        <h3>免费体验 + 付费深度</h3>
+        <p>顾客到店扫码免费体验 2 次，体验后想继续使用可付费解锁。降低进店门槛，同时增加额外收入。</p>
+        <div class="profit-rows">
+          <div class="pr-row"><span class="lbl">到店免费体验</span><span class="val">2 次 / 顾客</span></div>
+          <div class="pr-row"><span class="lbl">主理人引导成交后</span><span class="val">可赠送 1 次</span></div>
+          <div class="pr-row"><span class="lbl">顾客付费深度体验</span><span class="val">自定义定价</span></div>
+        </div>
+      </div>
+      <div class="profit-card dark reveal d2">
+        <div class="ptag">你的回本测算</div>
+        <h3>专业版年费 ¥500 起</h3>
+        <p>专业版年使用费 ¥500，赠 80 次智能试发；后续可按门店真实客流追加试发次数，具体方案由客服确认。</p>
+        <div class="profit-rows">
+          <div class="pr-row"><span class="lbl">进店转化率提升</span><span class="val">预计 +20%</span></div>
+          <div class="pr-row"><span class="lbl">月增成交</span><span class="val">约 20 单</span></div>
+          <div class="pr-row"><span class="lbl">年使用费</span><span class="val">¥500</span></div>
+          <div class="pr-row"><span class="lbl">回本所需新增单数</span><span class="val">约 3 单</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="flow" id="flow">
+  <div class="sec-inner">
+    <div class="center">
+      <span class="stag reveal">接入流程</span>
+      <h2 class="sec-title reveal d1">1 天完成接入</h2>
+      <p class="sec-sub reveal d2">从签约到上线，全程有专人协助，最快当天使用。</p>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step reveal d1"><div class="flow-icon-wrap">📋</div><h4>确认方案</h4><p>选择合适的年费套餐，签约开通，30 分钟确认完成。</p></div>
+      <div class="flow-step reveal d2"><div class="flow-icon-wrap">⚙️</div><h4>配置门店</h4><p>上传素材库、配置二维码，系统自动初始化。</p></div>
+      <div class="flow-step reveal d3"><div class="flow-icon-wrap">🧑‍💼</div><h4>员工培训</h4><p>30 分钟线上培训，主理人学会使用和顾客引导话术。</p></div>
+      <div class="flow-step reveal d4"><div class="flow-icon-wrap">🚀</div><h4>正式上线</h4><p>二维码投入使用，飞书报表开始推送，实时看数据。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="sec-inner">
+    <div class="center">
+      <span class="stag reveal">透明定价</span>
+      <h2 class="sec-title reveal d1">软件年费 + 试发按量</h2>
+      <p class="sec-sub reveal d2">软件按年付，套餐赠送试发次数，后续可按门店实际使用情况追加次数。所有套餐含 14 天免费试用。</p>
+    </div>
+    <div class="price-grid" style="grid-template-columns:repeat(4,1fr);max-width:1100px;gap:16px">
+      <!-- 试用 -->
+      <div class="price-card reveal d1">
+        <div class="p-name">免费试用</div>
+        <div class="p-price" style="font-size:38px">¥0</div>
+        <div class="p-unit">14 天免费试用</div>
+        <div class="p-count">14 天内 30 次 智能试发</div>
+        <ul class="p-list">
+          <li>1 家门店</li>
+          <li>10 款发型款式</li>
+          <li>30 天顾客记录</li>
+          <li>基础数据看板</li>
+          <li>用完可联系客服申请或付费升级</li>
+        </ul>
+        <button class="p-btn outline" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">免费开始</button>
+      </div>
+      <!-- 基础版 -->
+      <div class="price-card reveal d2">
+        <div class="p-name">基础版</div>
+        <div class="p-price-row"><div class="p-price" style="font-size:38px">¥300</div><div class="p-unit">/ 年</div></div>
+        <div class="p-count">每年赠 30 次 · 可按需追加次数</div>
+        <ul class="p-list">
+          <li>1 家门店</li>
+          <li>20 款发型款式</li>
+          <li>商家管理小程序</li>
+          <li>基础数据看板</li>
+          <li>活动期间限时赠送储值 / 会员卡</li>
+          <li>社群技术支持 48h</li>
+        </ul>
+        <button class="p-btn outline" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">开始订阅</button>
+      </div>
+      <!-- 专业版 -->
+      <div class="price-card hot reveal d3">
+        <div class="p-name">专业版</div>
+        <div class="p-price-row"><div class="p-price" style="font-size:38px">¥500</div><div class="p-unit">/ 年</div></div>
+        <div class="p-count">每年赠 80 次 · 可按需追加次数</div>
+        <ul class="p-list">
+          <li>最多 3 家门店</li>
+          <li>🌟 主理人绩效</li>
+          <li>飞书数据推送</li>
+          <li>完整顾客档案 + 绩效统计</li>
+          <li>活动期间限时赠送储值 / 会员卡</li>
+          <li>智能客服 + 数据导出</li>
+          <li>1v1 专属客服 24h</li>
+        </ul>
+        <button class="p-btn fill" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">立即订阅 →</button>
+      </div>
+      <!-- 连锁版 -->
+      <div class="price-card reveal d4">
+        <div class="p-name">连锁版</div>
+        <div class="p-price-row"><div class="p-price" style="font-size:38px">¥1,000</div><div class="p-unit">/ 年</div></div>
+        <div class="p-count">每年赠 200 次 · 可按需追加次数</div>
+        <ul class="p-list">
+          <li>不限门店数量</li>
+          <li>绩效统计 + 活动期间限时赠送储值 / 会员卡</li>
+          <li>多门店汇总报表 + 排行</li>
+          <li>飞书推送 + 企微/钉钉定制 + API 接口</li>
+          <li>品牌定制化配置</li>
+          <li>专属客户成功经理 4h</li>
+        </ul>
+        <button class="p-btn outline" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">联系商务</button>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:24px" class="reveal">所有套餐含 14 天 / 30 次免费试用 · 软件年费 · 试发次数可按需追加 · 随时升级</p>
+  </div>
+</section>
+
+<!-- CUSTOM DEV -->
+<section class="custom-dev" id="custom">
+  <div class="cd-inner">
+    <div class="cd-header">
+      <div class="reveal-l">
+        <span class="stag light">定制开发</span>
+        <h2 class="sec-title" style="color:#fff">标准产品满足不了？<br>我们来定制</h2>
+        <p class="sec-sub" style="color:rgba(255,255,255,.55)">有特殊业务需求、想要私有化部署、或者需要与现有系统对接？我们提供专业定制开发服务。</p>
+        <div class="cd-cta reveal d1">
+          <div>
+            <div class="cd-cta-text">需求不一样，就聊一聊</div>
+            <div class="cd-cta-sub">免费需求评估，给出专属方案</div>
+          </div>
+          <button class="btn-glow" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">联系我们 →</button>
+        </div>
+      </div>
+      <div class="reveal-r" style="display:flex;flex-direction:column;gap:12px">
+        <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:20px 24px">
+          <div style="color:rgba(255,255,255,.45);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">已完成定制案例</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="color:var(--acc2)">✓</span><span style="color:rgba(255,255,255,.7)">某连锁品牌自有微信支付接入</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="color:var(--acc2)">✓</span><span style="color:rgba(255,255,255,.7)">会员积分系统与 POS 系统对接</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="color:var(--acc2)">✓</span><span style="color:rgba(255,255,255,.7)">私有化部署至品牌自有服务器</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="color:var(--acc2)">✓</span><span style="color:rgba(255,255,255,.7)">多语言版本（繁中 / 英文）</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cd-grid">
+      <div class="cd-card reveal d1"><div class="cd-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b5e4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="10" y1="6" x2="14" y2="6"/><line x1="11.5" y1="18" x2="12.5" y2="18"/></svg></div><h4>小程序定制</h4><p>品牌专属 UI 风格、定制功能模块、与现有会员体系打通。</p></div>
+      <div class="cd-card reveal d2"><div class="cd-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b5e4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></div><h4>支付 & 会员</h4><p>可定制接入微信支付、储值 / 会员、POS 系统。</p></div>
+      <div class="cd-card reveal d3"><div class="cd-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b5e4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5l5-5"/><path d="M7 12l-2 2a3.5 3.5 0 005 5l2-2"/><path d="M17 12l2-2a3.5 3.5 0 00-5-5l-2 2"/></svg></div><h4>API 开放集成</h4><p>开放 API 对接，将 智能试发能力嵌入你现有的 App 或系统。</p></div>
+      <div class="cd-card reveal d4"><div class="cd-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b5e4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/></svg></div><h4>私有化部署</h4><p>整套系统部署至品牌自有服务器，数据完全自主可控。</p></div>
+      <div class="cd-card reveal d1"><div class="cd-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b5e4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><line x1="10" y1="2" x2="10" y2="5"/><line x1="14" y1="2" x2="14" y2="5"/><line x1="10" y1="19" x2="10" y2="22"/><line x1="14" y1="19" x2="14" y2="22"/><line x1="2" y1="10" x2="5" y2="10"/><line x1="2" y1="14" x2="5" y2="14"/><line x1="19" y1="10" x2="22" y2="10"/><line x1="19" y1="14" x2="22" y2="14"/></svg></div><h4>AI 模型定制</h4><p>针对特定发型风格微调模型，提升品牌特色风格的生成效果。</p></div>
+      <div class="cd-card reveal d2"><div class="cd-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#b5e4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><h4>数据报表定制</h4><p>除飞书外，支持钉钉、企微、自有 BI 系统的数据对接推送。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="sec-inner">
+    <div class="center">
+      <span class="stag reveal">常见问题</span>
+      <h2 class="sec-title reveal d1">你可能想问的</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal d1"><div class="faq-q">顾客需要下载 App 吗？</div><div class="faq-a"><div class="faq-a-in">不需要。顾客用微信扫描门店二维码直接进入小程序，整个过程在微信内完成，零下载，零注册，顾客使用门槛极低。</div></div></div>
+      <div class="faq-item reveal d2"><div class="faq-q">数据推送支持哪些平台？怎么配置？</div><div class="faq-a"><div class="faq-a-in">当前标准版支持飞书推送，预约、试发、成交等关键事件可进入门店工作群；企业微信、钉钉、短信、邮件等可按需定制。商家只需提供接收通知的工作群，我们协助完成机器人配置。</div></div></div>
+      <div class="faq-item reveal d3"><div class="faq-q">AI 效果图精准吗？</div><div class="faq-a"><div class="faq-a-in">AI 会尽量保留顾客五官、脸型和表情，仅调整发型发色。顾客可选填发丝粗细、发质软硬和受损程度，让生成更贴近实际发质；不填写也能正常试发。效果图更适合作为沟通参考，再由主理人结合真实发质、发量和脸型确认最终方案。</div></div></div>
+      <div class="faq-item reveal d4"><div class="faq-q">追加次数会过期吗？</div><div class="faq-a"><div class="faq-a-in">追加的试发次数可长期保留，门店可随时查看剩余次数，按自己的客流节奏使用，不用担心浪费。</div></div></div>
+      <div class="faq-item reveal d1"><div class="faq-q">顾客的照片数据怎么处理？</div><div class="faq-a"><div class="faq-a-in">顾客照片采用临时加密链接上传，AI 处理完成后自动从服务器清除，不永久存储。所有传输均加密，符合个人信息保护规定。</div></div></div>
+      <div class="faq-item reveal d2"><div class="faq-q">定制开发大概需要多长时间？</div><div class="faq-a"><div class="faq-a-in">视需求复杂度而定。简单的 UI 定制 1-2 周；支付集成、系统对接通常 3-4 周；私有化部署约 1-2 周。我们会在需求确认后提供明确时间表。</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-sec" id="cta">
+  <h2 class="reveal">现在申请<br>免费体验 14 天</h2>
+  <p class="reveal d1">免费试用 14 天，先用真实效果说话，再决定是否开通。</p>
+  <div class="cta-cards reveal d2">
+    <div class="cta-card">
+      <div class="cta-card-icon">📞</div>
+      <h4>预约演示</h4>
+      <p>留下门店数量和开通需求，客服安排演示时间。</p>
+    </div>
+    <div class="cta-card">
+      <div class="cta-card-icon">🤖</div>
+      <h4>客服助手</h4>
+      <p>点击右下角咨询功能、价格和接入流程。</p>
+    </div>
+  </div>
+  <div class="cta-btns reveal d3">
+    <button class="btn-glow" style="font-size:17px;height:58px;padding:0 36px" onclick="openSupport('trial')">立即申请免费试用 →</button>
+    <button class="btn-ghost" onclick="openSupport('demo')">预约 30 分钟演示</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <svg width="30" height="30" viewBox="0 0 240 240" fill="none">
+      <defs>
+        <linearGradient id="hg_ft" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DBB8A"/><stop offset="1" stop-color="#5FD39E"/></linearGradient>
+        <linearGradient id="bg_ft" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E2A22"/><stop offset="1" stop-color="#16352A"/></linearGradient>
+        <clipPath id="clip_ft"><circle cx="120" cy="115" r="72"/></clipPath>
+      </defs>
+      <rect x="0" y="0" width="240" height="240" rx="52" fill="url(#bg_ft)"/>
+      <circle cx="120" cy="115" r="72" fill="#13241D" stroke="#2C4A3D" stroke-width="2"/>
+      <g clip-path="url(#clip_ft)">
+        <rect x="120" y="43" width="72" height="144" fill="#1B3A2E"/>
+        <path d="M111,66 C77,66 66,101 72,131 C76,159 91,174 111,178 L111,66 Z" fill="#5B7A6C"/>
+        <path d="M129,62 C166,64 181,99 175,137 C171,163 156,178 129,180 C148,156 148,118 142,96 C138,79 134,70 129,62 Z" fill="url(#hg_ft)"/>
+        <line x1="120" y1="43" x2="120" y2="187" stroke="#0E2A22" stroke-width="3.5"/>
+      </g>
+      <g transform="translate(168,66)" fill="#7FE3B5"><path d="M0,-12 L3,-3 L12,0 L3,3 L0,12 L-3,3 L-12,0 L-3,-3 Z"/></g>
+    </svg>
+    <strong>焕发</strong>
+  </div>
+  <p>智能发型试穿 · 多平台数据推送 · 定制开发</p>
+  <p style="margin-top:10px">© 2026 焕发 · <a href="/privacy.html">隐私政策</a> · <a href="/terms.html">服务条款</a></p>
+</footer>
+
+<!-- AI 客服 -->
+<button id="ai-fab" onclick="toggleChat()">
+  🤖
+  <span class="fab-label">客服助手</span>
+  <span id="chat-unread">1</span>
+</button>
+<div id="ai-panel">
+  <div class="cp-head">
+    <div class="cp-av">🤖</div>
+    <div class="cp-info">
+      <h4>焕发客服助手</h4>
+      <p><span class="cp-online"></span> 在线 · 通常秒回</p>
+    </div>
+    <button class="cp-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="cp-body" id="cp-body">
+    <div class="cmsg bot">
+      <div class="cmsg-av">🤖</div>
+      <div class="cmsg-bubble">你好！我是焕发客服助手，可以回答关于产品的任何问题，比如功能、定价、数据推送、定制开发等。</div>
+    </div>
+  </div>
+  <div class="cp-quick" id="cp-quick">
+    <button class="cp-qbtn" onclick="quickAsk('怎么收费？')">怎么收费？</button>
+    <button class="cp-qbtn" onclick="quickAsk('飞书怎么接入？')">飞书怎么接入？</button>
+    <button class="cp-qbtn" onclick="quickAsk('申请免费试用')">申请试用</button>
+    <button class="cp-qbtn" onclick="quickAsk('支持定制开发吗？')">定制开发</button>
+  </div>
+  <div class="cp-foot">
+    <input id="cp-input" type="text" placeholder="输入你的问题…" onkeydown="if(event.key==='Enter')sendMsg()">
+    <button id="cp-send" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<script>
+/* ── LOADER ── */
+(function(){var hide=function(){var l=document.getElementById('loader');if(l)l.classList.add('gone')};
+if(document.readyState!=='loading'){setTimeout(hide,400)}else{document.addEventListener('DOMContentLoaded',function(){setTimeout(hide,400)})}
+setTimeout(hide,2000);/* 兜底：最多2秒一定撤掉加载动画，不等图片 */})();
+
+/* ── NAV ── */
+window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',scrollY>40)},{passive:true});
+
+/* ── 年付/月付切换 ── */
+let _isAnnual=false;
+function toggleAnnual(){
+  _isAnnual=!_isAnnual;
+  const tog=document.getElementById('price-toggle');
+  const knob=document.getElementById('price-knob');
+  tog.style.background=_isAnnual?'var(--g2)':'var(--border)';
+  knob.style.transform=_isAnnual?'translateX(22px)':'translateX(0)';
+  document.querySelectorAll('.price-val').forEach(el=>{
+    const v=_isAnnual?el.dataset.annual:el.dataset.monthly;
+    const n=parseInt(v);
+    el.textContent='¥'+(n>=1000?(n/1000).toFixed(1).replace('.0','')+'k':n);
+  });
+  document.querySelectorAll('.price-cycle').forEach(el=>{
+    el.textContent=_isAnnual?'/ 月（年付）':'/ 月';
+  });
+}
+
+/* ── REVEAL ── */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.1});
+document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach(el=>io.observe(el));
+
+/* ── COUNTER ── */
+function animateCount(el){
+  const target=+el.dataset.count;
+  const prefix=el.dataset.prefix||'';
+  const suffix=el.dataset.suffix||'';
+  let start=0; const dur=1200; const startTime=performance.now();
+  const tick=now=>{
+    const p=Math.min((now-startTime)/dur,1);
+    const ease=1-Math.pow(1-p,4);
+    el.textContent=prefix+Math.round(start+(target-start)*ease)+suffix;
+    if(p<1)requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+const counterObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){animateCount(e.target);counterObs.unobserve(e.target)}}),{threshold:.5});
+document.querySelectorAll('[data-count]').forEach(el=>counterObs.observe(el));
+
+/* ── FAQ ── */
+document.querySelectorAll('.faq-q').forEach(q=>{
+  q.addEventListener('click',()=>{
+    const item=q.parentElement;
+    const open=item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+    if(!open)item.classList.add('open');
+  });
+});
+
+/* ── 3D TILT on feat cards ── */
+document.querySelectorAll('.feat-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`translateY(-6px) rotateX(${-y*10}deg) rotateY(${x*10}deg)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';});
+});
+
+/* ── AI CHAT ── */
+const QA=[
+  {k:['收费','价格','多少钱','费用','套餐','年费','定价','报价','贵'],a:'当前采用「年使用费 + 套餐赠送试发次数 + 按需追加次数」：\n\n· 免费试用：¥0，14 天内赠 30 次，1 家门店\n· 基础版：¥300 / 年，每年赠 30 次，单店，活动期间限时赠送储值 / 会员卡\n· 专业版：¥500 / 年，每年赠 80 次，最多 3 家门店（含绩效统计、飞书推送、数据导出、活动期间限时赠送储值 / 会员卡）\n· 连锁版：¥1,000 / 年，每年赠 200 次，不限门店，含活动期间限时赠送储值 / 会员卡\n\n赠送次数用完可按量充值（问我"充值"看单价）。具体方案客服可帮你算。'},
+  {k:['充值','追加','加次数','次数购买','买次数','不够用','超出','超了','次数包','加量'],a:'套餐赠送次数用完后，可按需充值追加（一次"试发"生成 3 张效果图）：\n\n· 基础版：¥2.5 / 次\n· 专业版：¥2 / 次\n· 连锁版：¥1.5 / 次\n\n档位越高单价越低，充多少由你定、用多少充多少，客服帮你开通。'},
+  {k:['功能','能做','可以做','有什么','作用','介绍','是什么','干嘛'],a:'焕发是美业门店一体化经营系统：\n\n🎨 AI 智能试发（顾客扫码上传自拍，快速生成换发参考图；可选填发丝粗细、发质软硬和受损程度）\n📱 微信小程序（顾客端 + 商家端，免下载）\n🏪 多门店管理 + 顾客档案 CRM\n💰 主理人绩效、顾客储值 / 会员卡（活动期间付费版限时赠送）\n📊 经营数据看板 + 飞书推送（企微 / 钉钉可定制）\n🤝 客服助手\n\n想了解哪一块可以接着问～'},
+  {k:['飞书','企微','企业微信','钉钉','报表','日报','推送'],a:'数据推送是我们的亮点功能！\n\n当前标准版支持飞书推送，预约、AI 试发、成交等关键事件可以进入门店工作群。\n\n企业微信、钉钉、短信、邮件以及自动日报/周报，可按需定制。连锁品牌还支持多门店汇总报表。\n\n配置很简单，接入我们会协助完成。'},
+  {k:['试用','免费','体验','申请'],a:'可以申请免费试用：\n\n✓ 先用 1 家门店跑通流程\n✓ 免费试用 14 天，赠 30 次智能试发\n✓ 顾客预约会进入商家端订单管理\n✓ 效果满意后再选择年使用费套餐\n\n你可以直接在这里说明门店数量、城市和希望开通的时间，客服会继续跟进。'},
+  {k:['定制','开发','私有','api','接口','对接','二次','部署','定制开发'],a:'支持多种定制开发（专业服务，按需评估）：\n\n· 小程序品牌定制（专属 UI、功能模块、对接现有会员体系）\n· 可定制接入微信支付、储值 / 会员、POS 系统\n· API 开放集成（把 AI 试发能力嵌入你现有 App / 系统）\n· 私有化部署（整套部署到你自有服务器，数据自主可控）\n· AI 模型定制（针对品牌风格微调，提升生成效果）\n· 数据报表定制（钉钉 / 企微 / 自有 BI 对接）\n\n说说你的具体需求，我们提供免费方案评估～'},
+  {k:['app','下载','注册','安装'],a:'完全不需要！顾客用微信扫门店二维码，直接在微信里使用小程序。整个过程零下载、零注册，顾客使用门槛极低。'},
+  {k:['多久','时间','接入','上线'],a:'最快 1 天完成接入！\n\n流程：确认方案 → 配置门店（2-3小时）→ 员工培训（30分钟）→ 正式上线\n\n我们全程协助，一般当天就能用上。'},
+  {k:['安全','隐私','照片','数据'],a:'顾客照片安全有保障：\n\n✓ 临时加密链接上传\n✓ AI处理完成后自动清除\n✓ 不永久存储照片\n✓ 传输全程加密\n\n符合个人信息保护相关规定。'},
+  {k:['试发','换发','效果','准不准','像不像','几张','发型','发色','试戴','试试'],a:'AI 智能试发（核心功能）：\n\n· 顾客扫门店码、上传正面照，快速生成换发参考图\n· 一次出 3 套方案（不同发型/发色），当场沟通\n· AI 会尽量保留脸型五官，主要调整发型发色\n· 效果图仅供参考，最终造型以到店沟通为准\n\n让顾客"看见效果再决定"，提升进店沟通效率。'},
+  {k:['提成','分成','主理人','发型师','员工','绩效'],a:'主理人绩效（专业版起）：\n\n· 自定义项目绩效（剪/烫/染各设比例或固定额）\n· 支持一单两人（主理 + 助理各自算）\n· 结账录入一次，自动累计绩效\n· 月度报表：老板看全店、主理人看自己业绩\n\n把"AI 引流 + 员工激励"打通，员工更主动转化。'},
+  {k:['储值','会员','会员卡','次卡','储值卡','疗程','办卡'],a:'顾客储值 / 会员卡与营销套餐（活动期间付费版限时赠送，记账型）：\n\n· 储值余额、会员等级折扣、消费流水\n· 剪发次卡、染烫套餐、护理套餐可开通和核销\n· 钱在线下收，系统只负责记账和核销\n· 微信支付、POS、积分体系可按需定制接入\n\n帮门店锁客复购，免费试用版先跑通试发和预约流程。'},
+  {k:['多门店','连锁','分店','几家店','门店数'],a:'多门店 / 连锁管理：\n\n· 每家店独立数据 + 独立二维码\n· 总部统一后台查看各店表现\n· 连锁版支持多门店汇总报表、主理人排行\n· 试发次数额度可共享/分配\n\n适合 2 家店以上的品牌统一管理。'},
+  {k:['档案','crm','顾客管理','客户管理','复购','回头客','私域'],a:'顾客档案 / CRM：\n\n· 自动记录顾客试发历史、到店记录、消费\n· 主理人一眼掌握顾客偏好\n· 配合储值会员做复购运营\n\n让每个进店顾客沉淀成你的私域资产。'},
+  {k:['看板','统计','营业额','经营情况','数据分析','转化率','日报'],a:'经营数据看板：\n\n· 今日到店、试发次数、成交转化率实时看\n· 主理人绩效、AI 转化贡献\n· 每日报告自动推送飞书/企微/钉钉，老板不登录也掌握全局\n\n用数据驱动决策，不靠感觉。'},
+];
+let chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('ai-panel').classList.toggle('open',chatOpen);
+  if(chatOpen)document.getElementById('chat-unread').style.display='none';
+}
+function addMsg(text,role){
+  const b=document.getElementById('cp-body');
+  const d=document.createElement('div');
+  d.className=`cmsg ${role}`;
+  d.innerHTML=role==='bot'
+    ?`<div class="cmsg-av">🤖</div><div class="cmsg-bubble">${text.replace(/\n/g,'<br>')}</div>`
+    :`<div class="cmsg-bubble">${text}</div>`;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function showTyping(){
+  const b=document.getElementById('cp-body');
+  const d=document.createElement('div');
+  d.className='cp-typing';d.id='cpTyping';
+  d.innerHTML='<div class="tp-dot"></div><div class="tp-dot"></div><div class="tp-dot"></div>';
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function rmTyping(){const t=document.getElementById('cpTyping');if(t)t.remove();}
+function getAns(q){
+  const t=q.toLowerCase();
+  if(['人工','真人','转人工','人工客服','找人','打电话','回电','加我微信'].some(k=>t.includes(k))){
+    return '好的，我帮你转人工客服 👩‍💼\n\n请在这里留下你的【手机号或微信】，客服看到后会尽快主动联系你（通常很快）。\n方便的话也说下门店城市和数量，沟通更高效。';
+  }
+  for(const i of QA)if(i.k.some(k=>t.includes(k)))return i.a;
+  if(['预约','演示','联系','客服','微信','电话','手机号','试用'].some(k=>t.includes(k))){
+    return '好的，我先帮你登记咨询意向 ✅\n\n请在这里留下你的【手机号或微信】+ 门店城市、数量，客服看到后会尽快联系你确认试用或演示安排。';
+  }
+  return '这个问题我帮你转给人工客服 👩‍💼\n你可以留下【手机号或微信】+ 门店城市/数量，客服会尽快联系你。';
+}
+function openSupport(intent){
+  if(!chatOpen)toggleChat();
+  const text=intent==='demo'?'我想预约 30 分钟演示':'我想申请免费试用';
+  document.getElementById('cp-input').value=text;
+  sendMsg();
+}
+function pushLead(text,source){try{fetch('https://api.huanfaai.com/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,source:source||'官网客服助手'})}).catch(function(){});}catch(e){}}
+function sendMsg(){
+  const i=document.getElementById('cp-input');
+  const t=i.value.trim();if(!t)return;
+  addMsg(t,'user');i.value='';
+  var urgent=['人工','真人','转人工','联系','微信','电话','手机号','加我','回电','约'].some(function(k){return t.indexOf(k)>-1});
+  pushLead(t, urgent?'🔴官网客服助手·客户要求人工/留联系方式':'官网客服助手'); /* 推送到飞书 */
+  document.getElementById('cp-quick').style.display='none';
+  showTyping();
+  setTimeout(()=>{rmTyping();addMsg(getAns(t),'bot');},600+Math.random()*500);
+}
+function quickAsk(q){
+  document.getElementById('cp-quick').style.display='none';
+  addMsg(q,'user');showTyping();
+  setTimeout(()=>{rmTyping();addMsg(getAns(q),'bot');},600);
+}
+// 3秒后显示未读提示
+setTimeout(()=>{if(!chatOpen)document.getElementById('chat-unread').style.display='flex';},3000);
+
+/* ── 飞书消息动画 ── */
+const faObs=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    e.target.querySelectorAll('.fa-msg').forEach((m,i)=>{m.style.animationDelay=i*.3+'s'});
+    faObs.unobserve(e.target);
+  }
+}),{threshold:.3});
+const faMsgs=document.getElementById('fa-msgs');
+if(faMsgs)faObs.observe(faMsgs);
+</script>
+</body>
+</html>
+

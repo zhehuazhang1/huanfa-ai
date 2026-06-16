@@ -1,0 +1,55 @@
+<view class="page settings-page">
+  <view class="brand-row">
+    <view>
+      <view class="brand-name">门店设置</view>
+      <view class="muted">维护顾客端首页展示内容</view>
+    </view>
+  </view>
+
+  <view class="settings-card">
+    <view class="field-label">门店名称</view>
+    <input class="field-input" value="{{form.store_name}}" bindinput="inputStoreName" placeholder="例如：Mirror Hair Salon 人民广场店" />
+
+    <view class="field-label">首页标题</view>
+    <input class="field-input" value="{{form.home_title}}" bindinput="inputHomeTitle" placeholder="例如：灵感造型顾问" />
+
+    <view class="field-label">首页副标题</view>
+    <textarea class="field-textarea" value="{{form.home_subtitle}}" bindinput="inputHomeSubtitle" placeholder="例如：用一张自拍预览适合你的发型与发色" />
+  </view>
+
+  <view class="section-title">首页轮播</view>
+  <view wx:for="{{form.store_photos}}" wx:key="index" class="photo-card">
+    <view class="photo-head">
+      <view class="photo-index">轮播 {{index + 1}}</view>
+    </view>
+    <view class="field-label">标题</view>
+    <input class="field-input" value="{{item.title}}" data-index="{{index}}" data-field="title" bindinput="inputPhotoField" placeholder="例如：专属试发方案" />
+    <view class="field-label">描述</view>
+    <input class="field-input" value="{{item.desc}}" data-index="{{index}}" data-field="desc" bindinput="inputPhotoField" placeholder="例如：上传自拍，预览造型方向" />
+    <view class="field-label">图片链接</view>
+    <input class="field-input" value="{{item.url}}" data-index="{{index}}" data-field="url" bindinput="inputPhotoField" placeholder="https://..." />
+  </view>
+
+  <view class="notice-card">
+    <view class="notice-title">说明</view>
+    <view class="notice-text">保存后顾客端首页会自动读取新内容。图片暂时填写网络链接，后续会接入本地上传。</view>
+  </view>
+
+  <view class="settings-entry" bindtap="goKnowledge">
+    <view>
+      <view class="entry-title">客服知识库</view>
+      <view class="entry-desc">维护活动套餐、门店说明和 AI 客服回答</view>
+    </view>
+    <view class="entry-arrow">›</view>
+  </view>
+
+  <button class="primary-button save-button" loading="{{saving}}" bindtap="saveConfig">保存设置</button>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

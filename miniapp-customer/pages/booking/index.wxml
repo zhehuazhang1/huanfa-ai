@@ -1,0 +1,69 @@
+<view class="page booking-page">
+  <view class="booking-top">
+    <view class="back-icon" bindtap="goBack">‹</view>
+    <view class="top-title">预约造型服务</view>
+  </view>
+
+  <view class="plan-card">
+    <image class="plan-image" src="{{planImage || fallbackPlanImage}}" mode="aspectFit" />
+    <view class="plan-copy">
+      <view class="plan-label">本次推荐方案</view>
+      <view class="plan-name">{{styleName || '门店推荐造型'}}</view>
+      <view class="plan-color">{{colorName || '门店推荐发色'}}</view>
+    </view>
+    <view class="talk-divider"></view>
+    <view class="talk-title">沟通重点</view>
+    <view class="tag-row">
+      <text wx:for="{{talkTags}}" wx:key="*this" class="talk-tag">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="stylist-card" bindtap="chooseStylist">
+    <image class="stylist-avatar" src="{{selectedStylist.avatar_url || fallbackAvatar}}" mode="aspectFill" />
+    <view class="stylist-copy">
+      <view class="stylist-name">{{selectedStylist.display_name || '到店分配'}} <text wx:if="{{selectedStylist.display_name}}" class="role-mark">主理人</text></view>
+      <view class="stylist-skill">擅长：{{selectedStylist.skillsText || '修剪、造型、发色沟通'}}</view>
+    </view>
+    <view class="chevron">›</view>
+  </view>
+
+  <view class="section-title">服务项目（多选）</view>
+  <view class="service-grid">
+    <view wx:for="{{serviceItems}}" wx:key="id" class="service-chip {{item.selected ? 'active' : ''}}" data-id="{{item.id}}" bindtap="toggleService">
+      {{item.display_name || item.name}}
+    </view>
+  </view>
+
+  <view class="section-title">预约时间</view>
+  <view class="date-row">
+    <view wx:for="{{dateOptions}}" wx:key="value" class="date-card {{selectedDate === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="selectDate">
+      <view class="date-label">{{item.label}}</view>
+      <view class="date-value">{{item.short}}</view>
+    </view>
+    <picker mode="date" value="{{selectedDate}}" bindchange="pickMoreDate">
+      <view class="date-card more-date">
+        <view class="calendar-icon">□</view>
+        <view class="date-label">更多日期</view>
+      </view>
+    </picker>
+  </view>
+
+  <view wx:for="{{timeGroups}}" wx:key="label" class="time-section">
+    <view class="time-label">{{item.icon}} {{item.label}}</view>
+    <view class="time-grid">
+      <view wx:for="{{item.slots}}" wx:for-item="slot" wx:key="*this" class="time-slot {{selectedTime === slot ? 'active' : ''}}" data-time="{{slot}}" bindtap="selectTime">
+        {{slot}}
+      </view>
+    </view>
+  </view>
+
+  <view class="section-title">备注</view>
+  <textarea class="note-input" value="{{note}}" placeholder="想保留或调整的地方，可以提前告诉主理人" bindinput="onNoteInput" />
+
+  <view class="price-tip">
+    <view class="tip-icon">i</view>
+    <view>价格以到店沟通为准，具体根据发长、发量、烫染项目确认。</view>
+  </view>
+
+  <button class="submit-button" loading="{{submitting}}" bindtap="submitBooking">提交预约 →</button>
+</view>

@@ -1,0 +1,120 @@
+<view class="page detail-page">
+  <view class="profile-card">
+    <view class="avatar {{customer.is_disabled ? 'avatar-disabled' : ''}}">{{customer.avatarText || '客'}}</view>
+    <view class="profile-main">
+      <view class="profile-name">
+        {{customer.display_name || '顾客'}}
+        <text wx:if="{{customer.is_disabled}}" class="disabled-badge">已停用</text>
+      </view>
+      <view class="profile-sub">{{customer.masked_phone || '未绑定手机号'}}</view>
+    </view>
+    <view wx:if="{{!customer.is_disabled}}" class="visit-pill {{activeVisit ? 'active' : ''}}">{{activeVisit ? '已到店' : '未到店'}}</view>
+  </view>
+
+  <view wx:if="{{customer.is_disabled}}" class="disabled-banner">
+    该顾客账号已停用，无法登录或使用 AI 试发
+  </view>
+
+  <view wx:if="{{!customer.is_disabled}}" class="metric-grid">
+    <view class="metric-card">
+      <view class="metric-value">{{quota.free_remaining || 0}}</view>
+      <view class="metric-label">今日可试</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{giftRemaining || 0}}</view>
+      <view class="metric-label">赠送剩余</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!customer.is_disabled}}" class="action-row">
+    <view class="action-button primary" bindtap="giftAi">赠送 1 次 AI</view>
+    <view class="action-button secondary" bindtap="goOrders">查看订单</view>
+  </view>
+  <view wx:if="{{!customer.is_disabled}}" class="action-row single-row">
+    <view class="action-button secondary" bindtap="openPackage">开通营销套餐</view>
+  </view>
+
+  <view wx:if="{{!customer.is_disabled}}" class="membership-card">
+    <view class="membership-top">
+      <view>
+        <view class="membership-label">储值会员</view>
+        <view class="membership-level">{{membership.level_name || '普通会员'}}</view>
+      </view>
+    </view>
+    <view class="membership-balance">¥{{membership.balance || 0}}</view>
+    <view class="membership-stats">
+      <view>累计充值 ¥{{membership.total_recharge || 0}}</view>
+      <view>累计消费 ¥{{membership.total_consume || 0}}</view>
+    </view>
+    <view wx:if="{{membership.enabled !== false}}" class="membership-actions">
+      <view class="mini-action primary" data-type="recharge" bindtap="addMembershipTransaction">充值</view>
+      <view class="mini-action secondary" data-type="consume" bindtap="addMembershipTransaction">消费扣减</view>
+    </view>
+    <view wx:else class="membership-upgrade">{{membership.notes || '升级连锁版后可使用储值会员'}}</view>
+  </view>
+
+  <view wx:if="{{!customer.is_disabled && membership.enabled !== false}}" class="section-title">会员流水</view>
+  <view wx:if="{{!customer.is_disabled && membership.enabled !== false && membershipTransactions.length === 0}}" class="empty-line">暂无会员流水</view>
+  <view wx:if="{{!customer.is_disabled && membership.enabled !== false}}" wx:for="{{membershipTransactions}}" wx:key="id" class="record-card compact">
+    <view class="record-top">
+      <view class="record-title">{{transactionTypeText[item.transaction_type] || item.transaction_type}} ¥{{item.amount}}</view>
+      <view class="record-status">余额 ¥{{item.balance_after}}</view>
+    </view>
+    <view class="record-line">{{item.note || '线下记账'}}</view>
+    <view class="record-line muted">时间：{{item.created_at}}</view>
+  </view>
+
+  <view wx:if="{{!customer.is_disabled}}" class="section-title">已购套餐</view>
+  <view wx:if="{{!customer.is_disabled && customerPackages.length === 0}}" class="empty-line">暂无已购套餐</view>
+  <view wx:if="{{!customer.is_disabled}}" wx:for="{{customerPackages}}" wx:key="id" class="record-card compact">
+    <view class="record-top">
+      <view class="record-title">{{item.package_name || '营销套餐'}}</view>
+      <view class="record-status">{{item.statusText}}</view>
+    </view>
+    <view class="record-line">{{item.itemText}}</view>
+    <view class="record-line muted">实收 ¥{{item.paid_amount || 0}} · 有效期至 {{item.expires_at}}</view>
+  </view>
+
+  <view class="action-row manage-row">
+    <view class="action-button btn-disable" bindtap="toggleDisable">
+      {{customer.is_disabled ? '恢复账号' : '停用账号'}}
+    </view>
+    <view class="action-button btn-delete" bindtap="deleteCustomer">删除顾客</view>
+  </view>
+
+  <view class="section-title">最近试发</view>
+  <view wx:if="{{recentJobs.length === 0}}" class="empty-line">暂无 AI 试发记录</view>
+  <view wx:for="{{recentJobs}}" wx:key="job_no" class="record-card">
+    <view class="record-top">
+      <view class="record-title">{{item.job_no}}</view>
+      <view class="record-status">{{item.status_text || jobStatusText[item.status] || item.status}}</view>
+    </view>
+    <view class="record-line">方向：{{item.direction_text || directionText[item.direction] || item.direction || '未填'}}</view>
+    <view class="record-line">发型：{{item.style_display_name || item.selected_style_name || '未选择发型'}}</view>
+    <view class="record-line">发色：{{item.color_display_name || item.selected_color_name || '未选择发色'}}</view>
+    <view wx:if="{{item.failure_text}}" class="record-line">失败原因：{{item.failure_text}}</view>
+    <view class="record-line muted">时间：{{item.created_at}}</view>
+  </view>
+
+  <view class="section-title">最近预约</view>
+  <view wx:if="{{recentOrders.length === 0}}" class="empty-line">暂无预约记录</view>
+  <view wx:for="{{recentOrders}}" wx:key="id" class="record-card">
+    <view class="record-top">
+      <view class="record-title">订单 #{{item.id}}</view>
+      <view class="record-status">{{orderStatusText[item.status] || item.status}}</view>
+    </view>
+    <view class="record-line">主理人：{{item.stylist_name || '到店分配'}}</view>
+    <view class="record-line">预约时间：{{item.appointment_time || '到店沟通'}}</view>
+    <view class="record-line">{{item.notes || '暂无备注'}}</view>
+  </view>
+
+  <view class="section-title">赠送记录</view>
+  <view wx:if="{{giftRecords.length === 0}}" class="empty-line">暂无赠送记录</view>
+  <view wx:for="{{giftRecords}}" wx:key="id" class="record-card compact">
+    <view class="record-top">
+      <view class="record-title">{{item.gifted_by_name || '门店员工'}} 赠送</view>
+      <view class="record-status">{{giftStatusText[item.status] || item.status}}</view>
+    </view>
+    <view class="record-line muted">时间：{{item.created_at}}</view>
+  </view>
+</view>

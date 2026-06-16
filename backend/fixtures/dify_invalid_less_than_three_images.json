@@ -1,0 +1,16 @@
+{
+  "data": {
+    "outputs": {
+      "result": {
+        "status": "success",
+        "internal_api_cost": 0.66,
+        "images": [
+          {
+            "slot": "main",
+            "temp_image_url": "https://temporary-result-url/main.jpg"
+          }
+        ]
+      }
+    }
+  }
+}

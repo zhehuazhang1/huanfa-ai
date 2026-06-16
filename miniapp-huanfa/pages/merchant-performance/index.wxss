@@ -1,0 +1,167 @@
+.section-title {
+  margin-top: 30rpx;
+  font-size: 31rpx;
+  font-weight: 800;
+}
+
+.scope-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8rpx;
+  margin-top: 24rpx;
+  padding: 8rpx;
+  border-radius: 18rpx;
+  background: #fff;
+  box-shadow: 0 6rpx 18rpx rgba(26, 60, 52, 0.05);
+}
+
+.scope-tab {
+  height: 58rpx;
+  border-radius: 14rpx;
+  color: #46504c;
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 58rpx;
+  text-align: center;
+}
+
+.scope-tab.active {
+  background: #01261f;
+  color: #fff;
+}
+
+.period-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 18rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 22rpx rgba(26, 60, 52, 0.05);
+}
+
+.period-title {
+  color: #717976;
+  font-size: 22rpx;
+}
+
+.period-label {
+  margin-top: 4rpx;
+  color: #01261f;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.period-arrow {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 16rpx;
+  background: #f4f4f2;
+  color: #01261f;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 46rpx;
+  text-align: center;
+}
+
+.service-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.service-pill {
+  padding: 18rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 22rpx rgba(26, 60, 52, 0.05);
+}
+
+.service-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10rpx;
+}
+
+.service-name {
+  color: #01261f;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.service-hint {
+  margin-top: 6rpx;
+  color: #717976;
+  font-size: 22rpx;
+}
+
+.service-money {
+  flex: 0 0 auto;
+  color: #01261f;
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.conversion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.conversion-card {
+  padding: 20rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 22rpx rgba(26, 60, 52, 0.05);
+}
+
+.conversion-value {
+  color: #01261f;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.conversion-label {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 22rpx;
+}
+
+.rank-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
+  align-items: center;
+  margin-top: 16rpx;
+  padding: 22rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.rank-name {
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.rank-money {
+  flex: 0 0 auto;
+  color: #01261f;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.empty-line {
+  margin-top: 18rpx;
+  color: #72786f;
+  text-align: center;
+}

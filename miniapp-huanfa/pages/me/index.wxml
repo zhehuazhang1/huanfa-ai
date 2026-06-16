@@ -1,0 +1,92 @@
+<view class="page me-page">
+  <view class="profile-card">
+    <view>
+      <view class="page-title">我的</view>
+      <view class="muted">资料、预约、会员和 AI 次数</view>
+    </view>
+    <view class="phone-pill">{{customer.phone || customer.masked_phone || '未绑定手机号'}}</view>
+  </view>
+
+  <view class="info-card">
+    <view class="info-row">
+      <view>
+        <view class="info-label">名称</view>
+        <view class="info-value">{{customer.display_name || '未填写'}}</view>
+      </view>
+      <button class="small-button" bindtap="editName">修改</button>
+    </view>
+    <view class="info-row">
+      <view>
+        <view class="info-label">手机号</view>
+        <view class="info-value">{{customer.phone || customer.masked_phone || '正式上线后绑定微信手机号'}}</view>
+      </view>
+      <view class="text-note">微信绑定</view>
+    </view>
+    <view class="info-row">
+      <view>
+        <view class="info-label">出生日期</view>
+        <view class="info-value">{{customer.birthday || '未填写'}}</view>
+      </view>
+      <button class="small-button" bindtap="editBirthday">填写</button>
+    </view>
+    <view class="info-row">
+      <view>
+        <view class="info-label">性别方向</view>
+        <view class="info-value">{{genderText[customer.gender] || '未填写'}}</view>
+      </view>
+      <button class="small-button" bindtap="changeGender">选择</button>
+    </view>
+  </view>
+
+  <view class="metric-grid">
+    <view class="metric-card">
+      <view class="metric-value">{{quota.free_remaining || 0}}</view>
+      <view class="metric-label">今日免费试发</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{quota.gift_remaining || 0}}</view>
+      <view class="metric-label">赠送次数</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">¥{{membership.balance || 0}}</view>
+      <view class="metric-label">会员余额</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{packages.length || 0}}</view>
+      <view class="metric-label">可用套餐</view>
+    </view>
+  </view>
+
+  <view class="menu-card" bindtap="goOrders">
+    <view>
+      <view class="menu-title">我的预约</view>
+      <view class="menu-desc">查看预约状态、到店时间和服务方案</view>
+    </view>
+    <view class="menu-arrow">›</view>
+  </view>
+  <view class="menu-card" bindtap="goMember">
+    <view>
+      <view class="menu-title">会员与套餐</view>
+      <view class="menu-desc">查看余额、充值流水和已购次卡</view>
+    </view>
+    <view class="menu-arrow">›</view>
+  </view>
+  <view class="menu-card" bindtap="goChat">
+    <view>
+      <view class="menu-title">咨询师</view>
+      <view class="menu-desc">咨询发型、发质、预约和门店活动</view>
+    </view>
+    <view class="menu-arrow">›</view>
+  </view>
+
+  <view class="hint-card">
+    到店充值 AI 次数或会员时，可以报手机号给主理人，方便门店快速找到你的账号。
+  </view>
+
+  <view class="bottom-nav mini-nav">
+    <view class="nav-item" bindtap="goHome"><text class="nav-icon">首</text>首页</view>
+    <view class="nav-item" bindtap="goStyle"><text class="nav-icon">试</text>AI试发</view>
+    <view class="nav-item" bindtap="goChat"><text class="nav-icon">咨</text>咨询师</view>
+    <view class="nav-item active"><text class="nav-icon">我</text>我的</view>
+  </view>
+</view>

@@ -1,0 +1,56 @@
+<view class="page order-detail-page">
+  <view class="header-card">
+    <view>
+      <view class="order-title">订单 #{{order.id || orderId}}</view>
+      <view class="order-sub">{{order.sourceText}}</view>
+    </view>
+    <view class="status-pill">{{order.statusLabel}}</view>
+  </view>
+
+  <view class="section-card">
+    <view class="section-title">顾客与预约</view>
+    <view class="detail-row">
+      <text class="detail-label">顾客</text>
+      <text class="detail-value">{{order.customerText}}</text>
+    </view>
+    <view class="detail-row">
+      <text class="detail-label">主理人</text>
+      <text class="detail-value">{{order.stylistText}}</text>
+    </view>
+    <view class="detail-row">
+      <text class="detail-label">预约时间</text>
+      <text class="detail-value">{{order.appointmentText}}</text>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <view class="section-title">造型方案</view>
+    <view class="detail-row">
+      <text class="detail-label">发型</text>
+      <text class="detail-value strong">{{order.hairstyleText}}</text>
+    </view>
+    <view class="detail-row">
+      <text class="detail-label">发色</text>
+      <text class="detail-value strong">{{order.hairColorText}}</text>
+    </view>
+    <view class="detail-row">
+      <text class="detail-label">服务项目</text>
+      <text class="detail-value">{{order.serviceItemText}}</text>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <view class="section-title">沟通重点</view>
+    <view class="notes-box">{{order.notesText}}</view>
+  </view>
+
+  <view wx:if="{{order.status !== 'completed' && order.status !== 'cancelled'}}" class="section-card">
+    <view class="section-title">订单操作</view>
+    <view class="action-grid">
+      <button wx:if="{{order.status === 'pending'}}" class="action-button primary" data-status="confirmed" bindtap="updateStatus">确认预约</button>
+      <button wx:if="{{order.status === 'confirmed'}}" class="action-button primary" data-status="arrived" bindtap="updateStatus">标记到店</button>
+      <button wx:if="{{order.status === 'arrived'}}" class="action-button primary" data-status="serving" bindtap="updateStatus">开始服务</button>
+      <button class="action-button secondary" data-status="cancelled" bindtap="updateStatus">取消订单</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美发AI平台后台展示小样</title>
+  <style>
+    :root {
+      --bg: #f6f5ef;
+      --panel: #ffffff;
+      --ink: #20251f;
+      --muted: #687069;
+      --line: #dde2d8;
+      --green: #245f53;
+      --green-2: #e5f0eb;
+      --gold: #b67a23;
+      --blue: #345f8f;
+      --red: #a94f42;
+      --shadow: 0 12px 28px rgba(38, 48, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .side {
+      background: #1f2b27;
+      color: #f8faf7;
+      padding: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #d7a84f;
+      color: #1f2b27;
+      font-weight: 900;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-top: 16px;
+      padding-bottom: 4px;
+    }
+
+    .nav button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 16px;
+      color: #e9eee9;
+      background: rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      background: #d7a84f;
+      color: #1f2b27;
+      font-weight: 800;
+    }
+
+    .main {
+      padding: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0 14px;
+      background: var(--green);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: white;
+      color: var(--green);
+      border-color: var(--line);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .metric-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .field input, .field select {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #fbfcfa;
+      color: var(--ink);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th, td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      background: #fafbf8;
+      font-weight: 800;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: var(--green-2);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tag.gold {
+      background: #fbefd9;
+      color: var(--gold);
+    }
+
+    .tag.blue {
+      background: #e2edf8;
+      color: var(--blue);
+    }
+
+    .tag.red {
+      background: #fae7e3;
+      color: var(--red);
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .notice {
+      padding: 14px;
+      border-radius: 8px;
+      background: #fbefd9;
+      color: #5c421b;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ── 小操作按钮 ── */
+    .btn-sm {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--red);
+      border-radius: 6px;
+      background: white;
+      color: var(--red);
+      cursor: pointer;
+    }
+    .btn-sm:hover { background: #fdf0ee; }
+
+    /* ── 弹窗 ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500;
+    }
+    .modal-box {
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 28px;
+      width: min(480px, 95vw);
+      box-shadow: var(--shadow);
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: var(--muted);
+    }
+    .field-group { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── 登录遮罩 ── */
+    .login-mask {
+      position: fixed; inset: 0;
+      background: rgba(31,43,39,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    .login-box {
+      background: #fff; border-radius: 14px;
+      padding: 36px 32px; width: min(360px, calc(100vw - 40px));
+      box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    }
+    .login-box h2 {
+      margin: 0 0 6px; font-size: 20px; font-weight: 900; color: var(--ink);
+    }
+    .login-box p { margin: 0 0 24px; font-size: 13px; color: var(--muted); }
+    .login-field { display: grid; gap: 6px; margin-bottom: 14px; }
+    .login-field label { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .login-field input {
+      height: 44px; border: 1px solid var(--line); border-radius: 8px;
+      padding: 0 12px; font-size: 15px; color: var(--ink); background: #fbfcfa;
+      outline: none;
+    }
+    .login-field input:focus { border-color: var(--green); }
+    .login-btn {
+      width: 100%; height: 46px; border-radius: 8px; border: 0;
+      background: var(--green); color: #fff; font-size: 16px;
+      font-weight: 800; cursor: pointer; margin-top: 6px;
+    }
+    .login-btn:active { opacity: 0.85; }
+    .login-err {
+      margin-top: 12px; padding: 10px 12px; border-radius: 6px;
+      background: #fae7e3; color: var(--red); font-size: 13px;
+    }
+    .logout-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px; color: rgba(255,255,255,0.7);
+      padding: 0 10px; height: 32px; font-size: 13px;
+      cursor: pointer; margin-top: 16px; width: 100%;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.1); }
+
+    @media (min-width: 768px) {
+      .layout {
+        grid-template-columns: 220px 1fr;
+      }
+
+      .side {
+        min-height: 100vh;
+        position: sticky;
+        top: 0;
+      }
+
+      .nav {
+        display: grid;
+        overflow: visible;
+      }
+
+      .nav button {
+        width: 100%;
+        justify-content: flex-start;
+        border-radius: 8px;
+        text-align: left;
+      }
+
+      .main {
+        padding: 26px;
+      }
+
+      .topbar {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .filters {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .section-head {
+        flex-direction: row;
+        align-items: end;
+        justify-content: space-between;
+      }
+
+      .split {
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+    }
+
+    @media (min-width: 1120px) {
+      .grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="side">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>美发AI平台</div>
+      </div>
+      <nav class="nav" id="nav">
+        <button class="active" data-tab="overview">总览</button>
+        <button data-tab="tenants">客户与门店</button>
+        <button data-tab="stats">用量统计</button>
+        <button data-tab="jobs">生成记录</button>
+        <button data-tab="packages">AI次数包</button>
+        <button data-tab="keys">密钥管理</button>
+        <button data-tab="billing">账单与毛利</button>
+      </nav>
+      <button class="logout-btn" id="logoutBtn">退出登录</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="title">平台经营后台</div>
+          <div class="subtitle">给你自己用：管理多个美发商家、门店、AI额度、真实成本和结算账单。</div>
+        </div>
+        <div class="actions hidden" id="topActions">
+          <button class="btn secondary" id="loadApi">刷新数据</button>
+          <button class="btn" onclick="openAddTenantModal()">新增商家</button>
+        </div>
+      </div>
+
+      <section id="overview" class="tab-panel">
+        <!-- 低余额预警横幅 -->
+        <div id="balanceWarnings" class="hidden" style="margin-bottom:14px"></div>
+
+        <div class="grid">
+          <div class="metric">
+            <div class="metric-label">活跃商家数</div>
+            <div class="metric-value" id="tenantCount">—</div>
+            <div class="metric-note">连锁商家按租户管理</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">本月成功生成</div>
+            <div class="metric-value" id="successJobsCount">—</div>
+            <div class="metric-note" id="overviewMonth">本月统计</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">本月应收</div>
+            <div class="metric-value" id="revenueCount">¥—</div>
+            <div class="metric-note">按 ¥2/组结算</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">本月平台毛利</div>
+            <div class="metric-value" id="profitCount">¥—</div>
+            <div class="metric-note" id="profitNote">收入减真实API成本</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">AI对话成本（连锁版）</div>
+            <div class="metric-value" id="llmCostDisplay">¥—</div>
+            <div class="metric-note" id="llmTurnsNote">本月对话次数</div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:16px">
+          <div class="section-head">
+            <div>
+              <div class="section-title">平台资源状态</div>
+              <div class="subtitle">所有商家 AI 余额汇总，余额低于50次会触发预警。</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>商家</th><th>订阅套餐</th><th>剩余次数</th><th>本月已用</th><th>本月应收</th><th>状态</th><th>操作</th></tr>
+              </thead>
+              <tbody id="overviewTenantRows"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tenants" class="tab-panel hidden">
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">客户与门店</div>
+              <div class="subtitle">一个客户可以有多家门店，共享客户级AI额度池。</div>
+            </div>
+            <div class="filters">
+              <div class="field">
+                <label>客户状态</label>
+                <select>
+                  <option>全部</option>
+                  <option>启用</option>
+                  <option>停用</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>客户</th>
+                  <th>门店</th>
+                  <th>订阅套餐</th>
+                  <th>剩余额度</th>
+                  <th>本月用量</th>
+                  <th>本月应收</th>
+                  <th>LLM/月</th>
+                  <th>备注</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="tenantRows"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="packages" class="tab-panel hidden">
+        <div class="split">
+          <div class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">AI次数包销售</div>
+                <div class="subtitle">客户买次数包，你赚客户结算价和真实API成本之间的差额。</div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>次数包</th>
+                    <th>次数</th>
+                    <th>卖给客户</th>
+                    <th>预估真实成本</th>
+                    <th>预估毛利</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>体验包</td><td>1,000次</td><td>¥2,000</td><td>¥800</td><td><span class="tag">¥1,200</span></td></tr>
+                  <tr><td>标准包</td><td>5,000次</td><td>¥8,500</td><td>¥4,000</td><td><span class="tag">¥4,500</span></td></tr>
+                  <tr><td>连锁包</td><td>20,000次</td><td>¥30,000</td><td>¥16,000</td><td><span class="tag">¥14,000</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head">
+              <div class="section-title">客户赚钱逻辑</div>
+            </div>
+            <div class="panel-body">
+              <div class="notice">客户可把AI试发作为到店转化工具：店内扫码免费2次，额外次数可付费；主理人可赠送1次并统计转化。客户通过提高到店成交率赚钱，你通过AI次数包和SaaS服务费赚钱。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="keys" class="tab-panel hidden">
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">API密钥管理</div>
+              <div class="subtitle">平台统一管理 Dify、通义万相、OSS、微信支付、飞书密钥，密钥保存后加密存储、仅展示掩码。</div>
+            </div>
+            <button class="btn" onclick="openAddKeyModal()">＋ 新增密钥</button>
+          </div>
+          <div id="keysStatus" class="notice hidden" style="margin-bottom:12px"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>服务商</th>
+                  <th>密钥名称</th>
+                  <th>归属</th>
+                  <th>掩码值</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="keysRows">
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">切换到本页时自动加载…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="billing" class="tab-panel hidden">
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">账单与毛利</div>
+              <div class="subtitle">真实 API 成本和毛利仅平台后台可见；客户只看到应付金额。</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+              <div class="field">
+                <label>月份</label>
+                <input type="month" id="billingMonth" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa;color:var(--ink)">
+              </div>
+              <button class="btn secondary" onclick="loadBilling()">刷新</button>
+            </div>
+          </div>
+          <!-- 合计行 -->
+          <div id="billingTotal" style="padding:14px 16px;background:#fafbf8;border-bottom:1px solid var(--line);display:none">
+            <span id="billingTotalText" style="font-size:13px;color:var(--muted)"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>客户</th>
+                  <th>成功组数</th>
+                  <th>应收（¥2/组）</th>
+                  <th>API成本</th>
+                  <th>平台毛利</th>
+                  <th>当前余额</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="billingRows"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">切换到本页时自动加载…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- ── 用量统计 Tab ── -->
+      <section id="stats" class="tab-panel hidden">
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">用量统计</div>
+              <div class="subtitle">按时间维度查看生成量、成本、收入趋势，方便管理成本。</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+              <div class="field">
+                <label>粒度</label>
+                <select id="statsPeriod" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+                  <option value="day">按天</option>
+                  <option value="week">按周</option>
+                  <option value="month" selected>按月</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>开始日期</label>
+                <input type="date" id="statsStart" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+              </div>
+              <div class="field">
+                <label>截止日期</label>
+                <input type="date" id="statsEnd" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+              </div>
+              <button class="btn secondary" onclick="loadStats()">查询</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时段</th><th>发起组数</th><th>成功组数</th><th>失败组数</th>
+                  <th>成功率</th><th>图片总数</th><th>API成本(¥)</th><th>应收(¥)</th><th>毛利(¥)</th>
+                </tr>
+              </thead>
+              <tbody id="statsRows"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">选择时间范围后点击查询</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 顾客明细 -->
+        <div class="section" style="margin-top:16px">
+          <div class="section-head">
+            <div>
+              <div class="section-title">本月顾客明细</div>
+              <div class="subtitle">按顾客聚合，查看每人的生成组数和应收金额。</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+              <div class="field">
+                <label>月份</label>
+                <input type="month" id="customerStatsMonth" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+              </div>
+              <button class="btn secondary" onclick="loadCustomerStats()">查询</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>顾客</th><th>发起组</th><th>成功组</th><th>主图✓</th><th>推荐1✓</th><th>推荐2✓</th>
+                  <th>总图片</th><th>API成本(¥)</th><th>应收(¥)</th>
+                </tr>
+              </thead>
+              <tbody id="customerStatsRows"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">切换到本页时自动加载</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 生成记录 Tab ── -->
+      <section id="jobs" class="tab-panel hidden">
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">AI生成记录</div>
+              <div class="subtitle">每组3张图（主图/推荐1/推荐2）各自状态，仅平台后台可见失败详情。</div>
+            </div>
+          </div>
+          <!-- 筛选栏 -->
+          <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div class="field">
+              <label>客户</label>
+              <select id="jobsTenantId" onchange="onJobsTenantChange()" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa;min-width:160px">
+                <option value="">全部客户</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>门店</label>
+              <select id="jobsStoreId" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa;min-width:160px">
+                <option value="">全部门店</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>状态</label>
+              <select id="jobsStatus" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+                <option value="all">全部</option>
+                <option value="success">成功</option>
+                <option value="failed">失败</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>开始日期</label>
+              <input type="date" id="jobsDateFrom" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+            </div>
+            <div class="field">
+              <label>截止日期</label>
+              <input type="date" id="jobsDateTo" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+            </div>
+            <button class="btn secondary" onclick="loadJobs(1)" style="margin-bottom:2px">查询</button>
+          </div>
+          <div id="jobsInfo" style="padding:10px 16px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)">共 — 条记录</div>
+          <div class="table-wrap">
+            <table style="min-width:860px">
+              <thead>
+                <tr>
+                  <th>时间</th><th>客户/门店</th><th>顾客</th><th>状态</th>
+                  <th>主图</th><th>推荐1</th><th>推荐2</th>
+                  <th>成本(¥)</th><th>计费</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="jobsRows"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">切换到本页时自动加载</td></tr></tbody>
+            </table>
+          </div>
+          <div id="jobsPager" style="padding:14px 16px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--line)"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 生成记录详情弹窗 -->
+  <div class="modal-overlay hidden" id="jobDetailModal">
+    <div class="modal-box" style="width:min(680px,96vw);max-height:90vh;overflow-y:auto">
+      <div class="modal-head" style="position:sticky;top:0;background:#fff;padding-bottom:12px;z-index:1">
+        <div>
+          <div class="section-title" id="jobDetailTitle">生成详情</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px" id="jobDetailSubtitle"></div>
+        </div>
+        <button class="modal-close" onclick="closeJobDetail()">✕</button>
+      </div>
+      <!-- 基本信息 -->
+      <div id="jobDetailMeta" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;font-size:13px"></div>
+      <!-- 三张图卡片 -->
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">图片详情（3 张/组）</div>
+      <div id="jobDetailSlots" style="display:grid;gap:12px"></div>
+      <!-- 错误信息 -->
+      <div id="jobDetailError" class="hidden" style="margin-top:14px;padding:12px;background:#fdf0ee;border-radius:8px;font-size:13px;color:var(--red)"></div>
+    </div>
+  </div>
+
+  <!-- 充值弹窗 -->
+  <div class="modal-overlay hidden" id="rechargeModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="section-title">给客户充值 AI 次数</span>
+        <button class="modal-close" onclick="closeRechargeModal()">✕</button>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label>客户</label>
+          <input type="text" id="rechargeTenantName" readonly style="background:#f5f5f5">
+        </div>
+        <div class="field">
+          <label>充值次数</label>
+          <input type="number" id="rechargeCount" placeholder="如 1000" min="1">
+        </div>
+        <div class="field">
+          <label>收款金额（元，自动按 ¥2/次 计算）</label>
+          <input type="number" id="rechargeAmount" placeholder="如 2000" step="0.01">
+        </div>
+        <div class="field">
+          <label>备注</label>
+          <input type="text" id="rechargeNote" placeholder="如：首批试用，2026-06">
+        </div>
+      </div>
+      <div id="rechargeErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn" id="doRechargeBtn" onclick="doRecharge()">确认充值</button>
+        <button class="btn secondary" onclick="closeRechargeModal()">取 消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 订阅套餐弹窗 -->
+  <div class="modal-overlay hidden" id="subModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="section-title">修改订阅套餐</span>
+        <button class="modal-close" onclick="closeSubModal()">✕</button>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label>客户</label>
+          <input type="text" id="subTenantName" readonly style="background:#f5f5f5">
+        </div>
+        <div class="field">
+          <label>订阅套餐</label>
+          <select id="subPlan">
+            <option value="trial">免费试用（¥0/月）</option>
+            <option value="basic">基础版（¥199/月）</option>
+            <option value="pro">专业版（¥499/月）</option>
+            <option value="enterprise">连锁版（¥1,999/月）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>订阅月数</label>
+          <input type="number" id="subMonths" value="1" min="1" max="24" placeholder="如 1">
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:-8px">
+          试用版月数填 0 或任意数字（不计算到期时间）。续费将在现有到期日基础上累加。
+        </div>
+      </div>
+      <div id="subErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn" id="doSubBtn" onclick="doSetSubscription()">确认设置</button>
+        <button class="btn secondary" onclick="closeSubModal()">取 消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增商家弹窗 -->
+  <div class="modal-overlay hidden" id="addTenantModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="section-title">新增商家</span>
+        <button class="modal-close" onclick="closeAddTenantModal()">✕</button>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label>商家名称</label>
+          <input type="text" id="newTenantName" placeholder="如：张老师美发 / 某某造型">
+        </div>
+        <div class="field">
+          <label>初始 AI 次数</label>
+          <input type="number" id="newTenantAiCount" value="0" min="0" placeholder="如 100">
+        </div>
+        <div class="field">
+          <label>备注</label>
+          <input type="text" id="newTenantNotes" placeholder="可选，内部备注">
+        </div>
+      </div>
+      <div id="addTenantErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn" id="doAddTenantBtn" onclick="doCreateTenant()">确认新增</button>
+        <button class="btn secondary" onclick="closeAddTenantModal()">取 消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增密钥弹窗 -->
+  <div class="modal-overlay hidden" id="addKeyModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="section-title">新增 / 更新 API 密钥</span>
+        <button class="modal-close" onclick="closeAddKeyModal()">✕</button>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label>选择密钥类型</label>
+          <select id="keyPreset" onchange="onKeyPresetChange()">
+            <option value="">— 选择 —</option>
+            <option value="deepseek|api_key">DeepSeek · API密钥（连锁版AI咨询师）</option>
+            <option value="dify|api_key">Dify · API密钥</option>
+            <option value="dashscope|api_key">通义万相（DashScope）· API密钥</option>
+            <option value="oss|access_key_id">阿里云OSS · Access Key ID</option>
+            <option value="oss|access_key_secret">阿里云OSS · Access Key Secret</option>
+            <option value="wechat_pay|api_key">微信支付 · API密钥</option>
+            <option value="feishu|webhook">飞书 · Webhook地址</option>
+          </select>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:-8px" id="keyHint"></div>
+        <input type="hidden" id="keyProvider">
+        <input type="hidden" id="keyName">
+        <div class="field">
+          <label>密钥值（明文，保存后加密存储）</label>
+          <input type="password" id="keyValue" placeholder="填写真实密钥">
+        </div>
+        <div class="field">
+          <label>归属商户 ID（留空 = 平台级密钥）</label>
+          <input type="number" id="keyTenantId" placeholder="如 1，留空为平台级">
+        </div>
+      </div>
+      <div id="keyErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn" id="saveKeyBtn" onclick="saveApiKey()">保 存</button>
+        <button class="btn secondary" onclick="closeAddKeyModal()">取 消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录遮罩 -->
+  <div class="login-mask" id="loginMask">
+    <div class="login-box">
+      <h2>美发AI平台后台</h2>
+      <p>请使用平台管理员账号登录</p>
+      <div class="login-field">
+        <label>账号</label>
+        <input type="text" id="loginUser" value="Admin123" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>密码</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="请输入密码">
+      </div>
+      <button class="login-btn" id="loginBtn">登 录</button>
+      <div class="login-err hidden" id="loginErr"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = "/api";
+    let token = sessionStorage.getItem("platform_token") || "";
+
+    // ── 工具函数 ──
+    function curMonth() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    }
+    function curDate() {
+      return new Date().toISOString().slice(0,10);
+    }
+    function monthStart(m) { return m + "-01"; }
+    function monthEnd(m) {
+      const [y, mo] = m.split("-").map(Number);
+      return new Date(y, mo, 0).toISOString().slice(0,10);
+    }
+    function fmt(n, decimals=0) {
+      return Number(n || 0).toLocaleString("zh-CN", {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+    }
+
+    // ── 鉴权请求封装 ──
+    async function apiFetch(path, opts = {}) {
+      const res = await fetch(API + path, {
+        ...opts,
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, ...(opts.headers || {}) }
+      });
+      if (res.status === 401) { doLogout(); throw new Error("token失效，请重新登录"); }
+      return res.json();
+    }
+
+    // ── 登录 ──
+    async function doLogin() {
+      const user = document.getElementById("loginUser").value.trim();
+      const pass = document.getElementById("loginPass").value;
+      const errEl = document.getElementById("loginErr");
+      errEl.classList.add("hidden");
+      document.getElementById("loginBtn").textContent = "登录中…";
+      try {
+        const data = await fetch(API + "/auth/platform-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: user, password: pass })
+        }).then(r => r.json());
+        if (!data.access_token) throw new Error(data.detail || "登录失败");
+        token = data.access_token;
+        sessionStorage.setItem("platform_token", token);
+        document.getElementById("loginMask").classList.add("hidden");
+        loadDashboard();
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove("hidden");
+      }
+      document.getElementById("loginBtn").textContent = "登 录";
+    }
+
+    function doLogout() {
+      token = "";
+      sessionStorage.removeItem("platform_token");
+      document.getElementById("loginMask").classList.remove("hidden");
+      document.getElementById("loginPass").value = "";
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", doLogin);
+    document.getElementById("loginPass").addEventListener("keydown", e => e.key === "Enter" && doLogin());
+    document.getElementById("logoutBtn").addEventListener("click", doLogout);
+
+    if (token) {
+      document.getElementById("loginMask").classList.add("hidden");
+      loadDashboard();
+    }
+
+    // ── Tab 切换 ──
+    document.getElementById("nav").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-tab]");
+      if (!button) return;
+      document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+      button.classList.add("active");
+      const tab = button.dataset.tab;
+      document.getElementById(tab).classList.remove("hidden");
+      // “刷新数据”“新增客户”按钮只在“客户与门店”页显示
+      document.getElementById("topActions").classList.toggle("hidden", tab !== "tenants");
+      if (tab === "keys")    loadApiKeys();
+      if (tab === "billing") loadBilling();
+      if (tab === "stats")   { initStatsDefaults(); loadStats(); loadCustomerStats(); }
+      if (tab === "jobs")    { initJobsDefaults(); loadJobs(1); }
+      if (tab === "tenants") loadTenants();
+    });
+
+    // ────────────────────────────────────────
+    // 总览 Dashboard
+    // ────────────────────────────────────────
+    async function loadDashboard() {
+      const month = curMonth();
+      try {
+        const [overview, billing, tenantDash] = await Promise.all([
+          apiFetch(`/platform/overview?month=${month}`),
+          apiFetch(`/platform/billing-summary?month=${month}`),
+          apiFetch(`/platform/tenant-dashboard`)
+        ]);
+        // 建立 tenantId → subscription 的快查表
+        const subMap = {};
+        (tenantDash || []).forEach(t => { subMap[t.id] = t; });
+        // KPI 卡
+        document.getElementById("tenantCount").textContent = fmt(overview.tenants?.active);
+        document.getElementById("successJobsCount").textContent = fmt(overview.ai?.success_jobs) + " 组";
+        document.getElementById("revenueCount").textContent = "¥" + fmt(overview.finance?.estimated_revenue, 2);
+        document.getElementById("profitCount").textContent = "¥" + fmt(overview.finance?.estimated_gross_profit, 2);
+        document.getElementById("overviewMonth").textContent = `${month} 统计`;
+        const gp = overview.finance?.estimated_gross_profit || 0;
+        const rev = overview.finance?.estimated_revenue || 1;
+        document.getElementById("profitNote").textContent = `毛利率 ${Math.round(gp/rev*100)}%`;
+        // LLM 对话成本卡
+        const llm = overview.llm || {};
+        document.getElementById("llmCostDisplay").textContent = "¥" + fmt(llm.total_cost_yuan || 0, 2);
+        document.getElementById("llmTurnsNote").textContent = `本月对话 ${fmt(llm.total_turns || 0)} 次，均摊 ¥${fmt(llm.avg_cost_fen_per_turn ? llm.avg_cost_fen_per_turn/100 : 0, 3)}/次`;
+
+        // 低余额预警横幅
+        const warnings = (billing.tenants || []).filter(t => t.balance_warning);
+        const warnEl = document.getElementById("balanceWarnings");
+        if (warnings.length) {
+          warnEl.classList.remove("hidden");
+          warnEl.innerHTML = warnings.map(t =>
+            `<div style="padding:12px 16px;background:#fae7e3;color:var(--red);border-radius:8px;margin-bottom:8px;font-size:14px">
+              ⚠️ <b>${t.tenant_name}</b> 余额仅剩 <b>${fmt(t.balance_remaining)} 次</b>，请及时续费
+              <button onclick="openRechargeModal(${t.tenant_id},'${t.tenant_name}')" style="margin-left:12px;padding:2px 10px;border:1px solid var(--red);border-radius:6px;background:white;color:var(--red);cursor:pointer;font-size:12px">充值</button>
+            </div>`
+          ).join("");
+        } else {
+          warnEl.classList.add("hidden");
+        }
+
+        // 总览客户表
+        const tbody = document.getElementById("overviewTenantRows");
+        if ((billing.tenants || []).length) {
+          tbody.innerHTML = (billing.tenants || []).map(t => {
+            const cls = t.balance_warning ? "tag red" : "tag";
+            const statusText = t.balance_warning ? "余额低" : "正常";
+            const sub = subMap[t.tenant_id] || {};
+            return `<tr>
+              <td>${t.tenant_name}</td>
+              <td>${planBadge(sub.subscription_plan, sub.subscription_expires_at)}</td>
+              <td>${fmt(t.balance_remaining)} 次</td>
+              <td>${fmt(t.success_sets)} 组</td>
+              <td>¥${fmt(t.amount_due, 2)}</td>
+              <td><span class="${cls}">${statusText}</span></td>
+              <td><button onclick="openRechargeModal(${t.tenant_id},'${t.tenant_name}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">充值</button></td>
+            </tr>`;
+          }).join("");
+        } else {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">暂无数据</td></tr>`;
+        }
+      } catch (e) {
+        console.warn("loadDashboard 失败：", e.message);
+      }
+    }
+
+    document.getElementById("loadApi").addEventListener("click", () => { loadTenants(); loadDashboard(); });
+
+    // ────────────────────────────────────────
+    // 客户与门店 Tab
+    // ────────────────────────────────────────
+    async function loadTenants() {
+      const tbody = document.getElementById("tenantRows");
+      const month = curMonth();
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        const [tenants, billing] = await Promise.all([
+          apiFetch("/platform/tenant-dashboard"),
+          apiFetch(`/platform/billing-summary?month=${month}`)
+        ]);
+        const billingMap = {};
+        (billing.tenants || []).forEach(t => { billingMap[t.tenant_id] = t; });
+        if (!(tenants || []).length) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">暂无数据</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = (tenants || []).map(item => {
+          const bl = billingMap[item.id] || {};
+          const active = item.status === "active";
+          const cls = active ? "tag" : "tag red";
+          const llmYuan = (item.monthly_llm_cost_fen || 0) / 100;
+          const notes = item.notes || "";
+          return `<tr>
+            <td><b>${item.name}</b><div style="font-size:12px;color:var(--muted)">#${item.id}</div></td>
+            <td>${item.stores?.total ?? 0} 家</td>
+            <td>${planBadge(item.subscription_plan, item.subscription_expires_at)}</td>
+            <td>${fmt(item.ai?.balance ?? 0)} 次</td>
+            <td>${fmt(bl.success_sets ?? 0)} 组</td>
+            <td>¥${fmt(bl.amount_due ?? 0, 2)}</td>
+            <td>${llmYuan > 0 ? "¥" + fmt(llmYuan, 2) : "<span style='color:var(--muted)'>—</span>"}</td>
+            <td>
+              <input type="text" value="${notes.replace(/"/g, "&quot;")}" placeholder="添加备注…"
+                data-tenant-id="${item.id}"
+                onchange="saveTenantNote(${item.id}, this.value)"
+                style="width:120px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;color:var(--text)">
+            </td>
+            <td><span class="${cls}">${active ? "启用" : "停用"}</span></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="openRechargeModal(${item.id},'${item.name}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">充值</button>
+              <button onclick="openSubModal(${item.id},'${item.name}','${item.subscription_plan||'trial'}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">改套餐</button>
+            </td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--red);padding:24px">加载失败：${e.message}</td></tr>`;
+      }
+    }
+
+    async function saveTenantNote(tenantId, value) {
+      try {
+        await apiFetch(`/platform/tenants/${tenantId}`, {
+          method: "PUT",
+          body: JSON.stringify({ notes: value })
+        });
+      } catch (e) {
+        alert("备注保存失败：" + e.message);
+      }
+    }
+
+    // ────────────────────────────────────────
+    // 账单 Tab
+    // ────────────────────────────────────────
+    async function loadBilling() {
+      const month = document.getElementById("billingMonth").value || curMonth();
+      const tbody = document.getElementById("billingRows");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        const data = await apiFetch(`/platform/billing-summary?month=${month}`);
+        const pt = data.platform_total || {};
+        const totalEl = document.getElementById("billingTotal");
+        const totalText = document.getElementById("billingTotalText");
+        totalEl.style.display = "block";
+        totalText.innerHTML = `合计：<b>${fmt(pt.success_sets)} 组</b> · 应收 <b>¥${fmt(pt.amount_due,2)}</b> · API成本 ¥${fmt(pt.api_cost,2)} · 毛利 <b>¥${fmt(pt.gross_profit,2)}</b>（毛利率 ${pt.amount_due > 0 ? Math.round(pt.gross_profit/pt.amount_due*100) : 0}%）`;
+        if (!(data.tenants || []).length) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">本月暂无数据</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = (data.tenants || []).map(t => {
+          const warnTag = t.balance_warning ? `<span class="tag red" style="margin-left:6px">余额低</span>` : "";
+          return `<tr>
+            <td><b>${t.tenant_name}</b>${warnTag}</td>
+            <td>${fmt(t.success_sets)} 组</td>
+            <td><b>¥${fmt(t.amount_due, 2)}</b></td>
+            <td>¥${fmt(t.api_cost, 2)}</td>
+            <td><span class="tag">¥${fmt(t.gross_profit, 2)}</span></td>
+            <td>${fmt(t.balance_remaining)} 次</td>
+            <td><button onclick="openRechargeModal(${t.tenant_id},'${t.tenant_name}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">充值</button></td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px">加载失败：${e.message}</td></tr>`;
+      }
+    }
+
+    // ────────────────────────────────────────
+    // 用量统计 Tab
+    // ────────────────────────────────────────
+    function initStatsDefaults() {
+      const m = curMonth();
+      if (!document.getElementById("statsStart").value) document.getElementById("statsStart").value = monthStart(m);
+      if (!document.getElementById("statsEnd").value)   document.getElementById("statsEnd").value   = monthEnd(m);
+      if (!document.getElementById("customerStatsMonth").value) document.getElementById("customerStatsMonth").value = m;
+    }
+
+    async function loadStats() {
+      const start  = document.getElementById("statsStart").value;
+      const end    = document.getElementById("statsEnd").value;
+      const period = document.getElementById("statsPeriod").value;
+      if (!start || !end) return;
+      const tbody = document.getElementById("statsRows");
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        const data = await apiFetch(`/platform/stats/daily?start=${start}&end=${end}&period=${period}`);
+        if (!(data || []).length) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">该时段暂无数据</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = (data || []).map(r => `<tr>
+          <td style="font-family:monospace">${r.period}</td>
+          <td>${fmt(r.total_sets)}</td>
+          <td><b>${fmt(r.success_sets)}</b></td>
+          <td style="color:var(--red)">${fmt(r.failed_sets)}</td>
+          <td>${r.success_rate}</td>
+          <td>${fmt(r.total_photos)}</td>
+          <td>¥${fmt(r.cost,3)}</td>
+          <td><b>¥${fmt(r.revenue,2)}</b></td>
+          <td><span class="tag">¥${fmt(r.gross_profit,2)}</span></td>
+        </tr>`).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">加载失败：${e.message}</td></tr>`;
+      }
+    }
+
+    async function loadCustomerStats() {
+      const month = document.getElementById("customerStatsMonth").value || curMonth();
+      const tbody = document.getElementById("customerStatsRows");
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        // 默认查租户1，后续可改成下拉选择
+        const data = await apiFetch(`/platform/customer-stats?tenant_id=1&month=${month}`);
+        if (!(data || []).length) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">本月暂无数据</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = (data || []).map(r => `<tr>
+          <td><b>${r.nickname}</b><div style="font-size:12px;color:var(--muted)">#${r.user_id}</div></td>
+          <td>${fmt(r.total_sets)}</td>
+          <td><b>${fmt(r.success_sets)}</b></td>
+          <td>${fmt(r.main_ok)}</td>
+          <td>${fmt(r.rec1_ok)}</td>
+          <td>${fmt(r.rec2_ok)}</td>
+          <td>${fmt(r.total_photos)}</td>
+          <td>¥${fmt(r.cost,3)}</td>
+          <td><b>¥${fmt(r.revenue,2)}</b></td>
+        </tr>`).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">加载失败：${e.message}</td></tr>`;
+      }
+    }
+
+    // ────────────────────────────────────────
+    // 生成记录 Tab
+    // ────────────────────────────────────────
+    function initJobsDefaults() {
+      const m = curMonth();
+      if (!document.getElementById("jobsDateFrom").value) document.getElementById("jobsDateFrom").value = monthStart(m);
+      if (!document.getElementById("jobsDateTo").value)   document.getElementById("jobsDateTo").value   = curDate();
+      // 加载客户下拉
+      loadJobsTenants();
+    }
+
+    async function loadJobsTenants() {
+      const sel = document.getElementById("jobsTenantId");
+      if (sel.options.length > 1) return; // 已加载过
+      try {
+        const tenants = await apiFetch("/platform/tenant-dashboard");
+        (tenants || []).forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.name;
+          sel.appendChild(opt);
+        });
+      } catch(e) { console.warn("加载客户列表失败", e.message); }
+    }
+
+    async function onJobsTenantChange() {
+      const tenantId = document.getElementById("jobsTenantId").value;
+      const storeSel = document.getElementById("jobsStoreId");
+      storeSel.innerHTML = `<option value="">全部门店</option>`;
+      if (!tenantId) return;
+      try {
+        const stores = await apiFetch(`/platform/stores?tenant_id=${tenantId}`);
+        (stores || []).forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = s.name;
+          storeSel.appendChild(opt);
+        });
+      } catch(e) { console.warn("加载门店列表失败", e.message); }
+      loadJobs(1);
+    }
+
+    let _jobsCurrentPage = 1;
+    // 全量缓存当前页数据，供详情弹窗使用
+    let _jobsCache = [];
+
+    async function loadJobs(page) {
+      page = page || 1;
+      _jobsCurrentPage = page;
+      const tenantId = document.getElementById("jobsTenantId").value;
+      const storeId  = document.getElementById("jobsStoreId").value;
+      const status   = document.getElementById("jobsStatus").value;
+      const dateFrom = document.getElementById("jobsDateFrom").value;
+      const dateTo   = document.getElementById("jobsDateTo").value;
+      const tbody    = document.getElementById("jobsRows");
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        const qs = new URLSearchParams({ page, page_size: 20 });
+        if (tenantId) qs.set("tenant_id", tenantId);
+        if (storeId)  qs.set("store_id", storeId);
+        if (status && status !== "all") qs.set("status", status);
+        if (dateFrom) qs.set("date_from", dateFrom);
+        if (dateTo)   qs.set("date_to", dateTo);
+        const data = await apiFetch(`/platform/jobs?${qs}`);
+        _jobsCache = data.items || [];
+        // 筛选标签
+        const filterHints = [];
+        if (tenantId) {
+          const sel = document.getElementById("jobsTenantId");
+          filterHints.push(sel.options[sel.selectedIndex]?.text || "");
+        }
+        if (storeId) {
+          const sel = document.getElementById("jobsStoreId");
+          filterHints.push(sel.options[sel.selectedIndex]?.text || "");
+        }
+        const hintStr = filterHints.length ? `（${filterHints.join(" · ")}）` : "";
+        document.getElementById("jobsInfo").textContent = `共 ${fmt(data.total)} 条记录${hintStr} · 第 ${page} 页`;
+        if (!_jobsCache.length) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">暂无数据</td></tr>`;
+          renderJobsPager(0, page, 20);
+          return;
+        }
+        tbody.innerHTML = _jobsCache.map((job, idx) => {
+          const overall = job.status === "success"
+            ? `<span class="tag">✓ 成功</span>`
+            : `<span class="tag red">✗ 失败</span>`;
+          const slotCell = (slotKey) => {
+            const s = (job.slots || []).find(x => x.slot === slotKey);
+            if (!s) return `<td style="color:var(--muted);text-align:center">—</td>`;
+            if (s.status === "success") return `<td style="color:var(--green);text-align:center;font-size:16px">✓</td>`;
+            return `<td style="color:var(--red);text-align:center;font-size:16px">✗</td>`;
+          };
+          const billingTag = job.billing_type === "free"
+            ? `<span class="tag">免费</span>`
+            : job.billing_type === "gift"
+            ? `<span class="tag blue">赠送</span>`
+            : `<span class="tag gold">付费</span>`;
+          const dt = job.created_at ? job.created_at.slice(5,16) : "—";
+          return `<tr style="cursor:pointer" onclick="openJobDetail(${idx})" title="点击查看详情">
+            <td style="font-size:12px;font-family:monospace">${dt}</td>
+            <td><div style="font-weight:700;font-size:13px">${job.tenant_name||"—"}</div><div style="font-size:11px;color:var(--muted)">${job.store_name||"—"}</div></td>
+            <td>${job.nickname}<div style="font-size:11px;color:var(--muted)">#${job.user_id}</div></td>
+            <td>${overall}</td>
+            ${slotCell("main")}${slotCell("natural")}${slotCell("advanced")}
+            <td style="font-family:monospace;font-size:12px">¥${fmt(job.internal_api_cost,3)}</td>
+            <td>${billingTag}</td>
+            <td><button onclick="event.stopPropagation();openJobDetail(${idx})" style="height:26px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">详情</button></td>
+          </tr>`;
+        }).join("");
+        renderJobsPager(data.total, page, 20);
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--red);padding:24px">加载失败：${e.message}</td></tr>`;
+      }
+    }
+
+    function renderJobsPager(total, cur, pageSize) {
+      const pages = Math.ceil(total / pageSize) || 1;
+      const el = document.getElementById("jobsPager");
+      let html = "";
+      if (cur > 1) html += `<button onclick="loadJobs(${cur-1})" style="height:32px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:white;cursor:pointer">← 上一页</button>`;
+      html += `<span style="font-size:13px;color:var(--muted)">第 ${cur} / ${pages} 页</span>`;
+      if (cur < pages) html += `<button onclick="loadJobs(${cur+1})" style="height:32px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:white;cursor:pointer">下一页 →</button>`;
+      el.innerHTML = html;
+    }
+
+    // ── 生成记录详情弹窗 ──
+    const SLOT_LABELS = { main:"主图（选定发型+颜色）", natural:"推荐图1（同发型+自然黑）", advanced:"推荐图2（热门发型+选定颜色）" };
+    const BILLING_LABELS = { free:"免费", gift:"赠送", paid:"付费" };
+
+    function openJobDetail(idx) {
+      const job = _jobsCache[idx];
+      if (!job) return;
+
+      document.getElementById("jobDetailTitle").textContent = `生成详情 · ${job.job_no}`;
+      document.getElementById("jobDetailSubtitle").textContent =
+        `${job.created_at || ""}  ·  ${job.tenant_name || ""}  ·  ${job.store_name || ""}`;
+
+      // 基本信息格
+      const statusHtml = job.status === "success"
+        ? `<span class="tag">✓ 成功</span>`
+        : `<span class="tag red">✗ 失败</span>`;
+      const billingHtml = job.billing_type === "gift"
+        ? `<span class="tag blue">赠送</span>`
+        : job.billing_type === "paid"
+        ? `<span class="tag gold">付费</span>`
+        : `<span class="tag">免费</span>`;
+      document.getElementById("jobDetailMeta").innerHTML = `
+        <div style="padding:10px;background:#fafbf8;border-radius:8px;border:1px solid var(--line)">
+          <div style="color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px">整体状态</div>
+          <div>${statusHtml}</div>
+        </div>
+        <div style="padding:10px;background:#fafbf8;border-radius:8px;border:1px solid var(--line)">
+          <div style="color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px">计费类型</div>
+          <div>${billingHtml}</div>
+        </div>
+        <div style="padding:10px;background:#fafbf8;border-radius:8px;border:1px solid var(--line)">
+          <div style="color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px">API 成本</div>
+          <div style="font-weight:700">¥${fmt(job.internal_api_cost,4)}</div>
+        </div>
+        <div style="padding:10px;background:#fafbf8;border-radius:8px;border:1px solid var(--line)">
+          <div style="color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px">顾客</div>
+          <div>${job.nickname} <span style="color:var(--muted);font-size:11px">#${job.user_id}</span></div>
+        </div>
+      `;
+
+      // 三张图卡片
+      const slots = job.slots || [];
+      document.getElementById("jobDetailSlots").innerHTML = slots.map(s => {
+        const ok = s.status === "success";
+        const statusDot = ok
+          ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px"></span>成功`
+          : `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:6px"></span>失败`;
+        const imgSection = ok && s.image_url && !s.url_expired
+          ? `<img src="${s.image_url}" style="width:100%;border-radius:8px;margin-top:10px;display:block"
+               onerror="this.style.display='none';this.nextSibling.style.display='block'"
+             ><div style="display:none;padding:10px;text-align:center;color:var(--muted);font-size:12px;margin-top:8px">图片加载失败（链接可能已过期）</div>`
+          : ok && (!s.image_url || s.url_expired)
+          ? `<div style="padding:10px;text-align:center;color:var(--muted);font-size:12px;margin-top:8px;background:#f5f5f5;border-radius:6px">图片已过期（OSS临时链接约80分钟有效）</div>`
+          : `<div style="padding:10px;text-align:center;color:var(--red);font-size:12px;margin-top:8px;background:#fdf0ee;border-radius:6px">生成失败，无图片</div>`;
+        return `
+          <div style="border:1px solid var(--line);border-radius:10px;padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+              <div>
+                <div style="font-weight:700;font-size:13px">${SLOT_LABELS[s.slot] || s.slot}</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px">
+                  ${s.style_name ? `发型：${s.style_name}` : ""}
+                  ${s.color_name ? `  颜色：${s.color_name}` : ""}
+                </div>
+              </div>
+              <div style="font-size:12px;font-weight:700">${statusDot}</div>
+            </div>
+            ${imgSection}
+          </div>`;
+      }).join("");
+
+      // 错误信息
+      const errEl = document.getElementById("jobDetailError");
+      if (job.error_summary) {
+        errEl.classList.remove("hidden");
+        errEl.innerHTML = `<b>失败原因：</b>${job.error_summary}${job.error_detail ? `<div style="margin-top:6px;font-size:11px;opacity:0.7;word-break:break-all">${job.error_detail}</div>` : ""}`;
+      } else {
+        errEl.classList.add("hidden");
+      }
+
+      document.getElementById("jobDetailModal").classList.remove("hidden");
+    }
+
+    function closeJobDetail() {
+      document.getElementById("jobDetailModal").classList.add("hidden");
+    }
+    document.getElementById("jobDetailModal").addEventListener("click", function(e) {
+      if (e.target === this) closeJobDetail();
+    });
+
+    // ────────────────────────────────────────
+    // 充值弹窗
+    // ────────────────────────────────────────
+    let _rechargeTenantId = null;
+
+    function openRechargeModal(tenantId, tenantName) {
+      _rechargeTenantId = tenantId;
+      document.getElementById("rechargeTenantName").value = tenantName;
+      document.getElementById("rechargeCount").value = "";
+      document.getElementById("rechargeAmount").value = "";
+      document.getElementById("rechargeNote").value = "";
+      document.getElementById("rechargeErr").classList.add("hidden");
+      document.getElementById("rechargeModal").classList.remove("hidden");
+    }
+    function closeRechargeModal() {
+      document.getElementById("rechargeModal").classList.add("hidden");
+    }
+    document.getElementById("rechargeModal").addEventListener("click", function(e){ if(e.target===this) closeRechargeModal(); });
+
+    // ────────────────────────────────────────
+    // 套餐徽章渲染
+    // ────────────────────────────────────────
+    function planBadge(plan, expiresAt) {
+      const names  = { trial: "试用版", basic: "基础版", pro: "专业版", enterprise: "连锁版" };
+      const colors = { trial: "#8a9e8a", basic: "var(--blue)", pro: "var(--green)", enterprise: "var(--gold)" };
+      const name  = names[plan]  || "试用版";
+      const color = colors[plan] || "#8a9e8a";
+      let expStr = "";
+      if (expiresAt && plan && plan !== "trial") {
+        expStr = `<div style="font-size:11px;color:var(--muted);margin-top:2px">${expiresAt.slice(0,10)} 到期</div>`;
+      }
+      return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:${color};color:white">${name}</span>${expStr}`;
+    }
+
+    // ────────────────────────────────────────
+    // 订阅套餐弹窗
+    // ────────────────────────────────────────
+    let _subTenantId = null;
+
+    function openSubModal(id, name, currentPlan) {
+      _subTenantId = id;
+      document.getElementById("subTenantName").value = name;
+      document.getElementById("subPlan").value = currentPlan || "trial";
+      document.getElementById("subMonths").value = 1;
+      document.getElementById("subErr").classList.add("hidden");
+      document.getElementById("subModal").classList.remove("hidden");
+    }
+    function closeSubModal() {
+      document.getElementById("subModal").classList.add("hidden");
+    }
+    document.getElementById("subModal").addEventListener("click", function(e){ if(e.target===this) closeSubModal(); });
+
+    async function doSetSubscription() {
+      const plan   = document.getElementById("subPlan").value;
+      const months = parseInt(document.getElementById("subMonths").value) || 1;
+      const btn    = document.getElementById("doSubBtn");
+      const errEl  = document.getElementById("subErr");
+      errEl.classList.add("hidden");
+      if (!_subTenantId) { errEl.textContent = "未选择客户"; errEl.classList.remove("hidden"); return; }
+      btn.textContent = "保存中…"; btn.disabled = true;
+      try {
+        const data = await apiFetch(`/platform/tenants/${_subTenantId}/subscription`, {
+          method: "POST",
+          body: JSON.stringify({ plan, months })
+        });
+        if (data.detail) throw new Error(data.detail);
+        closeSubModal();
+        loadTenants();
+        loadDashboard();
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove("hidden");
+      }
+      btn.textContent = "确认设置"; btn.disabled = false;
+    }
+
+    function openAddTenantModal() {
+      document.getElementById("newTenantName").value = "";
+      document.getElementById("newTenantAiCount").value = 0;
+      document.getElementById("newTenantNotes").value = "";
+      document.getElementById("addTenantErr").classList.add("hidden");
+      document.getElementById("addTenantModal").classList.remove("hidden");
+    }
+    function closeAddTenantModal() {
+      document.getElementById("addTenantModal").classList.add("hidden");
+    }
+    document.getElementById("addTenantModal").addEventListener("click", function(e){ if(e.target===this) closeAddTenantModal(); });
+
+    // 自动生成客户编码：时间戳+随机数，保证唯一，无需手动填写
+    function generateTenantCode() {
+      return "t" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
+    }
+
+    async function doCreateTenant() {
+      const name  = document.getElementById("newTenantName").value.trim();
+      const aiCount = parseInt(document.getElementById("newTenantAiCount").value) || 0;
+      const notes = document.getElementById("newTenantNotes").value.trim();
+      const btn   = document.getElementById("doAddTenantBtn");
+      const errEl = document.getElementById("addTenantErr");
+      errEl.classList.add("hidden");
+      if (!name) {
+        errEl.textContent = "请填写商家名称";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      btn.textContent = "提交中…"; btn.disabled = true;
+      try {
+        const data = await apiFetch("/platform/tenants", {
+          method: "POST",
+          body: JSON.stringify({ tenant_code: generateTenantCode(), name: name, initial_ai_count: aiCount })
+        });
+        if (data.detail) throw new Error(data.detail);
+        if (notes && data.id) {
+          await apiFetch(`/platform/tenants/${data.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ notes })
+          });
+        }
+        closeAddTenantModal();
+        loadTenants();
+        loadDashboard();
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove("hidden");
+      }
+      btn.textContent = "确认新增"; btn.disabled = false;
+    }
+
+    // 自动计算金额
+    document.getElementById("rechargeCount").addEventListener("input", function() {
+      const n = parseInt(this.value);
+      if (n > 0) document.getElementById("rechargeAmount").value = (n * 2).toFixed(2);
+    });
+
+    async function doRecharge() {
+      const errEl  = document.getElementById("rechargeErr");
+      const btn    = document.getElementById("doRechargeBtn");
+      errEl.classList.add("hidden");
+      btn.textContent = "提交中…"; btn.disabled = true;
+      try {
+        const count  = parseInt(document.getElementById("rechargeCount").value);
+        const amount = parseFloat(document.getElementById("rechargeAmount").value);
+        const note   = document.getElementById("rechargeNote").value.trim();
+        if (!count || count <= 0)    throw new Error("请填写充值次数");
+        if (!amount || amount <= 0)  throw new Error("请填写收款金额");
+        if (!_rechargeTenantId)      throw new Error("未选择客户");
+        const payload = {
+          tenant_id:       _rechargeTenantId,
+          package_name:    note || `手动充值 ${count} 次`,
+          purchased_count: count,
+          unit_price:      parseFloat((amount / count).toFixed(4)),
+          payment_status:  "paid"
+        };
+        const data = await apiFetch("/platform/packages", { method: "POST", body: JSON.stringify(payload) });
+        if (data.detail) throw new Error(data.detail);
+        closeRechargeModal();
+        alert(`✓ 充值成功！${document.getElementById("rechargeTenantName").value} 充入 ${fmt(count)} 次，收款 ¥${fmt(amount,2)}`);
+        loadDashboard();
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove("hidden");
+      } finally {
+        btn.textContent = "确认充值"; btn.disabled = false;
+      }
+    }
+
+    // ────────────────────────────────────────
+    // API 密钥管理
+    // ────────────────────────────────────────
+    const PROVIDER_LABELS = {
+      dify:       "Dify",
+      dashscope:  "通义万相",
+      oss:        "阿里云OSS",
+      wechat_pay: "微信支付",
+      feishu:     "飞书"
+    };
+
+    async function loadApiKeys() {
+      const tbody = document.getElementById("keysRows");
+      const statusEl = document.getElementById("keysStatus");
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      statusEl.classList.add("hidden");
+      try {
+        const data = await apiFetch("/platform/api-keys");
+        renderApiKeys(Array.isArray(data) ? data : []);
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败：${e.message}</td></tr>`;
+      }
+    }
+
+    function renderApiKeys(rows) {
+      const tbody = document.getElementById("keysRows");
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">暂无密钥，点击"＋ 新增密钥"添加</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = rows.map(r => {
+        const active = r.status === "active";
+        const scope = r.tenant_id ? `商户 #${r.tenant_id}` : "平台";
+        const tagClass = active ? "tag" : "tag red";
+        const tagText  = active ? "启用" : "已禁用";
+        const opHtml   = active
+          ? `<button class="btn-sm" onclick="disableApiKey(${r.id}, this)">禁用</button>`
+          : `<span style="color:var(--muted);font-size:12px">—</span>`;
+        return `<tr>
+          <td>${PROVIDER_LABELS[r.provider] || r.provider}</td>
+          <td style="font-family:monospace;font-size:13px">${r.key_name}</td>
+          <td>${scope}</td>
+          <td style="font-family:monospace;font-size:13px">${r.masked_secret || "—"}</td>
+          <td><span class="${tagClass}">${tagText}</span></td>
+          <td>${opHtml}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    const KEY_HINTS = {
+      "dify|api_key":              "Dify 工作流 API Key，格式通常以 app- 开头",
+      "dashscope|api_key":         "阿里云 DashScope API Key，格式以 sk- 开头，通义万相生图用这个",
+      "oss|access_key_id":         "阿里云 RAM 用户的 Access Key ID（20位字母数字）",
+      "oss|access_key_secret":     "阿里云 RAM 用户的 Access Key Secret（30位，只显示一次）",
+      "wechat_pay|api_key":        "微信支付 API v3 密钥（32位）",
+      "feishu|webhook":            "飞书机器人 Webhook 地址（https://open.feishu.cn/...）",
+    };
+
+    function onKeyPresetChange() {
+      const preset = document.getElementById("keyPreset").value;
+      const hint = document.getElementById("keyHint");
+      if (!preset) { hint.textContent = ""; return; }
+      const [provider, keyName] = preset.split("|");
+      document.getElementById("keyProvider").value = provider;
+      document.getElementById("keyName").value = keyName;
+      hint.textContent = KEY_HINTS[preset] || "";
+    }
+
+    function openAddKeyModal() {
+      document.getElementById("keyPreset").value = "";
+      document.getElementById("keyProvider").value = "";
+      document.getElementById("keyName").value = "";
+      document.getElementById("keyValue").value = "";
+      document.getElementById("keyTenantId").value = "";
+      document.getElementById("keyHint").textContent = "";
+      document.getElementById("keyErr").classList.add("hidden");
+      document.getElementById("addKeyModal").classList.remove("hidden");
+    }
+
+    function closeAddKeyModal() {
+      document.getElementById("addKeyModal").classList.add("hidden");
+    }
+
+    async function saveApiKey() {
+      const errEl = document.getElementById("keyErr");
+      errEl.classList.add("hidden");
+      const btn = document.getElementById("saveKeyBtn");
+      btn.textContent = "保存中…"; btn.disabled = true;
+      try {
+        const tenantRaw = document.getElementById("keyTenantId").value.trim();
+        const payload = {
+          provider:     document.getElementById("keyProvider").value,
+          key_name:     document.getElementById("keyName").value.trim(),
+          secret_value: document.getElementById("keyValue").value,
+          tenant_id:    tenantRaw ? parseInt(tenantRaw, 10) : null,
+        };
+        if (!payload.key_name)     throw new Error("密钥名称不能为空");
+        if (!payload.secret_value) throw new Error("密钥值不能为空");
+        const data = await apiFetch("/platform/api-keys", { method: "POST", body: JSON.stringify(payload) });
+        if (data.detail) throw new Error(data.detail);
+        closeAddKeyModal();
+        await loadApiKeys();
+        const statusEl = document.getElementById("keysStatus");
+        statusEl.textContent = `✓ 密钥「${data.key_name}」保存成功（${data.masked_secret}）`;
+        statusEl.classList.remove("hidden");
+        setTimeout(() => statusEl.classList.add("hidden"), 4000);
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove("hidden");
+      } finally {
+        btn.textContent = "保 存"; btn.disabled = false;
+      }
+    }
+
+    async function disableApiKey(id, btnEl) {
+      if (!confirm("确认禁用这条密钥？禁用后相关服务将无法使用该密钥，可重新添加同名密钥来恢复。")) return;
+      btnEl.textContent = "…"; btnEl.disabled = true;
+      try {
+        const data = await apiFetch(`/platform/api-keys/${id}/disable`, { method: "PUT" });
+        if (data.detail) throw new Error(data.detail);
+        await loadApiKeys();
+      } catch (e) {
+        alert("操作失败：" + e.message);
+        btnEl.textContent = "禁用"; btnEl.disabled = false;
+      }
+    }
+
+    document.getElementById("addKeyModal").addEventListener("click", function(e) {
+      if (e.target === this) closeAddKeyModal();
+    });
+
+    // ── 账单月份默认值 ──
+    document.getElementById("billingMonth").value = curMonth();
+  </script>
+</body>
+</html>

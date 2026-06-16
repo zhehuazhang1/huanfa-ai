@@ -1,0 +1,1511 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>美发AI小程序客户展示小样 v3</title>
+  <style>
+    :root {
+      --ink: #1d1715;
+      --muted: #756964;
+      --line: #e1d6cc;
+      --paper: #f6eee5;
+      --panel: #fffaf4;
+      --card: #fff;
+      --deep: #251f1b;
+      --rose: #b9555b;
+      --green: #19786f;
+      --gold: #b9832f;
+      --soft: #f0e5da;
+      --shadow: 0 24px 70px rgba(47, 37, 30, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(185, 85, 91, 0.12), transparent 34%),
+        linear-gradient(230deg, rgba(25, 120, 111, 0.12), transparent 40%),
+        var(--paper);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea { font: inherit; }
+
+    button {
+      min-height: 44px;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(1.8rem, 4vw, 3.75rem);
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 244, 0.82);
+      box-shadow: var(--shadow);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .phone-frame {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 34px;
+      background: #181411;
+      box-shadow: var(--shadow);
+    }
+
+    .phone {
+      min-height: 780px;
+      overflow: hidden;
+      border-radius: 25px;
+      background: var(--panel);
+      position: relative;
+    }
+
+    .phone-top {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      color: #fff;
+      background: var(--deep);
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px 2px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .brandbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 16px 14px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .logo i {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--rose);
+      color: #fff;
+      font-style: normal;
+    }
+
+    .store-pill {
+      max-width: 150px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.86);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .screen {
+      display: none;
+      padding: 16px;
+      animation: rise 240ms ease-out;
+    }
+
+    .screen.active { display: block; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cover {
+      min-height: 210px;
+      display: grid;
+      align-content: end;
+      padding: 18px;
+      margin: -16px -16px 16px;
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.62)),
+        url("https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80") center/cover;
+    }
+
+    .cover h2 {
+      margin: 0;
+      max-width: 310px;
+      font-size: 1.9rem;
+      line-height: 1.08;
+      font-weight: 900;
+    }
+
+    .cover p {
+      margin: 8px 0 0;
+      max-width: 290px;
+      color: rgba(255,255,255,0.84);
+      line-height: 1.5;
+      font-size: 0.88rem;
+    }
+
+    .quota {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+    }
+
+    .quota b {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 0.92rem;
+    }
+
+    .quota span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .count {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 900;
+      font-size: 0.88rem;
+    }
+
+    .primary,
+    .secondary,
+    .plain {
+      width: 100%;
+      border-radius: 8px;
+      font-weight: 900;
+    }
+
+    .primary {
+      color: #fff;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.22), transparent 24%),
+        linear-gradient(135deg, var(--rose), var(--green));
+      box-shadow: 0 14px 28px rgba(25, 120, 111, 0.18), 0 10px 24px rgba(185, 85, 91, 0.18);
+    }
+
+    .secondary {
+      color: #fff;
+      background: linear-gradient(135deg, #3a302a, var(--deep));
+      box-shadow: 0 10px 22px rgba(37, 31, 27, 0.12);
+    }
+
+    .plain {
+      color: var(--green);
+      background: rgba(25, 120, 111, 0.1);
+      border: 1px solid rgba(25, 120, 111, 0.18);
+    }
+
+    .home-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .round-ai {
+      width: 144px;
+      height: 144px;
+      min-height: 144px;
+      margin: 0 auto;
+      border-radius: 50%;
+      color: #fff;
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255,255,255,0.28), transparent 24%),
+        linear-gradient(145deg, #c75e63, #1c7a72);
+      box-shadow: 0 20px 42px rgba(185, 85, 91, 0.28);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 1.05rem;
+      line-height: 1.25;
+      font-weight: 900;
+    }
+
+    .merchant-showcase {
+      margin: 14px 0;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    .merchant-track {
+      display: flex;
+      width: max-content;
+      animation: marquee 18s linear infinite;
+    }
+
+    .merchant-track img {
+      width: 138px;
+      height: 150px;
+      object-fit: cover;
+      display: block;
+      margin-right: 8px;
+    }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .mini {
+      min-height: 70px;
+      padding: 10px 7px;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,250,244,0.94)),
+        var(--card);
+      border: 1px solid rgba(185, 85, 91, 0.16);
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--deep);
+      box-shadow: 0 8px 18px rgba(47, 37, 30, 0.08);
+    }
+
+    .cards {
+      display: grid;
+      gap: 10px;
+    }
+
+    .direction-card {
+      min-height: 150px;
+      display: grid;
+      align-content: end;
+      padding: 14px;
+      border-radius: 8px;
+      color: #fff;
+      overflow: hidden;
+      position: relative;
+      text-align: left;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 14px 28px rgba(47, 37, 30, 0.14);
+    }
+
+    .direction-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.68));
+    }
+
+    .direction-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .direction-card b {
+      display: block;
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+
+    .direction-card span {
+      color: rgba(255,255,255,0.84);
+      font-size: 0.82rem;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 1.16rem;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .select-layout {
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      gap: 10px;
+      min-height: 560px;
+    }
+
+    .asset-list {
+      display: grid;
+      align-content: start;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .asset-card {
+      min-height: 156px;
+      padding: 0;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--card);
+      text-align: left;
+    }
+
+    .asset-card.active { border-color: var(--green); }
+
+    .asset-card img {
+      width: 100%;
+      height: 116px;
+      display: block;
+      object-fit: cover;
+    }
+
+    .asset-card .swatch {
+      height: 116px;
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,0.92);
+      font-weight: 900;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+
+    .asset-card b {
+      display: block;
+      padding: 8px 8px 2px;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .asset-card span {
+      display: block;
+      padding: 0 8px 8px;
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+
+    .side-menu {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      position: sticky;
+      top: 82px;
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .side-menu button {
+      min-height: 42px;
+      padding: 8px 6px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fff8f0, #eadfd3);
+      color: var(--deep);
+      font-size: 0.78rem;
+      font-weight: 900;
+      border: 1px solid rgba(185, 85, 91, 0.12);
+    }
+
+    .side-menu button.active {
+      color: #fff;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255,255,255,0.2), transparent 26%),
+        linear-gradient(145deg, var(--rose), var(--green));
+      box-shadow: 0 10px 20px rgba(25, 120, 111, 0.16);
+    }
+
+    .asset-list {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .selected-bar {
+      position: sticky;
+      bottom: 0;
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      margin: 12px -16px -16px;
+      border-top: 1px solid var(--line);
+      background: rgba(255,250,244,0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    .selected-text {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .photo-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .photo-preview {
+      min-height: 360px;
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.52)),
+        url("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80") center/cover;
+      display: grid;
+      align-content: end;
+      padding: 16px;
+      color: #fff;
+    }
+
+    .photo-preview b {
+      font-size: 1.12rem;
+    }
+
+    .photo-preview p {
+      margin: 6px 0 0;
+      color: rgba(255,255,255,0.84);
+      line-height: 1.5;
+      font-size: 0.82rem;
+    }
+
+    .notice {
+      padding: 12px;
+      border: 1px solid rgba(185, 131, 47, 0.35);
+      border-radius: 8px;
+      background: rgba(185, 131, 47, 0.1);
+      color: #6d4d1b;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .confirm-box,
+    .order-box {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .row b {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .loading-card {
+      min-height: 520px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 76px;
+      height: 76px;
+      border: 8px solid #eadfd3;
+      border-top-color: var(--rose);
+      border-radius: 50%;
+      margin: 0 auto 18px;
+      animation: spin 900ms linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-card h2 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    .loading-card p {
+      margin: 8px auto 0;
+      max-width: 260px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.86rem;
+    }
+
+    .result-hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #ddd;
+    }
+
+    .result-hero img {
+      width: 100%;
+      height: 430px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .result-count {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(0,0,0,0.44);
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .result-caption {
+      display: grid;
+      gap: 8px;
+      padding: 12px 0 10px;
+    }
+
+    .result-caption h2 {
+      margin: 0;
+      font-size: 1.12rem;
+    }
+
+    .result-caption p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .tagline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(185, 85, 91, 0.12), rgba(25, 120, 111, 0.12));
+      color: var(--deep);
+      font-size: 0.74rem;
+      font-weight: 900;
+      border: 1px solid rgba(25, 120, 111, 0.12);
+    }
+
+    .slide-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .result-scroller {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .result-slide {
+      min-width: 100%;
+      scroll-snap-align: start;
+    }
+
+    .result-scroller::-webkit-scrollbar {
+      height: 0;
+    }
+
+    .dot-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 8px 0 10px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #d6c9bd;
+    }
+
+    .dot.active {
+      background: var(--green);
+    }
+
+    .stylist-card {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .stylist-card.active {
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(25, 120, 111, 0.12);
+    }
+
+    .stylist-card img {
+      width: 74px;
+      height: 88px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .stylist-card h3 {
+      margin: 0 0 4px;
+      font-size: 0.96rem;
+    }
+
+    .stylist-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .works {
+      display: flex;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .works img {
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .form-field label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .form-field textarea {
+      min-height: 72px;
+      padding-top: 10px;
+      resize: vertical;
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      background: #090807;
+    }
+
+    .modal.show {
+      display: grid;
+      place-items: center;
+    }
+
+    .modal img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .watermark {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      color: #fff;
+      background: rgba(0,0,0,0.42);
+      font-weight: 900;
+      font-size: 0.84rem;
+    }
+
+    .close-tip {
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      color: rgba(255,255,255,0.72);
+      font-size: 0.76rem;
+    }
+
+    .side {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 244, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 1.14rem;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .flow div {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .flow b { color: var(--ink); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.35rem;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .script {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .script li {
+      padding: 12px;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    .script b { color: var(--ink); }
+
+    @media (min-width: 900px) {
+      .layout {
+        grid-template-columns: 450px 1fr;
+      }
+
+      .phone-frame {
+        position: sticky;
+        top: 22px;
+      }
+
+      .flow {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .metrics {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero {
+        display: grid;
+      }
+
+      .badge {
+        width: 100%;
+      }
+
+      .result-hero img {
+        height: 380px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>美发AI小程序客户展示小样</h1>
+        <p>新版流程：Dify工作流编排通义万相，在用户原自拍上生成3张AI造型图。到店扫码免费，非到店付费，结果页推荐主理人并下单到店支付。</p>
+      </div>
+      <div class="badge">v3 · Dify + 通义万相<br>顾客端可点击演示</div>
+    </header>
+
+    <section class="layout">
+      <div class="phone-frame">
+        <div class="phone">
+          <div class="phone-top">
+            <div class="status"><span>9:41</span><span>5G 100%</span></div>
+            <div class="brandbar">
+              <div class="logo"><i>H</i><span>H·SALON</span></div>
+              <div class="store-pill" id="storeLabel">徐汇旗舰店</div>
+            </div>
+          </div>
+
+          <section class="screen active" data-screen="home">
+            <div class="cover">
+              <h2>拍照前，先看自己适合什么</h2>
+              <p>AI生成3张专属造型效果，满意后再下单到店。</p>
+            </div>
+            <div class="quota">
+              <div>
+                <b id="quotaTitle">到店扫码权益</b>
+                <span id="quotaDesc">今日免费AI试发 2/2。非到店用户可付费生成。</span>
+              </div>
+              <div class="count" id="quotaCount">2/2</div>
+            </div>
+            <div class="home-actions">
+              <button class="round-ai" data-go="direction">开始<br>AI造型</button>
+              <button class="secondary" id="toggleEntry">切换为自行打开演示</button>
+            </div>
+            <div class="merchant-showcase" aria-label="商家上传照片展示">
+              <div class="merchant-track">
+                <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1523264766116-1e09b3145b84?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+                <img src="https://images.unsplash.com/photo-1523264766116-1e09b3145b84?auto=format&fit=crop&w=420&q=80" alt="商家作品">
+              </div>
+            </div>
+            <div class="mini-grid">
+              <button class="mini">发型灵感</button>
+              <button class="mini">我的订单</button>
+              <button class="mini">AI咨询</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="direction">
+            <div class="section-title">
+              <h2>想试哪种造型方向？</h2>
+              <span>女性 / 男性 / 中性</span>
+            </div>
+            <div class="cards">
+              <button class="direction-card" data-direction="female" style="background-image:url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=80')">
+                <b>女性</b>
+                <span>层次、烫染、柔和轮廓</span>
+              </button>
+              <button class="direction-card" data-direction="male" style="background-image:url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=900&q=80')">
+                <b>男性</b>
+                <span>清爽、商务、潮流短发</span>
+              </button>
+              <button class="direction-card" data-direction="neutral" style="background-image:url('https://images.unsplash.com/photo-1523264766116-1e09b3145b84?auto=format&fit=crop&w=900&q=80')">
+                <b>中性</b>
+                <span>利落、个性、轻盈层次</span>
+              </button>
+            </div>
+            <div style="margin-top:12px">
+              <button class="secondary" data-go="home">返回首页</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="select">
+            <div class="section-title">
+              <h2 id="selectTitle">女性造型</h2>
+              <span>右侧切换分类</span>
+            </div>
+            <div class="select-layout">
+              <div class="side-menu">
+                <button class="active" data-kind="hot">热门</button>
+                <button data-kind="colors">发色</button>
+                <button data-kind="long">长发</button>
+                <button data-kind="medium">中发</button>
+                <button data-kind="short">短发</button>
+              </div>
+              <div class="asset-list" id="assetList"></div>
+            </div>
+            <div class="selected-bar">
+              <div class="selected-text" id="selectedText">已选：未选择</div>
+              <button class="primary" id="goPhoto" disabled>去自拍生成</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="photo">
+            <div class="section-title">
+              <h2>自拍或上传照片</h2>
+              <span>照片不保存</span>
+            </div>
+            <div class="photo-panel">
+              <div class="photo-preview">
+                <b>请保持正脸清晰</b>
+                <p>光线充足，头发不要大面积遮住脸。照片仅用于本次AI造型生成。</p>
+              </div>
+              <div class="notice">照片和生成图仅临时展示，退出后不可找回。请在结果页长按保存或截图。</div>
+              <button class="primary" data-go="confirm">同意并使用样例自拍</button>
+              <button class="secondary" data-go="select">返回重选</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="confirm">
+            <div class="section-title">
+              <h2>确认生成</h2>
+              <span>一次生成3张</span>
+            </div>
+            <div class="confirm-box">
+              <div class="row"><span>当前门店</span><b id="confirmStore">徐汇旗舰店</b></div>
+              <div class="row"><span>造型方向</span><b id="confirmDirection">女性</b></div>
+              <div class="row"><span>选择方案</span><b id="confirmChoice">锁骨发 · 黑茶色</b></div>
+              <div class="row"><span>生成内容</span><b>主图 + 2张推荐图</b></div>
+              <div class="row"><span>本次权益</span><b id="confirmBilling">免费 1次</b></div>
+            </div>
+            <div style="display:grid;gap:10px;margin-top:12px">
+              <button class="primary" id="startGenerate">确认生成</button>
+              <button class="secondary" data-go="photo">返回拍照</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="generating">
+            <div class="loading-card">
+              <div>
+                <div class="spinner"></div>
+                <h2>Dify正在编排通义万相</h2>
+                <p>正在保留你的五官、服装和背景，只替换头发区域。预计10-30秒。</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="result">
+            <div class="result-scroller" id="resultScroller">
+              <div class="result-slide">
+                <div class="result-hero" data-result-index="0">
+                  <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80" alt="AI生成结果">
+                  <div class="result-count">1/3</div>
+                </div>
+              </div>
+              <div class="result-slide">
+                <div class="result-hero" data-result-index="1">
+                  <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=80" alt="AI生成结果">
+                  <div class="result-count">2/3</div>
+                </div>
+              </div>
+              <div class="result-slide">
+                <div class="result-hero" data-result-index="2">
+                  <img src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=900&q=80" alt="AI生成结果">
+                  <div class="result-count">3/3</div>
+                </div>
+              </div>
+            </div>
+            <div class="dot-row" id="dotRow"><span class="dot active"></span><span class="dot"></span><span class="dot"></span></div>
+            <div class="result-caption">
+              <h2 id="resultTitle">你选择的方案</h2>
+              <p id="resultChoice">女性 · 韩系锁骨发 · 黑茶色</p>
+              <div class="tagline" id="resultTags"></div>
+            </div>
+            <div class="notice">图片仅临时展示，退出后不可找回。点开大图后可长按保存或截图。</div>
+            <div id="stylistList">
+              <div class="stylist-card active" data-stylist="Mia">
+                <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=420&q=80" alt="推荐主理人">
+                <div>
+                  <h3>Mia · 高级主理人</h3>
+                  <p>默认最匹配。擅长层次剪、黑茶色、自然烫染。今日16:00后可约。</p>
+                  <div class="works">
+                    <img src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=200&q=80" alt="作品">
+                    <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=200&q=80" alt="作品">
+                    <img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=200&q=80" alt="作品">
+                  </div>
+                </div>
+              </div>
+              <div class="stylist-card" data-stylist="Kevin">
+                <img src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=420&q=80" alt="推荐主理人">
+                <div>
+                  <h3>Kevin · 资深主理人</h3>
+                  <p>擅长短发轮廓、商务风格、自然棕调。今日18:00后可约。</p>
+                  <div class="works">
+                    <img src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=200&q=80" alt="作品">
+                    <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=200&q=80" alt="作品">
+                    <img src="https://images.unsplash.com/photo-1614890085618-0e1054da74f8?auto=format&fit=crop&w=200&q=80" alt="作品">
+                  </div>
+                </div>
+              </div>
+              <div class="stylist-card" data-stylist="Allen">
+                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=420&q=80" alt="推荐主理人">
+                <div>
+                  <h3>Allen · 创意主理人</h3>
+                  <p>擅长中性层次、潮流发色、造型设计。今日15:00后可约。</p>
+                  <div class="works">
+                    <img src="https://images.unsplash.com/photo-1523264766116-1e09b3145b84?auto=format&fit=crop&w=200&q=80" alt="作品">
+                    <img src="https://images.unsplash.com/photo-1605980776566-0486c3ac7617?auto=format&fit=crop&w=200&q=80" alt="作品">
+                    <img src="https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=200&q=80" alt="作品">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;gap:10px">
+              <button class="primary" data-go="order">下单</button>
+              <button class="plain" data-go="select">重新选择</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="order">
+            <div class="section-title">
+              <h2>下单到店</h2>
+              <span>服务到店支付</span>
+            </div>
+            <div class="order-box">
+              <div class="row"><span>门店</span><b id="orderStore">徐汇旗舰店</b></div>
+              <div class="row"><span>手机号</span><b>微信授权手机号</b></div>
+              <div class="row"><span>主理人</span><b id="orderStylist">Mia</b></div>
+              <div class="row"><span>造型方案</span><b id="orderChoice">女性 · 锁骨发 · 黑茶色</b></div>
+              <div class="form-field">
+                <label>服务项目</label>
+                <select>
+                  <option>烫染套餐</option>
+                  <option>染发</option>
+                  <option>美发</option>
+                  <option>造型</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>预约时间</label>
+                <input type="datetime-local" value="2026-06-01T16:00">
+              </div>
+              <div class="form-field">
+                <label>备注</label>
+                <textarea placeholder="可填写想保留长度、是否接受漂发等"></textarea>
+              </div>
+              <button class="primary" id="submitOrder">提交订单，到店支付</button>
+            </div>
+          </section>
+
+          <div class="modal" id="imageModal">
+            <div class="close-tip">点击任意位置返回</div>
+            <img id="modalImage" src="" alt="大图预览">
+            <div class="watermark"><span>H·SALON</span></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="section">
+          <h2>演示流程</h2>
+          <div class="flow">
+            <div><b>登录/入口</b><br>到店扫码享免费2次，自行打开可付费生成。</div>
+            <div><b>选择</b><br>女性/男性/中性，选择发型、发色或二者组合。</div>
+            <div><b>生成</b><br>Dify编排通义万相，在原自拍上生成3张图。</div>
+            <div><b>转化</b><br>推荐主理人，下单到店支付，数据同步飞书。</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>已体现的规则</h2>
+          <div class="metrics">
+            <div class="metric"><strong>3张</strong><span>一次AI试发</span></div>
+            <div class="metric"><strong>2次</strong><span>到店扫码免费</span></div>
+            <div class="metric"><strong>0</strong><span>照片入库</span></div>
+            <div class="metric"><strong>1位</strong><span>默认主理人</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>给客户讲解重点</h2>
+          <ul class="script">
+            <li><b>不是普通预约小程序。</b>核心是顾客先看到自己换发型发色后的效果，再下单到店。</li>
+            <li><b>推荐来自商家库。</b>发型、发色、主理人都来自门店维护的数据，AI不乱编。</li>
+            <li><b>图片不保存。</b>结果只临时展示，用户自己长按保存，降低隐私风险。</li>
+            <li><b>数据能统计。</b>AI试发、赠送、付费、下单、成交都可同步到飞书看板。</li>
+          </ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      entry: "store",
+      direction: "female",
+      kind: "hot",
+      selectedStyle: null,
+      selectedColor: null,
+      resultIndex: 0,
+      stylist: "Mia",
+      currentScreen: "home",
+      history: ["home"],
+      touchStartX: 0,
+      touchStartY: 0
+    };
+
+    const directionLabel = {
+      female: "女性",
+      male: "男性",
+      neutral: "中性"
+    };
+
+    const styles = {
+      female: [
+        { id: "fs01", name: "韩系锁骨发", length: "medium", tags: ["需烫", "无需漂", "维护中"], img: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=420&q=80" },
+        { id: "fs02", name: "法式层次卷", length: "long", tags: ["需烫", "需护理", "预计120分钟"], img: "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=420&q=80" },
+        { id: "fs03", name: "自然内扣", length: "medium", tags: ["无需漂", "维护低", "预计90分钟"], img: "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=420&q=80" },
+        { id: "fs04", name: "短波波", length: "short", tags: ["需修剪", "维护低"], img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=420&q=80" }
+      ],
+      male: [
+        { id: "ms01", name: "商务侧分", length: "short", tags: ["无需漂", "维护低", "预计60分钟"], img: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=420&q=80" },
+        { id: "ms02", name: "纹理短发", length: "short", tags: ["需烫", "维护中"], img: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=420&q=80" },
+        { id: "ms03", name: "韩系微分", length: "medium", tags: ["需烫", "预计90分钟"], img: "https://images.unsplash.com/photo-1614890085618-0e1054da74f8?auto=format&fit=crop&w=420&q=80" },
+        { id: "ms04", name: "清爽寸感", length: "short", tags: ["维护低", "无需烫"], img: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=420&q=80" }
+      ],
+      neutral: [
+        { id: "ns01", name: "中性层次短发", length: "short", tags: ["需修剪", "维护低"], img: "https://images.unsplash.com/photo-1523264766116-1e09b3145b84?auto=format&fit=crop&w=420&q=80" },
+        { id: "ns02", name: "清爽狼尾", length: "medium", tags: ["需修剪", "造型感"], img: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?auto=format&fit=crop&w=420&q=80" },
+        { id: "ns03", name: "自然碎短发", length: "short", tags: ["维护低", "无需漂"], img: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=420&q=80" }
+      ]
+    };
+
+    const colors = {
+      female: [
+        { id: "fc01", name: "黑茶色", tags: ["无需漂", "显白", "维护低"], swatch: "linear-gradient(135deg,#251912,#4a3125)" },
+        { id: "fc02", name: "冷棕色", tags: ["无需漂", "通勤", "预计90分钟"], swatch: "linear-gradient(135deg,#473225,#8a6750)" },
+        { id: "fc03", name: "奶茶棕", tags: ["可能需漂", "显白", "维护中"], swatch: "linear-gradient(135deg,#8b6a51,#d0ad86)" }
+      ],
+      male: [
+        { id: "mc01", name: "自然黑", tags: ["无需漂", "商务", "维护低"], swatch: "linear-gradient(135deg,#0f0e0d,#34302b)" },
+        { id: "mc02", name: "冷棕色", tags: ["无需漂", "通勤", "维护低"], swatch: "linear-gradient(135deg,#3d3028,#80644d)" },
+        { id: "mc03", name: "亚麻棕", tags: ["可能需漂", "潮流", "维护中"], swatch: "linear-gradient(135deg,#76624a,#bda17a)" }
+      ],
+      neutral: [
+        { id: "nc01", name: "亚麻灰", tags: ["需漂", "造型感", "维护高"], swatch: "linear-gradient(135deg,#6f6c64,#c1bcae)" },
+        { id: "nc02", name: "雾棕色", tags: ["可能需漂", "显白", "维护中"], swatch: "linear-gradient(135deg,#5c4c3f,#9f856d)" },
+        { id: "nc03", name: "自然黑", tags: ["无需漂", "维护低"], swatch: "linear-gradient(135deg,#10100f,#36332f)" }
+      ]
+    };
+
+    const generatedPhotos = [
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=900&q=80"
+    ];
+
+    function go(screen, options = {}) {
+      if (!options.replace && state.currentScreen !== screen) {
+        state.history.push(screen);
+      }
+      state.currentScreen = screen;
+      document.querySelectorAll(".screen").forEach((item) => item.classList.remove("active"));
+      document.querySelector(`[data-screen="${screen}"]`).classList.add("active");
+      if (screen === "select") renderAssets();
+      if (screen === "confirm") renderConfirm();
+      if (screen === "result") renderResult();
+      if (screen === "order") renderOrder();
+    }
+
+    function back() {
+      if (state.history.length <= 1) return;
+      state.history.pop();
+      const previous = state.history[state.history.length - 1] || "home";
+      state.currentScreen = previous;
+      document.querySelectorAll(".screen").forEach((item) => item.classList.remove("active"));
+      document.querySelector(`[data-screen="${previous}"]`).classList.add("active");
+      if (previous === "select") renderAssets();
+      if (previous === "confirm") renderConfirm();
+      if (previous === "result") renderResult();
+      if (previous === "order") renderOrder();
+    }
+
+    function choiceText() {
+      const style = state.selectedStyle ? state.selectedStyle.name : "保留原发型";
+      const color = state.selectedColor ? state.selectedColor.name : "保留原发色";
+      return `${directionLabel[state.direction]} · ${style} · ${color}`;
+    }
+
+    function updateSelected() {
+      const text = state.selectedStyle || state.selectedColor ? choiceText() : "未选择";
+      document.querySelector("#selectedText").textContent = `已选：${text}`;
+      document.querySelector("#goPhoto").disabled = !(state.selectedStyle || state.selectedColor);
+    }
+
+    function renderAssets() {
+      document.querySelector("#selectTitle").textContent = `${directionLabel[state.direction]}造型`;
+      const list = document.querySelector("#assetList");
+      let assets = [];
+      if (state.kind === "colors") {
+        assets = colors[state.direction].map((item) => ({ ...item, type: "color" }));
+      } else if (["short", "medium", "long"].includes(state.kind)) {
+        assets = styles[state.direction].filter((item) => item.length === state.kind).map((item) => ({ ...item, type: "style" }));
+      } else {
+        assets = [
+          ...styles[state.direction].slice(0, 3).map((item) => ({ ...item, type: "style" })),
+          ...colors[state.direction].slice(0, 2).map((item) => ({ ...item, type: "color" }))
+        ];
+      }
+
+      list.innerHTML = assets.map((item) => {
+        const active = item.type === "style"
+          ? state.selectedStyle && state.selectedStyle.id === item.id
+          : state.selectedColor && state.selectedColor.id === item.id;
+        const media = item.type === "style"
+          ? `<img src="${item.img}" alt="${item.name}">`
+          : `<div class="swatch" style="background:${item.swatch}">${item.name}</div>`;
+        return `
+          <button class="asset-card ${active ? "active" : ""}" data-type="${item.type}" data-id="${item.id}">
+            ${media}
+            <b>${item.name}</b>
+            <span>${item.tags.slice(0, 2).join(" · ")}</span>
+          </button>
+        `;
+      }).join("");
+      updateSelected();
+    }
+
+    function renderConfirm() {
+      document.querySelector("#confirmStore").textContent = state.entry === "store" ? "徐汇旗舰店" : "自行打开 · 已选徐汇旗舰店";
+      document.querySelector("#confirmDirection").textContent = directionLabel[state.direction];
+      document.querySelector("#confirmChoice").textContent = choiceText();
+      document.querySelector("#confirmBilling").textContent = state.entry === "store" ? "免费 1次" : "付费生成 ¥5.9";
+    }
+
+    function currentResultData() {
+      const style = state.selectedStyle || styles[state.direction][0];
+      const color = state.selectedColor || colors[state.direction][0];
+      const base = [
+        { title: "你选择的方案", style, color },
+        { title: "自然推荐", style: styles[state.direction][1] || style, color },
+        { title: "进阶推荐", style, color: colors[state.direction][1] || color }
+      ];
+      return base[state.resultIndex];
+    }
+
+    function renderResult() {
+      const data = currentResultData();
+      document.querySelector("#resultTitle").textContent = data.title;
+      document.querySelector("#resultChoice").textContent = `${directionLabel[state.direction]} · ${data.style.name} · ${data.color.name}`;
+      const tags = [...data.style.tags, ...data.color.tags].slice(0, 5);
+      document.querySelector("#resultTags").innerHTML = tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
+      document.querySelectorAll("#dotRow .dot").forEach((dot, index) => {
+        dot.classList.toggle("active", index === state.resultIndex);
+      });
+      document.querySelectorAll("#stylistList .stylist-card").forEach((card) => {
+        card.classList.toggle("active", card.dataset.stylist === state.stylist);
+      });
+    }
+
+    function renderOrder() {
+      const data = currentResultData();
+      document.querySelector("#orderStore").textContent = state.entry === "store" ? "徐汇旗舰店" : "徐汇旗舰店";
+      document.querySelector("#orderStylist").textContent = state.stylist;
+      document.querySelector("#orderChoice").textContent = `${directionLabel[state.direction]} · ${data.style.name} · ${data.color.name}`;
+    }
+
+    document.addEventListener("click", (event) => {
+      const goBtn = event.target.closest("[data-go]");
+      if (goBtn) go(goBtn.dataset.go);
+
+      const directionBtn = event.target.closest("[data-direction]");
+      if (directionBtn) {
+        state.direction = directionBtn.dataset.direction;
+        state.selectedStyle = null;
+        state.selectedColor = null;
+        state.kind = "hot";
+        document.querySelectorAll(".side-menu button").forEach((item) => item.classList.toggle("active", item.dataset.kind === "hot"));
+        go("select");
+      }
+
+      const menuBtn = event.target.closest(".side-menu button");
+      if (menuBtn) {
+        state.kind = menuBtn.dataset.kind;
+        document.querySelectorAll(".side-menu button").forEach((item) => item.classList.remove("active"));
+        menuBtn.classList.add("active");
+        renderAssets();
+      }
+
+      const asset = event.target.closest(".asset-card");
+      if (asset) {
+        const collection = asset.dataset.type === "style" ? styles[state.direction] : colors[state.direction];
+        const found = collection.find((item) => item.id === asset.dataset.id);
+        if (asset.dataset.type === "style") state.selectedStyle = found;
+        if (asset.dataset.type === "color") state.selectedColor = found;
+        renderAssets();
+      }
+
+      const resultHero = event.target.closest(".result-hero");
+      if (resultHero) {
+        const img = resultHero.querySelector("img");
+        document.querySelector("#modalImage").src = img.src;
+        document.querySelector("#imageModal").classList.add("show");
+      }
+
+      const stylist = event.target.closest("#stylistList .stylist-card");
+      if (stylist) {
+        state.stylist = stylist.dataset.stylist;
+        renderResult();
+      }
+    });
+
+    document.querySelector("#goPhoto").addEventListener("click", () => go("photo"));
+    document.querySelector("#startGenerate").addEventListener("click", () => {
+      go("generating");
+      setTimeout(() => {
+        state.resultIndex = 0;
+        go("result");
+      }, 1200);
+    });
+
+    document.querySelector("#resultScroller").addEventListener("scroll", () => {
+      const scroller = document.querySelector("#resultScroller");
+      const index = Math.round(scroller.scrollLeft / scroller.clientWidth);
+      if (index !== state.resultIndex && index >= 0 && index < 3) {
+        state.resultIndex = index;
+        renderResult();
+      }
+    });
+
+    document.querySelector("#imageModal").addEventListener("click", () => {
+      document.querySelector("#imageModal").classList.remove("show");
+    });
+
+    document.querySelector("#toggleEntry").addEventListener("click", () => {
+      state.entry = state.entry === "store" ? "remote" : "store";
+      const isStore = state.entry === "store";
+      document.querySelector("#storeLabel").textContent = isStore ? "徐汇旗舰店" : "自行打开";
+      document.querySelector("#quotaTitle").textContent = isStore ? "到店扫码权益" : "非到店付费体验";
+      document.querySelector("#quotaDesc").textContent = isStore ? "今日免费AI试发 2/2。非到店用户可付费生成。" : "可付费使用AI试发，价格与到店超额生成一致。";
+      document.querySelector("#quotaCount").textContent = isStore ? "2/2" : "¥5.9";
+      document.querySelector("#toggleEntry").textContent = isStore ? "切换为自行打开演示" : "切换为到店扫码演示";
+    });
+
+    document.querySelector("#submitOrder").addEventListener("click", () => {
+      alert("演示：订单已提交，服务到店支付。");
+      go("home");
+    });
+
+    document.querySelector(".phone").addEventListener("touchstart", (event) => {
+      const touch = event.touches[0];
+      state.touchStartX = touch.clientX;
+      state.touchStartY = touch.clientY;
+    }, { passive: true });
+
+    document.querySelector(".phone").addEventListener("touchend", (event) => {
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - state.touchStartX;
+      const dy = Math.abs(touch.clientY - state.touchStartY);
+      if (state.touchStartX < 36 && dx > 72 && dy < 55) {
+        back();
+      }
+    }, { passive: true });
+  </script>
+</body>
+</html>

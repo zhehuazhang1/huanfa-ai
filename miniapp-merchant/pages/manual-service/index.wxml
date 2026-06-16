@@ -1,0 +1,66 @@
+<view class="page">
+  <view class="header-title">补录服务</view>
+  <view class="muted">线下散客、老客到店服务也可以进入数据看板</view>
+
+  <view class="form-card">
+    <view class="field">
+      <view class="field-label">服务日期</view>
+      <picker mode="date" value="{{form.service_date}}" bindchange="changeDate">
+        <view class="picker-value">{{form.service_date}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">主理人</view>
+      <picker range="{{staffNames}}" value="{{staffIndex}}" bindchange="changeStaff">
+        <view class="picker-value">{{selectedStaffName || '请选择主理人'}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">服务项目</view>
+      <picker range="{{serviceNames}}" value="{{serviceIndex}}" bindchange="changeService">
+        <view class="picker-value">{{selectedServiceName || '请选择服务项目'}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">成交金额</view>
+      <input class="field-input" type="digit" value="{{form.actual_amount}}" bindinput="inputAmount" placeholder="请输入本次成交金额" />
+    </view>
+
+    <view class="field">
+      <view class="field-label">结算方式</view>
+      <picker range="{{paymentMethodNames}}" value="{{paymentMethodIndex}}" bindchange="changePaymentMethod">
+        <view class="picker-value">{{paymentMethodNames[paymentMethodIndex]}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">顾客ID{{form.payment_method === 'cash' ? '（可选）' : '（必填）'}}</view>
+      <input class="field-input" type="number" value="{{form.customer_id}}" bindinput="inputCustomerId" placeholder="从顾客档案查看，例如 28" />
+      <button class="secondary-button lookup-button" bindtap="loadCustomerPackages">查询可用套餐</button>
+    </view>
+
+    <view class="field" wx:if="{{form.payment_method === 'package'}}">
+      <view class="field-label">套餐核销</view>
+      <picker range="{{customerPackageNames}}" value="{{customerPackageIndex}}" bindchange="changeCustomerPackage">
+        <view class="picker-value">{{customerPackageNames[customerPackageIndex]}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">顾客来源</view>
+      <picker range="{{sourceNames}}" value="{{sourceIndex}}" bindchange="changeSource">
+        <view class="picker-value">{{sourceNames[sourceIndex]}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">备注</view>
+      <textarea class="field-textarea" value="{{form.notes}}" bindinput="inputNotes" placeholder="可填写顾客情况、服务说明，非必填" />
+    </view>
+  </view>
+
+  <button class="primary-button submit-button" loading="{{submitting}}" bindtap="submitRecord">保存并计入看板</button>
+</view>

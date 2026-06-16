@@ -1,0 +1,53 @@
+<view class="page sync-page">
+  <view class="brand-row">
+    <view>
+      <view class="brand-name">飞书同步</view>
+      <view class="muted">查看订单、补录服务和 AI 次数是否进入同步队列</view>
+    </view>
+  </view>
+
+  <view class="sync-summary">
+    <view class="summary-card">
+      <view class="summary-value">{{status.pending}}</view>
+      <view class="summary-label">待同步</view>
+    </view>
+    <view class="summary-card">
+      <view class="summary-value">{{status.synced}}</view>
+      <view class="summary-label">已同步</view>
+    </view>
+    <view class="summary-card">
+      <view class="summary-value danger">{{status.failed}}</view>
+      <view class="summary-label">失败</view>
+    </view>
+  </view>
+
+  <button class="primary-button sync-button" loading="{{syncing}}" bindtap="retrySync">立即同步</button>
+
+  <view class="notice-card">
+    <view class="notice-title">当前试用版说明</view>
+    <view class="notice-text">未配置真实飞书 Webhook 时，系统会先记录同步事件；接入飞书后点击同步即可推送。</view>
+  </view>
+
+  <view class="section-title">最近同步记录</view>
+  <view wx:if="{{events.length === 0}}" class="empty">暂无同步记录</view>
+
+  <view wx:for="{{events}}" wx:key="id" class="event-card">
+    <view class="event-top">
+      <view>
+        <view class="event-title">{{item.typeLabel}}</view>
+        <view class="event-summary">{{item.summary}}</view>
+      </view>
+      <view class="event-status {{item.status}}">{{item.statusLabel}}</view>
+    </view>
+    <view class="event-meta">时间：{{item.timeText || '未记录'}}</view>
+    <view wx:if="{{item.errorText}}" class="event-error">错误：{{item.errorText}}</view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

@@ -1,0 +1,310 @@
+.booking-page {
+  padding-bottom: 150rpx;
+}
+
+.booking-top {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-bottom: 42rpx;
+}
+
+.back-icon {
+  color: #01261f;
+  font-size: 58rpx;
+  line-height: 1;
+}
+
+.top-title {
+  color: #1a1c1b;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.plan-card,
+.stylist-card {
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 10rpx 30rpx rgba(26, 60, 52, 0.06);
+}
+
+.plan-card {
+  display: grid;
+  grid-template-columns: 190rpx minmax(0, 1fr);
+  gap: 28rpx;
+  padding: 28rpx;
+}
+
+.plan-image {
+  width: 190rpx;
+  height: 190rpx;
+  border-radius: 14rpx;
+  background: #d8d8d6;
+}
+
+.plan-copy {
+  min-width: 0;
+  padding-top: 16rpx;
+}
+
+.plan-label {
+  color: #414846;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.plan-name,
+.plan-color {
+  margin-top: 10rpx;
+  color: #01261f;
+  font-size: 31rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.talk-divider {
+  grid-column: 1 / -1;
+  height: 1rpx;
+  background: #e6e8e5;
+}
+
+.talk-title {
+  grid-column: 1 / -1;
+  color: #01261f;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.tag-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.talk-tag {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(197, 234, 223, 0.45);
+  color: #01261f;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.stylist-card {
+  display: grid;
+  grid-template-columns: 98rpx minmax(0, 1fr) 32rpx;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 44rpx;
+  padding: 28rpx;
+}
+
+.stylist-avatar {
+  width: 98rpx;
+  height: 98rpx;
+  border-radius: 999rpx;
+  background: #d8d8d6;
+}
+
+.stylist-copy {
+  min-width: 0;
+}
+
+.stylist-name {
+  color: #01261f;
+  font-size: 36rpx;
+  font-weight: 900;
+}
+
+.role-mark {
+  margin-left: 10rpx;
+  color: #9a6a1f;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.stylist-skill {
+  margin-top: 8rpx;
+  color: #414846;
+  font-size: 25rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: #c1c8c4;
+  font-size: 54rpx;
+}
+
+.section-title {
+  margin-top: 42rpx;
+  color: #01261f;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.service-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.service-chip {
+  min-width: 118rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  border-radius: 18rpx;
+  background: #fff;
+  border: 1rpx solid #cdd2cf;
+  color: #1a1c1b;
+  font-size: 27rpx;
+}
+
+.service-chip.active {
+  background: #01261f;
+  border-color: #01261f;
+  color: #fff;
+  font-weight: 900;
+}
+
+.date-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24rpx;
+  margin-top: 24rpx;
+}
+
+.date-card {
+  height: 146rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: 18rpx;
+  background: #fff;
+  border: 1rpx solid #cdd2cf;
+  color: #1a1c1b;
+}
+
+.date-card.active {
+  background: #01261f;
+  border-color: #01261f;
+  color: #fff;
+}
+
+.date-label {
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.date-value {
+  margin-top: 8rpx;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.calendar-icon {
+  color: #01261f;
+  font-size: 38rpx;
+}
+
+.time-section {
+  margin-top: 26rpx;
+}
+
+.time-label {
+  color: #414846;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22rpx;
+  margin-top: 18rpx;
+}
+
+.time-slot {
+  height: 82rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+  background: #fff;
+  color: #1a1c1b;
+  font-size: 27rpx;
+}
+
+.time-slot.active {
+  border: 3rpx solid #01261f;
+  color: #01261f;
+  font-weight: 900;
+  background: #f7fbf8;
+}
+
+.note-input {
+  width: 100%;
+  min-height: 214rpx;
+  margin-top: 22rpx;
+  padding: 26rpx;
+  box-sizing: border-box;
+  border-radius: 20rpx;
+  background: #fff;
+  border: 1rpx solid #cdd2cf;
+  color: #1a1c1b;
+  font-size: 26rpx;
+  line-height: 1.45;
+}
+
+.price-tip {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 28rpx;
+  padding: 26rpx;
+  border-radius: 18rpx;
+  background: #fffaf0;
+  color: #8a6b32;
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.tip-icon {
+  flex: 0 0 auto;
+  width: 34rpx;
+  height: 34rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  border: 2rpx solid #8a6b32;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.submit-button {
+  position: fixed;
+  left: 20rpx;
+  right: 20rpx;
+  bottom: 22rpx;
+  width: auto;
+  height: 104rpx;
+  margin: 0;
+  padding: 0;
+  line-height: 104rpx;
+  border-radius: 16rpx;
+  background: #01261f;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 900;
+  box-shadow: 0 18rpx 40rpx rgba(1, 38, 31, 0.18);
+}

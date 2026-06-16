@@ -1,0 +1,157 @@
+.me-page {
+  padding-bottom: 170rpx;
+}
+
+.profile-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 30rpx;
+  border-radius: 24rpx;
+  background: #01261f;
+  color: #fff;
+}
+
+.page-title {
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.profile-card .muted {
+  margin-top: 8rpx;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.phone-pill {
+  flex: 0 0 auto;
+  max-width: 300rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 23rpx;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-card,
+.menu-card,
+.hint-card {
+  margin-top: 22rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(26, 60, 52, 0.06);
+}
+
+.info-card {
+  padding: 4rpx 26rpx;
+}
+
+.info-row {
+  min-height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #f0f1ef;
+}
+
+.info-row:last-child {
+  border-bottom: 0;
+}
+
+.info-label {
+  color: #717976;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.info-value {
+  margin-top: 8rpx;
+  color: #1a1c1b;
+  font-size: 28rpx;
+  font-weight: 850;
+}
+
+.small-button {
+  width: 116rpx;
+  height: 58rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 999rpx;
+  background: #eef7f3;
+  color: #01261f;
+  font-size: 24rpx;
+  font-weight: 850;
+  line-height: 58rpx;
+}
+
+.text-note {
+  color: #717976;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.metric-card {
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(26, 60, 52, 0.06);
+}
+
+.metric-value {
+  color: #01261f;
+  font-size: 38rpx;
+  font-weight: 950;
+}
+
+.metric-label {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.menu-card {
+  min-height: 116rpx;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.menu-title {
+  color: #1a1c1b;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.menu-desc {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.menu-arrow {
+  color: #01261f;
+  font-size: 44rpx;
+  font-weight: 300;
+}
+
+.hint-card {
+  padding: 24rpx 28rpx;
+  color: #5d554c;
+  font-size: 24rpx;
+  line-height: 1.55;
+  background: #fbf7ef;
+}

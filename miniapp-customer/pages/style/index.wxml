@@ -1,0 +1,165 @@
+<view class="page style-page">
+  <view class="brand-row">
+    <view>
+      <view class="brand-name">灵感造型</view>
+      <view class="muted">可只选发型、只选发色，或同时选择</view>
+    </view>
+  </view>
+
+  <view class="direction-tabs">
+    <view wx:for="{{directions}}" wx:key="value" class="direction-tab {{direction === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="changeDirection">
+      {{item.label}}
+    </view>
+  </view>
+
+  <view class="mode-tabs">
+    <view class="mode-tab {{assetMode === 'styles' ? 'active' : ''}}" data-mode="styles" bindtap="changeAssetMode">造型</view>
+    <view class="mode-tab {{assetMode === 'colors' ? 'active' : ''}}" data-mode="colors" bindtap="changeAssetMode">发色</view>
+  </view>
+
+  <view wx:if="{{assetMode === 'styles'}}" class="category-tabs">
+    <scroll-view scroll-x class="category-scroll">
+      <view wx:for="{{categories}}" wx:key="value" class="category-tab {{category === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="changeCategory">
+        {{item.label}}
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="selector-shell">
+    <scroll-view class="asset-list" scroll-y>
+      <view wx:if="{{assetMode === 'styles'}}" class="asset-grid">
+        <view wx:for="{{visibleStyles}}" wx:key="style_id" class="asset-card {{selectedStyleId === item.style_id ? 'selected' : ''}}" data-id="{{item.style_id}}" bindtap="selectStyle">
+          <image class="asset-image" src="{{item.thumbnail_url || fallbackStyleImage}}" mode="aspectFit" lazy-load />
+          <view class="asset-head">
+            <view class="asset-name">{{item.style_name}}</view>
+            <view wx:if="{{selectedStyleId === item.style_id}}" class="check-mark">✓</view>
+          </view>
+          <view class="asset-preview-hint">点击查看大图</view>
+          <view wx:if="{{item.customer_description}}" class="asset-description">{{item.customer_description}}</view>
+          <view class="customer-badges">
+            <text wx:for="{{item.customerBadges}}" wx:key="*this" class="customer-badge">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{assetMode === 'colors'}}" class="asset-grid">
+        <view wx:for="{{visibleColors}}" wx:key="color_id" class="asset-card color-card {{selectedColorId === item.color_id ? 'selected' : ''}}" data-id="{{item.color_id}}" bindtap="selectColor">
+          <image wx:if="{{item.thumbnail_url}}" class="asset-image" src="{{item.thumbnail_url}}" mode="aspectFit" lazy-load />
+          <view wx:else class="color-swatch" style="background: {{item.color_swatch || '#5d5048'}}"></view>
+          <view class="asset-head">
+            <view class="asset-name">{{item.color_name}}</view>
+            <view wx:if="{{selectedColorId === item.color_id}}" class="check-mark">✓</view>
+          </view>
+          <view class="asset-preview-hint">点击查看详情</view>
+          <view class="customer-badges">
+            <text wx:for="{{item.customerBadges}}" wx:key="*this" class="customer-badge">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view wx:if="{{previewAssetVisible}}" class="asset-preview-mask" bindtap="closeAssetPreview">
+    <view class="asset-preview-panel" catchtap="noop">
+      <view class="asset-preview-top">
+        <view>
+          <view class="asset-preview-label">{{previewAssetType === 'style' ? '造型预览' : '发色预览'}}</view>
+          <view class="asset-preview-title">{{previewAsset.previewTitle}}</view>
+        </view>
+        <view class="asset-preview-close" bindtap="closeAssetPreview">×</view>
+      </view>
+
+      <view wx:if="{{previewAssetType === 'style' || previewAsset.previewImage}}" class="asset-preview-image-wrap">
+        <image class="asset-preview-image" src="{{previewAsset.previewImage || fallbackStyleImage}}" mode="aspectFit" lazy-load bindtap="previewAssetImage" />
+      </view>
+      <view wx:else class="asset-preview-color" style="background: {{previewAsset.color_swatch || '#5d5048'}}"></view>
+
+      <view class="asset-preview-desc">{{previewAsset.previewDescription}}</view>
+      <view class="asset-preview-badges">
+        <text wx:for="{{previewAsset.customerBadges}}" wx:key="*this" class="customer-badge">{{item}}</text>
+      </view>
+
+      <view class="asset-preview-actions">
+        <view class="asset-preview-secondary" bindtap="closeAssetPreview">再看看</view>
+        <view class="asset-preview-primary" bindtap="confirmPreviewAsset">{{previewAsset.selected ? '已选择' : '选择这个'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="selection-bar">
+    <view class="selection-text">
+      <view>发型：{{selectedStyleName || '未选择'}}</view>
+      <view>发色：{{selectedColorName || '未选择'}}</view>
+    </view>
+    <button class="generate-button primary-button" loading="{{loading}}" bindtap="startGenerate">下一步</button>
+  </view>
+
+  <view wx:if="{{confirmSelfieVisible}}" class="selfie-confirm-screen">
+    <view class="confirm-topbar">
+      <view class="confirm-back" bindtap="cancelSelfieConfirmation">‹</view>
+      <view class="confirm-page-title">确认试发方案</view>
+    </view>
+
+    <scroll-view class="confirm-scroll" scroll-y>
+      <image class="confirm-hero-image" src="{{selfiePreviewPath}}" mode="aspectFit" />
+
+      <view class="confirm-choice-card">
+        <view class="confirm-card-title">本次选择</view>
+        <view class="confirm-choice-row">
+          <text>发型</text>
+          <text class="confirm-choice-value">{{selectedStyleName || '门店推荐造型'}}</text>
+        </view>
+        <view class="confirm-choice-row">
+          <text>发色</text>
+          <text class="confirm-choice-value">{{selectedColorName || '门店推荐发色'}}</text>
+        </view>
+        <view class="confirm-chip-row">
+          <text class="confirm-chip">{{selectedStyleName || '推荐造型'}}</text>
+          <text class="confirm-chip">{{selectedColorName || '推荐发色'}}</text>
+          <text wx:if="{{customerReferencePreviewPath}}" class="confirm-chip">{{customerReferenceType === 'hair_color' ? '自带参考发色图' : '自带参考发型图'}}</text>
+        </view>
+      </view>
+
+      <view class="confirm-choice-card hair-profile-card">
+        <view class="confirm-card-title">发质补充 <text class="optional-text">选填</text></view>
+        <view class="hair-profile-hint">填写后 AI 会更贴近实际发丝质感，不填也可以直接生成。</view>
+        <view wx:for="{{hairProfileOptions}}" wx:key="key" class="hair-profile-group">
+          <view class="hair-profile-label">{{item.label}}</view>
+          <view class="hair-profile-options">
+            <text
+              wx:for="{{item.options}}"
+              wx:for-item="option"
+              wx:key="value"
+              class="hair-profile-chip {{hairProfile[item.key] === option.value ? 'active' : ''}}"
+              data-key="{{item.key}}"
+              data-value="{{option.value}}"
+              bindtap="selectHairProfile"
+            >{{option.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="confirm-tip-card">
+        <view class="confirm-tip-icon">i</view>
+        <view>
+          <view class="confirm-tip-title">温和提示</view>
+          <view class="confirm-tip-text">AI 将尽量保留你的五官、表情、脸型和眼镜，仅调整发型发色。</view>
+        </view>
+      </view>
+
+      <view class="confirm-quota">今日还可免费试发 {{remainingQuota}} 次</view>
+    </scroll-view>
+
+    <view class="confirm-bottom-actions">
+      <button class="confirm-upload-button" disabled="{{loading}}" bindtap="chooseSelfieAgain">重新上传</button>
+      <button class="confirm-start-button" loading="{{loading}}" bindtap="confirmSelfieGenerate">开始生成</button>
+    </view>
+  </view>
+
+  <view class="bottom-nav mini-nav">
+    <view class="nav-item" bindtap="goHome"><text class="nav-icon">首</text>首页</view>
+    <view class="nav-item active" bindtap="goStyle"><text class="nav-icon">试</text>AI试发</view>
+    <view class="nav-item" bindtap="goChat"><text class="nav-icon">咨</text>咨询师</view>
+    <view class="nav-item" bindtap="goMe"><text class="nav-icon">我</text>我的</view>
+  </view>
+</view>

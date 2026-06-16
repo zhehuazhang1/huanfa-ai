@@ -1,0 +1,97 @@
+﻿<view class="page">
+  <view class="header-title">数据看板</view>
+  <view class="muted">AI 试发、预约转化和剪染烫造型护理数据</view>
+
+  <view class="scope-tabs">
+    <view
+      wx:for="{{scopeOptions}}"
+      wx:key="value"
+      class="scope-tab {{scope === item.value ? 'active' : ''}}"
+      data-scope="{{item.value}}"
+      bindtap="changeScope"
+    >{{item.label}}</view>
+  </view>
+
+  <picker mode="selector" range="{{periodOptions}}" range-key="label" value="{{periodIndex}}" bindchange="changePeriod">
+    <view class="period-picker">
+      <view>
+        <view class="period-title">统计周期</view>
+        <view class="period-label">{{currentPeriodLabel}}</view>
+      </view>
+      <view class="period-arrow">⌄</view>
+    </view>
+  </picker>
+
+  <view class="metric-grid">
+    <view class="metric-card">
+      <view class="metric-value">{{performance.totals.completed_services || 0}}</view>
+      <view class="metric-label">完成服务</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">¥{{performance.totals.revenue || 0}}</view>
+      <view class="metric-label">成交金额</view>
+    </view>
+  </view>
+
+  <view class="section-title">AI转化</view>
+  <view class="conversion-grid">
+    <view class="conversion-card">
+      <view class="conversion-value">{{performance.ai_conversion.ai_success_jobs || 0}}</view>
+      <view class="conversion-label">AI成功次数</view>
+    </view>
+    <view class="conversion-card">
+      <view class="conversion-value">{{performance.ai_conversion.ai_converted_orders || 0}}</view>
+      <view class="conversion-label">AI转下单</view>
+    </view>
+    <view class="conversion-card">
+      <view class="conversion-value">{{performance.ai_conversion.orderRateText || '0%'}}</view>
+      <view class="conversion-label">下单转化率</view>
+    </view>
+    <view class="conversion-card">
+      <view class="conversion-value">¥{{performance.ai_conversion.ai_converted_revenue || 0}}</view>
+      <view class="conversion-label">AI成交金额</view>
+    </view>
+  </view>
+
+  <view class="section-title">服务项目分析</view>
+  <view wx:if="{{serviceTypes.length === 0}}" class="empty-line">暂无服务项目业绩</view>
+  <view class="service-overview">
+    <view wx:for="{{serviceTypes}}" wx:key="key" class="service-pill">
+      <view class="service-top">
+        <view class="service-name">{{item.label}}</view>
+        <view class="service-money">¥{{item.revenue || 0}}</view>
+      </view>
+      <view class="service-hint">{{item.completed_services || 0}} 单 / AI 转化 {{item.ai_converted_services || 0}} 单</view>
+    </view>
+  </view>
+
+  <view class="section-title">主理人绩效</view>
+  <view wx:if="{{performance.by_stylist.length === 0}}" class="empty-line">暂无主理人绩效</view>
+  <view wx:for="{{performance.by_stylist}}" wx:key="stylist_id" class="rank-row">
+    <view>
+      <view class="rank-name">{{item.stylist_name || '未命名'}}</view>
+      <view class="muted">{{item.completed_services}} 单 · 业绩 ¥{{item.revenue}}</view>
+      <view class="muted">{{item.performanceText}}</view>
+    </view>
+    <view class="rank-money">¥{{item.estimated_performance || 0}}</view>
+  </view>
+
+  <view class="section-title">分类汇总</view>
+  <view wx:if="{{performance.by_category.length === 0}}" class="empty-line">暂无分类业绩</view>
+  <view wx:for="{{performance.by_category}}" wx:key="category" class="rank-row">
+    <view>
+      <view class="rank-name">{{item.categoryLabel}}</view>
+      <view class="muted">{{item.completed_services}} 单 / AI 转化 {{item.ai_converted_services || 0}} 单</view>
+    </view>
+    <view class="rank-money">¥{{item.revenue}}</view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item active"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>
+

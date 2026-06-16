@@ -1,0 +1,29 @@
+<view class="page">
+  <view class="hero">
+    <view class="brand-mark">焕</view>
+    <view class="title">焕发</view>
+    <view class="subtitle">同一个小程序，顾客试发和商家经营分开使用</view>
+  </view>
+
+  <view class="mode-list">
+    <view class="mode-card" bindtap="enterCustomer">
+      <view>
+        <view class="mode-title">顾客体验</view>
+        <view class="mode-desc">上传自拍、选择发型发色、生成试发方案并预约到店</view>
+      </view>
+      <view class="mode-action">进入</view>
+    </view>
+
+    <view class="mode-card merchant" bindtap="enterMerchant">
+      <view>
+        <view class="mode-title">商家工作台</view>
+        <view class="mode-desc">查看预约订单、顾客、素材、团队和门店数据</view>
+      </view>
+      <view class="mode-action">进入</view>
+    </view>
+  </view>
+
+  <view class="tip">
+    当前为合并版测试入口。正式上线后会根据微信身份自动进入对应模式。
+  </view>
+</view>

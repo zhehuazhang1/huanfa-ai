@@ -1,0 +1,62 @@
+﻿<view class="page home-page">
+  <view class="home-top">
+    <view class="brand-row">
+      <view>
+        <view class="store-kicker">{{storeProfile.store_name || 'Mirror Hair Salon'}}</view>
+        <view class="brand-name">{{storeProfile.home_title || '灵感造型顾问'}}</view>
+        <view class="muted">{{storeProfile.home_subtitle || '用一张自拍预览适合你的发型与发色'}}</view>
+      </view>
+      <view class="quota-pill">{{quotaText}}</view>
+    </view>
+  </view>
+
+  <swiper class="photo-swiper" autoplay interval="2600" circular indicator-dots indicator-color="rgba(255,255,255,0.45)" indicator-active-color="#ffffff">
+    <swiper-item wx:for="{{storePhotos}}" wx:key="url">
+      <image class="store-photo" src="{{item.url}}" mode="aspectFill" />
+      <view class="photo-shade"></view>
+      <view class="photo-copy">
+        <view class="photo-title">{{item.title}}</view>
+        <view class="photo-desc">{{item.desc}}</view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <view class="action-zone">
+    <button class="start-button primary-button" bindtap="startStyle">开始试发</button>
+  </view>
+
+  <view class="quick-row">
+    <view class="quick-card surface-card" bindtap="goStyle">
+      <view class="quick-icon">发</view>
+      <view class="quick-title">灵感造型</view>
+      <view class="quick-desc">发型、发色都可试</view>
+    </view>
+    <view class="quick-card surface-card" bindtap="startStyleWithReference">
+      <view class="quick-icon">图</view>
+      <view class="quick-title">自带参考图</view>
+      <view class="quick-desc">可参考发型或发色</view>
+    </view>
+  </view>
+
+  <view class="section-head">
+    <view class="section-title">门店热门造型</view>
+    <view class="section-more" bindtap="goStyle">查看更多</view>
+  </view>
+
+  <scroll-view class="popular-scroll" scroll-x>
+    <view class="popular-card" wx:for="{{popularStyles}}" wx:key="title" bindtap="goStyle">
+      <image class="popular-image" src="{{item.url}}" mode="aspectFill" />
+      <view class="popular-name">{{item.title}}</view>
+      <view class="popular-tags">
+        <text wx:for="{{item.tags}}" wx:key="*this" class="soft-tag">{{item}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-nav">
+    <view class="nav-item active"><text class="nav-icon">首</text>首页</view>
+    <view class="nav-item" bindtap="goStyle"><text class="nav-icon">试</text>AI试发</view>
+    <view class="nav-item" bindtap="goChat"><text class="nav-icon">咨</text>咨询师</view>
+    <view class="nav-item" bindtap="goMe"><text class="nav-icon">我</text>我的</view>
+  </view>
+</view>

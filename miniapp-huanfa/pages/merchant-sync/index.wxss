@@ -1,0 +1,136 @@
+.sync-page {
+  padding-bottom: 164rpx;
+}
+
+.sync-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 26rpx;
+}
+
+.summary-card {
+  padding: 22rpx 16rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.summary-value {
+  color: #01261f;
+  font-size: 38rpx;
+  font-weight: 900;
+}
+
+.summary-value.danger {
+  color: #9b3e35;
+}
+
+.summary-label {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.sync-button {
+  width: 100%;
+  height: 86rpx;
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.notice-card {
+  margin-top: 22rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #eef6f2;
+  border: 1rpx solid rgba(1, 38, 31, 0.08);
+}
+
+.notice-title {
+  color: #01261f;
+  font-size: 27rpx;
+  font-weight: 900;
+}
+
+.notice-text {
+  margin-top: 8rpx;
+  color: #59615e;
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.section-title {
+  margin-top: 34rpx;
+  color: #1a1c1b;
+  font-size: 31rpx;
+  font-weight: 900;
+}
+
+.empty {
+  margin-top: 90rpx;
+  color: #717976;
+  text-align: center;
+  font-size: 25rpx;
+}
+
+.event-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.event-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.event-title {
+  color: #1a1c1b;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.event-summary {
+  margin-top: 8rpx;
+  color: #59615e;
+  font-size: 24rpx;
+  line-height: 1.35;
+}
+
+.event-status {
+  flex: 0 0 auto;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  color: #01261f;
+  background: #eef3ef;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.event-status.synced {
+  background: rgba(197, 234, 223, 0.58);
+}
+
+.event-status.failed {
+  color: #9b3e35;
+  background: #f6e5e1;
+}
+
+.event-meta,
+.event-error {
+  margin-top: 12rpx;
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.event-error {
+  color: #9b3e35;
+}

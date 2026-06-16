@@ -1,0 +1,79 @@
+<view class="page customers-page">
+  <view class="header-title">顾客</view>
+  <view class="muted">识别到店顾客，查看试发和赠送 AI 次数</view>
+
+  <view class="search-box">
+    <input class="search-input" value="{{keyword}}" placeholder="搜索手机号或昵称" bindinput="onKeywordInput" confirm-type="search" bindconfirm="loadCustomers" />
+    <view class="search-button" bindtap="loadCustomers">搜索</view>
+  </view>
+
+  <view class="view-tabs">
+    <view class="view-tab {{viewMode === 'today_active' ? 'active' : ''}}" data-mode="today_active" bindtap="changeView">今日活跃</view>
+    <view class="view-tab {{viewMode === 'all' ? 'active' : ''}}" data-mode="all" bindtap="changeView">全部顾客</view>
+  </view>
+
+  <view wx:if="{{viewMode === 'all'}}" class="status-tabs">
+    <view wx:for="{{statusOptions}}" wx:key="value" class="status-tab {{status === item.value ? 'active' : ''}}" data-status="{{item.value}}" bindtap="changeStatus">
+      {{item.label}}
+    </view>
+  </view>
+
+  <view wx:if="{{customers.length === 0}}" class="empty-card">
+    <view class="empty-title">{{viewMode === 'today_active' ? '今天还没有顾客动态' : '暂无顾客'}}</view>
+    <view class="muted">{{viewMode === 'today_active' ? '今天有新顾客到店、预约或试发后会出现在这里。' : '顾客扫码到店、预约或 AI 试发后会出现在这里。'}}</view>
+  </view>
+
+  <view wx:for="{{customers}}" wx:key="user_id" class="customer-card {{item.is_disabled ? 'disabled-card' : ''}}">
+    <view class="customer-top">
+      <view class="avatar {{item.is_disabled ? 'avatar-disabled' : ''}}">{{item.avatarText}}</view>
+      <view class="customer-main">
+        <view class="customer-name">
+          {{item.display_name}}
+          <text wx:if="{{item.is_disabled}}" class="disabled-badge">已停用</text>
+        </view>
+        <view class="customer-sub">{{item.masked_phone || '未绑定手机号'}}</view>
+      </view>
+      <view wx:if="{{!item.is_disabled}}" class="state-pill {{item.in_store ? 'active' : ''}}">{{item.in_store ? '已到店' : '未到店'}}</view>
+    </view>
+
+    <view wx:if="{{!item.is_disabled}}" class="info-grid">
+      <view class="info-cell">
+        <view class="info-value">{{item.free_remaining}}</view>
+        <view class="info-label">今日可试</view>
+      </view>
+      <view class="info-cell">
+        <view class="info-value">{{item.gift_remaining || 0}}</view>
+        <view class="info-label">赠送剩余</view>
+      </view>
+      <view class="info-cell">
+        <view class="info-value">{{item.ai_job_count || 0}}</view>
+        <view class="info-label">试发次数</view>
+      </view>
+    </view>
+
+    <view wx:if="{{!item.is_disabled}}" class="customer-line">最近到店：{{item.latest_visit_at || '暂无'}}</view>
+    <view wx:if="{{!item.is_disabled}}" class="customer-line">最近预约：{{statusText[item.latest_order_status] || item.latest_order_status || '暂无'}}</view>
+
+    <!-- 正常状态：查看详情 + 赠送 -->
+    <view wx:if="{{!item.is_disabled}}" class="action-row">
+      <view class="action-button secondary" data-id="{{item.user_id}}" bindtap="goDetail">查看详情</view>
+      <view class="action-button primary" data-id="{{item.user_id}}" bindtap="giftAi">赠送 1 次</view>
+    </view>
+
+    <!-- 管理操作：停用/恢复 + 删除 -->
+    <view class="action-row action-row-manage">
+      <view class="action-button btn-disable" data-id="{{item.user_id}}" data-disabled="{{item.is_disabled}}" bindtap="toggleDisable">
+        {{item.is_disabled ? '恢复账号' : '停用账号'}}
+      </view>
+      <view class="action-button btn-delete" data-id="{{item.user_id}}" bindtap="deleteCustomer">删除</view>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item active"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

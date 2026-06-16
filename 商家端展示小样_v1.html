@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>美发AI小程序商家端展示小样</title>
+  <style>
+    :root {
+      --ink: #1d1715;
+      --muted: #766b64;
+      --line: #e1d6cc;
+      --paper: #f6eee5;
+      --panel: #fffaf4;
+      --card: #fff;
+      --deep: #251f1b;
+      --rose: #b9555b;
+      --green: #19786f;
+      --gold: #b9832f;
+      --soft: #f0e5da;
+      --shadow: 0 24px 70px rgba(47, 37, 30, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(185, 85, 91, 0.11), transparent 34%),
+        linear-gradient(230deg, rgba(25, 120, 111, 0.11), transparent 40%),
+        var(--paper);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select { font: inherit; }
+
+    button {
+      min-height: 44px;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(1.8rem, 4vw, 3.7rem);
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 244, 0.86);
+      box-shadow: var(--shadow);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .phone-frame {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 34px;
+      background: #181411;
+      box-shadow: var(--shadow);
+    }
+
+    .phone {
+      min-height: 780px;
+      overflow: hidden;
+      border-radius: 25px;
+      background: var(--panel);
+      position: relative;
+    }
+
+    .phone-top {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      color: #fff;
+      background: var(--deep);
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px 2px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .brandbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 16px 14px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+    }
+
+    .logo i {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--rose);
+      color: #fff;
+      font-style: normal;
+    }
+
+    .role-pill {
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.86);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .screen {
+      display: none;
+      padding: 16px 16px 86px;
+      animation: rise 240ms ease-out;
+    }
+
+    .screen.active { display: block; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 1.18rem;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.32rem;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .metric.accent {
+      color: #fff;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.22), transparent 24%),
+        linear-gradient(135deg, var(--rose), var(--green));
+      border-color: transparent;
+    }
+
+    .metric.accent span { color: rgba(255,255,255,0.84); }
+
+    .card {
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 0.96rem;
+    }
+
+    .card p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .pill {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: var(--green);
+      background: rgba(25, 120, 111, 0.1);
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .primary,
+    .secondary,
+    .plain {
+      border-radius: 8px;
+      font-weight: 900;
+    }
+
+    .primary {
+      color: #fff;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.22), transparent 24%),
+        linear-gradient(135deg, var(--rose), var(--green));
+      box-shadow: 0 12px 24px rgba(25, 120, 111, 0.16);
+    }
+
+    .secondary {
+      color: #fff;
+      background: linear-gradient(135deg, #3a302a, var(--deep));
+    }
+
+    .plain {
+      color: var(--green);
+      background: rgba(25, 120, 111, 0.1);
+      border: 1px solid rgba(25, 120, 111, 0.18);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      min-height: 40px;
+      border-radius: 8px;
+      color: var(--deep);
+      background: linear-gradient(180deg, #fff8f0, #eadfd3);
+      border: 1px solid rgba(185, 85, 91, 0.12);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .tab.active {
+      color: #fff;
+      background: linear-gradient(145deg, var(--rose), var(--green));
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0e7de;
+    }
+
+    .row:last-child { border-bottom: 0; }
+
+    .row b {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .staff-card {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      margin-bottom: 10px;
+    }
+
+    .staff-card img {
+      width: 58px;
+      height: 68px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .staff-card h3 {
+      margin: 0 0 4px;
+      font-size: 0.95rem;
+    }
+
+    .staff-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--green);
+      font-size: 0.74rem;
+      font-weight: 900;
+    }
+
+    .status-dot::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .asset {
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    .asset img,
+    .asset .swatch {
+      width: 100%;
+      height: 118px;
+      object-fit: cover;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .asset b {
+      display: block;
+      padding: 8px 8px 2px;
+      font-size: 0.82rem;
+    }
+
+    .asset span {
+      display: block;
+      padding: 0 8px 8px;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      padding: 8px 10px 10px;
+      border-top: 1px solid var(--line);
+      background: rgba(255,250,244,0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav {
+      min-height: 48px;
+      border-radius: 8px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+
+    .nav.active {
+      color: #fff;
+      background: linear-gradient(145deg, var(--rose), var(--green));
+    }
+
+    .side {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 244, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 1.14rem;
+    }
+
+    .script {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .script li {
+      padding: 12px;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    .script b { color: var(--ink); }
+
+    @media (min-width: 900px) {
+      .layout { grid-template-columns: 450px 1fr; }
+      .phone-frame { position: sticky; top: 22px; }
+    }
+
+    @media (max-width: 640px) {
+      .hero { display: grid; }
+      .badge { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>商家端展示小样</h1>
+        <p>给店长和老板看的运营端：现场确认订单、赠送AI试发、追加员工额度、管理主理人状态、查看业绩和AI转化。</p>
+      </div>
+      <div class="badge">商家端 · 小程序操作台<br>飞书负责统计看板</div>
+    </header>
+
+    <section class="layout">
+      <div class="phone-frame">
+        <div class="phone">
+          <div class="phone-top">
+            <div class="status"><span>9:41</span><span>店长端</span></div>
+            <div class="brandbar">
+              <div class="logo"><i>H</i><span>H·SALON 商家</span></div>
+              <div class="role-pill">徐汇店 · 店长</div>
+            </div>
+          </div>
+
+          <section class="screen active" data-screen="workbench">
+            <div class="section-title">
+              <h2>今日工作台</h2>
+              <span>本店数据</span>
+            </div>
+            <div class="metrics">
+              <div class="metric accent"><strong>28</strong><span>今日预约</span></div>
+              <div class="metric"><strong>9</strong><span>待确认</span></div>
+              <div class="metric"><strong>64</strong><span>AI试发</span></div>
+              <div class="metric"><strong>18</strong><span>AI转下单</span></div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>待确认订单</h3>
+                  <p>顾客：陈女士 · 女性 · 锁骨发 · 黑茶色</p>
+                </div>
+                <span class="pill">待确认</span>
+              </div>
+              <div class="actions">
+                <button class="primary">确认预约</button>
+                <button class="secondary">联系顾客</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>AI赠送提醒</h3>
+                  <p>Kevin 今日已赠送 5/5 次，可由店长追加额度。</p>
+                </div>
+                <span class="pill">额度用完</span>
+              </div>
+              <button class="plain" data-go="ai">去追加额度</button>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>主理人状态</h3>
+                  <p>Mia 可预约 · Kevin 忙碌 · Allen 不在店</p>
+                </div>
+                <span class="pill">影响推荐</span>
+              </div>
+              <button class="plain" data-go="staff">管理主理人</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="orders">
+            <div class="section-title">
+              <h2>订单管理</h2>
+              <span>状态流转</span>
+            </div>
+            <div class="tabs">
+              <button class="tab active">待确认</button>
+              <button class="tab">已确认</button>
+              <button class="tab">服务中</button>
+              <button class="tab">已完成</button>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>AI造型订单 #A1028</h3>
+                  <p>陈女士 · Mia · 烫染套餐 · 16:00</p>
+                </div>
+                <span class="pill">AI转化</span>
+              </div>
+              <div class="row"><span>方案</span><b>女性 · 锁骨发 · 黑茶色</b></div>
+              <div class="row"><span>状态</span><b>待确认</b></div>
+              <div class="actions">
+                <button class="primary">确认预约</button>
+                <button class="secondary">取消</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>到店安排订单 #A1029</h3>
+                  <p>王先生 · 到店安排 · 男性 · 商务侧分</p>
+                </div>
+                <span class="pill">待分配</span>
+              </div>
+              <div class="actions">
+                <button class="primary">分配主理人</button>
+                <button class="secondary">确认到店</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="ai">
+            <div class="section-title">
+              <h2>AI次数</h2>
+              <span>赠送和追加</span>
+            </div>
+            <div class="metrics">
+              <div class="metric accent"><strong>64</strong><span>今日总试发</span></div>
+              <div class="metric"><strong>32</strong><span>免费</span></div>
+              <div class="metric"><strong>18</strong><span>赠送</span></div>
+              <div class="metric"><strong>14</strong><span>付费</span></div>
+            </div>
+
+            <div class="staff-card">
+              <img src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=420&q=80" alt="Kevin">
+              <div>
+                <h3>Kevin</h3>
+                <p>今日赠送 5/5 · AI转下单 4单</p>
+                <div class="actions">
+                  <button class="primary" id="addQuota">追加5次</button>
+                  <button class="plain">查看转化</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>给顾客赠送AI试发</h3>
+                  <p>员工点击赠送后，系统自动记录赠送人、使用、下单和成交。</p>
+                </div>
+                <span class="pill">自动统计</span>
+              </div>
+              <button class="primary">扫码顾客并赠送1次</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="performance">
+            <div class="section-title">
+              <h2>业绩</h2>
+              <span>本店 / 主理人 / 服务</span>
+            </div>
+            <div class="metrics">
+              <div class="metric accent"><strong>¥36,820</strong><span>本月成交</span></div>
+              <div class="metric"><strong>42%</strong><span>AI转化率</span></div>
+              <div class="metric"><strong>¥418</strong><span>客单价</span></div>
+              <div class="metric"><strong>¥8,260</strong><span>AI转成交</span></div>
+            </div>
+
+            <div class="card">
+              <h3>主理人AI推荐转化排行</h3>
+              <div class="row"><span>1. Mia</span><b>18单 · ¥12,860</b></div>
+              <div class="row"><span>2. Kevin</span><b>14单 · ¥9,430</b></div>
+              <div class="row"><span>3. Allen</span><b>8单 · ¥6,180</b></div>
+            </div>
+
+            <div class="card">
+              <h3>服务项目统计</h3>
+              <div class="row"><span>染发</span><b>32单 · ¥13,280</b></div>
+              <div class="row"><span>烫发</span><b>18单 · ¥10,620</b></div>
+              <div class="row"><span>造型</span><b>12单 · ¥3,180</b></div>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="gallery">
+            <div class="section-title">
+              <h2>图库</h2>
+              <span>发型 / 发色 / 标签</span>
+            </div>
+            <div class="tabs">
+              <button class="tab active">发型</button>
+              <button class="tab">发色</button>
+              <button class="tab">标签</button>
+              <button class="tab">作品</button>
+            </div>
+            <div class="gallery-grid">
+              <div class="asset">
+                <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=420&q=80" alt="发型">
+                <b>韩系锁骨发</b>
+                <span>女性 · 中发 · 需烫 · 推荐</span>
+              </div>
+              <div class="asset">
+                <img src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=420&q=80" alt="发型">
+                <b>男士纹理短发</b>
+                <span>男性 · 短发 · 需烫 · 推荐</span>
+              </div>
+              <div class="asset">
+                <div class="swatch" style="background:linear-gradient(135deg,#251912,#4a3125)">黑茶色</div>
+                <b>黑茶色</b>
+                <span>女性 · 无需漂 · 显白</span>
+              </div>
+              <div class="asset">
+                <div class="swatch" style="background:linear-gradient(135deg,#6f6c64,#c1bcae)">亚麻灰</div>
+                <b>亚麻灰</b>
+                <span>中性 · 需漂 · 造型感</span>
+              </div>
+            </div>
+            <div style="display:grid;gap:10px;margin-top:12px">
+              <button class="primary">上传发型/发色</button>
+              <button class="plain">AI自动标签，进阶套餐</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="staff">
+            <div class="section-title">
+              <h2>主理人</h2>
+              <span>状态影响推荐</span>
+            </div>
+
+            <div class="staff-card">
+              <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=420&q=80" alt="Mia">
+              <div>
+                <h3>Mia</h3>
+                <p><span class="status-dot">可预约</span> · 女性层次剪 · 黑茶色</p>
+                <div class="actions">
+                  <button class="primary">设为忙碌</button>
+                  <button class="plain">编辑资料</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="staff-card">
+              <img src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=420&q=80" alt="Kevin">
+              <div>
+                <h3>Kevin</h3>
+                <p><span class="status-dot">忙碌</span> · 男士短发 · 冷棕色</p>
+                <div class="actions">
+                  <button class="primary">设为可约</button>
+                  <button class="plain">追加AI额度</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="staff-card">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=420&q=80" alt="Allen">
+              <div>
+                <h3>Allen</h3>
+                <p><span class="status-dot">不在店</span> · 中性层次 · 潮流发色</p>
+                <div class="actions">
+                  <button class="primary">设为可约</button>
+                  <button class="plain">编辑资料</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="services">
+            <div class="section-title">
+              <h2>服务项目</h2>
+              <span>商家可自定义</span>
+            </div>
+            <div class="card">
+              <div class="row"><span>美发</span><b>启用 · ¥98起</b></div>
+              <div class="row"><span>染发</span><b>启用 · ¥298起</b></div>
+              <div class="row"><span>烫发</span><b>启用 · ¥398起</b></div>
+              <div class="row"><span>造型</span><b>启用 · ¥168起</b></div>
+              <div class="row"><span>护理</span><b>启用 · ¥198起</b></div>
+            </div>
+            <button class="primary">新增服务项目</button>
+          </section>
+
+          <nav class="bottom-nav">
+            <button class="nav active" data-go="workbench">工作台</button>
+            <button class="nav" data-go="orders">订单</button>
+            <button class="nav" data-go="ai">AI次数</button>
+            <button class="nav" data-go="performance">业绩</button>
+            <button class="nav" data-go="gallery">图库</button>
+          </nav>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="section">
+          <h2>商家端定位</h2>
+          <ul class="script">
+            <li><b>小程序商家端是操作台。</b>现场确认预约、赠送AI试发、追加员工额度、管理主理人状态。</li>
+            <li><b>飞书是统计台。</b>老板看全店经营、AI转化、门店排行和平台结算。</li>
+            <li><b>店长看本店。</b>老板看全店，主理人看本人，数据按权限过滤。</li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <h2>这版覆盖模块</h2>
+          <ul class="script">
+            <li><b>工作台：</b>今日预约、待确认、AI试发、AI转下单。</li>
+            <li><b>订单：</b>确认、到店、服务中、完成、取消。</li>
+            <li><b>AI次数：</b>赠送、追加额度、自动记录转化。</li>
+            <li><b>业绩：</b>本店、主理人、服务项目、AI转化。</li>
+            <li><b>图库：</b>发型、发色、标签、作品和AI自动标签入口。</li>
+            <li><b>主理人：</b>状态、擅长方向、可预约、是否影响推荐。</li>
+          </ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    function go(screen) {
+      document.querySelectorAll(".screen").forEach((item) => item.classList.remove("active"));
+      document.querySelector(`[data-screen="${screen}"]`).classList.add("active");
+      document.querySelectorAll(".nav").forEach((item) => item.classList.toggle("active", item.dataset.go === screen));
+    }
+
+    document.addEventListener("click", (event) => {
+      const nav = event.target.closest("[data-go]");
+      if (nav) go(nav.dataset.go);
+    });
+
+    document.querySelector("#addQuota").addEventListener("click", () => {
+      alert("演示：已给 Kevin 今日追加5次AI赠送额度。系统会自动记录授权和后续转化。");
+    });
+  </script>
+</body>
+</html>

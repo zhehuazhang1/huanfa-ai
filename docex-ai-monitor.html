@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root { color-scheme: light; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: #fafaf7;
+  color: #2c2c2a;
+  margin: 0;
+  padding: 24px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.container { max-width: 920px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+.subtitle { color: #5f5e5a; font-size: 13px; margin-bottom: 24px; }
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 0.5px solid rgba(0,0,0,0.15);
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: #5f5e5a;
+  user-select: none;
+}
+.tab.active { color: #2c2c2a; border-bottom-color: #534AB7; font-weight: 500; }
+.panel { display: none; }
+.panel.active { display: block; }
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.score-card {
+  background: #f1efe8;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.score-label { font-size: 12px; color: #5f5e5a; margin-bottom: 6px; }
+.score-value { font-size: 22px; font-weight: 500; }
+.score-value .total { font-size: 14px; color: #888780; font-weight: 400; }
+.score-bar {
+  height: 4px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.score-bar > div { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.section-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 20px 0 10px;
+  color: #2c2c2a;
+}
+.checklist-group {
+  background: white;
+  border: 0.5px solid rgba(0,0,0,0.15);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.group-header {
+  padding: 12px 16px;
+  background: #f1efe8;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.group-header .count { font-size: 12px; color: #5f5e5a; font-weight: 400; }
+.check-item {
+  padding: 12px 16px;
+  border-top: 0.5px solid rgba(0,0,0,0.08);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.check-item input[type="checkbox"] {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: #534AB7;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.check-item label { cursor: pointer; flex: 1; }
+.check-item.done label { color: #888780; text-decoration: line-through; }
+.check-title { font-weight: 500; display: block; margin-bottom: 2px; }
+.check-desc { font-size: 13px; color: #5f5e5a; }
+.severity {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+  font-weight: 500;
+}
+.sev-high { background: #FCEBEB; color: #791F1F; }
+.sev-mid { background: #FAEEDA; color: #633806; }
+.sev-low { background: #EAF3DE; color: #27500A; }
+.risk-card {
+  background: white;
+  border: 0.5px solid rgba(0,0,0,0.15);
+  border-left: 3px solid;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.risk-card.high { border-left-color: #E24B4A; }
+.risk-card.mid { border-left-color: #EF9F27; }
+.risk-card.low { border-left-color: #97C459; }
+.risk-title { font-weight: 500; margin-bottom: 4px; font-size: 14px; }
+.risk-desc { font-size: 13px; color: #5f5e5a; margin-bottom: 6px; }
+.risk-action {
+  font-size: 12px;
+  color: #534AB7;
+  background: #EEEDFE;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  cursor: pointer;
+}
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+.feature-item {
+  background: white;
+  border: 0.5px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.feature-item .status {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 6px;
+  background: #E1F5EE;
+  color: #085041;
+}
+.timeline-item {
+  border-left: 2px solid #CECBF6;
+  padding: 0 0 16px 16px;
+  margin-left: 6px;
+  position: relative;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #534AB7;
+}
+.timeline-date { font-size: 12px; color: #5f5e5a; }
+.timeline-title { font-weight: 500; margin: 2px 0; }
+.timeline-desc { font-size: 13px; color: #5f5e5a; }
+.add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.add-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 0.5px solid rgba(0,0,0,0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.add-row button {
+  background: #534AB7;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ask-btn {
+  background: #EEEDFE;
+  color: #3C3489;
+  border: 0.5px solid #CECBF6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 6px;
+}
+.ask-btn:hover { background: #CECBF6; }
+.summary-box {
+  background: #EEEDFE;
+  border-left: 3px solid #534AB7;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  background: #f1efe8;
+  color: #5f5e5a;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-right: 4px;
+}
+.empty {
+  text-align: center;
+  color: #888780;
+  font-size: 13px;
+  padding: 20px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Docex AI 监督看板</h1>
+  <p class="subtitle">美发 SaaS · AI 写代码进度与质量追踪 · 数据存本地（关闭后下次打开还在）</p>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">总览</div>
+    <div class="tab" data-tab="quality">代码质量</div>
+    <div class="tab" data-tab="risks">风险清单</div>
+    <div class="tab" data-tab="features">已实现功能</div>
+    <div class="tab" data-tab="progress">进度日志</div>
+  </div>
+
+  <div class="panel active" id="dashboard">
+    <div class="summary-box">
+      <strong>当前阶段判断：</strong>已过 demo 阶段，进入"准生产/小规模上线"。已实现完整商业闭环（开通租户 → 售卖套餐 → AI 生成 → 转化下单 → 商家收钱 → 飞书同步），有 14 个单元测试覆盖核心业务。
+    </div>
+    <div class="score-grid" id="scoreGrid"></div>
+    <div class="section-title">下一步建议（按优先级）</div>
+    <div id="nextSteps"></div>
+  </div>
+
+  <div class="panel" id="quality">
+    <p class="subtitle">每次 AI 提交代码，对照这份清单检查。打勾 = 已确认通过。</p>
+    <div id="checklistContainer"></div>
+  </div>
+
+  <div class="panel" id="risks">
+    <p class="subtitle">已识别的风险 · 按严重程度排列 · 点"问 AI"会把追问发给 AI 处理</p>
+    <div id="riskContainer"></div>
+    <div class="section-title">添加新风险</div>
+    <div class="add-row">
+      <input id="newRiskTitle" placeholder="风险标题（如：员工赠券可被刷）">
+      <button onclick="addRisk()">添加</button>
+    </div>
+  </div>
+
+  <div class="panel" id="features">
+    <p class="subtitle">AI 已经做出来的功能 · 基于 14 个单元测试反推</p>
+    <div class="feature-grid" id="featureGrid"></div>
+  </div>
+
+  <div class="panel" id="progress">
+    <p class="subtitle">Docex 关键里程碑记录</p>
+    <div id="timelineContainer"></div>
+    <div class="section-title">添加进展</div>
+    <div class="add-row">
+      <input id="newProgressTitle" placeholder="发生了什么（如：演示给第一家美发店）">
+      <button onclick="addProgress()">记录</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'docex-monitor-v1';
+
+const DEFAULTS = {
+  scores: [
+    { label: '多租户安全', value: 2, total: 10, color: '#E24B4A', note: '所有测试只用 tenant_id=1，跨租户隔离未验证' },
+    { label: '金额/计费逻辑', value: 6, total: 10, color: '#EF9F27', note: '主流程已测，但缺边界值、并发、退款场景' },
+    { label: 'AI 生成质量', value: 0, total: 10, color: '#888780', note: '尚未评估，需要真实用户照片测试' },
+    { label: '业务进度', value: 7, total: 10, color: '#1D9E75', note: '核心闭环已通，待客户验证' }
+  ],
+  checklist: [
+    {
+      group: '多租户数据安全（最关键）',
+      items: [
+        { id: 'mt1', sev: 'high', title: '租户间数据绝对隔离测试', desc: '租户 A 创建的订单/用户/AI 记录，租户 B 的所有接口都查不到' },
+        { id: 'mt2', sev: 'high', title: '所有 SQL 查询都带 tenant_id', desc: '没有任何 SQL 是 SELECT * FROM xxx WHERE id=? 这种没有租户隔离的' },
+        { id: 'mt3', sev: 'mid', title: '员工权限不越界', desc: '员工 A 不能查/改门店 B 的数据；店长不能跨门店操作' },
+        { id: 'mt4', sev: 'mid', title: '上传文件路径包含租户隔离', desc: '已看到 object_key = temp/{tenant_id}/{store_id}/... 这样做对' }
+      ]
+    },
+    {
+      group: '金额/计费逻辑',
+      items: [
+        { id: 'pay1', sev: 'high', title: '支付回调幂等', desc: '同一个 pay_order_no 被回调多次只生效一次' },
+        { id: 'pay2', sev: 'high', title: '余额扣减并发安全', desc: '用户同时发起 10 个 AI 请求，只能扣 10 次（不能扣 9 次也不能扣 11 次）' },
+        { id: 'pay3', sev: 'mid', title: '0 元、负数、超大额都拒绝', desc: '边界值测试' },
+        { id: 'pay4', sev: 'mid', title: '退款流程闭环', desc: '退款后余额回正、订单状态变更、AI 转化数据扣减' },
+        { id: 'pay5', sev: 'low', title: '金额计算用 Decimal', desc: '不能用 float 算钱，0.1+0.2 ≠ 0.3' }
+      ]
+    },
+    {
+      group: 'AI 生成质量',
+      items: [
+        { id: 'ai1', sev: 'high', title: 'AI 生成结果有人工评分', desc: '至少有一个机制让员工/顾客评价 AI 推荐质量' },
+        { id: 'ai2', sev: 'mid', title: 'AI 失败有回退方案', desc: 'AI 服务挂了，用户看到的不是白屏而是友好提示' },
+        { id: 'ai3', sev: 'mid', title: '生成内容有 NSFW/合规过滤', desc: '上传的照片做基础过滤' },
+        { id: 'ai4', sev: 'low', title: '相同输入生成结果可复现', desc: '便于调试和申诉' }
+      ]
+    },
+    {
+      group: '安全与合规',
+      items: [
+        { id: 'sec1', sev: 'high', title: '顾客照片不持久化（已测）', desc: '只放临时存储，TTL 到期自动删' },
+        { id: 'sec2', sev: 'high', title: 'API 有鉴权', desc: '所有接口要登录 + 权限校验，不是裸奔' },
+        { id: 'sec3', sev: 'mid', title: '敏感操作有审计日志', desc: '改价格、发赠券、退款都要记录是谁干的' },
+        { id: 'sec4', sev: 'mid', title: '飞书同步失败不丢数据', desc: '失败的事件进死信队列，可人工介入' }
+      ]
+    }
+  ],
+  risks: [
+    { id: 'r1', sev: 'high', title: '跨租户隔离从未验证', desc: '所有 14 个测试都用 tenant_id=1，如果代码里有一处忘记加租户过滤，租户 A 就能看到 B 的客户数据 —— SaaS 一旦出这事，公司就完了', action: '让 AI 补一个测试：创建 tenant=2 的数据，用 tenant=1 的接口查询，必须返回空' },
+    { id: 'r2', sev: 'high', title: '支付回调无幂等保护', desc: 'mark_payment_paid 看代码没有"已支付直接返回"的判断。微信/支付宝回调常重试，可能重复发券、重复加余额', action: '让 AI 在 mark_payment_paid 开头加：如果 pay_status 已经是 paid，直接返回当前订单状态' },
+    { id: 'r3', sev: 'mid', title: 'AI 生成质量没有衡量机制', desc: '测试只验证"AI 调用成功"，但生成的发型/颜色推荐到底好不好、顾客喜不喜欢、转化率多少 —— 都没数据', action: '让 AI 加一个埋点：顾客查看 AI 推荐后是否预约 / 评分；做成商家工作台的核心指标' },
+    { id: 'r4', sev: 'mid', title: '所有定价是硬编码', desc: '测试里出现 9.9、399、2.0、1.5 这些魔法数字。如果以后改价格，要改多处代码', action: '让 AI 把所有价格抽到配置表（套餐表、结算单价表），代码里只引用配置' },
+    { id: 'r5', sev: 'mid', title: '飞书绑定可能限制可复制性', desc: '"飞书同步"是写死的能力。如果客户用钉钉/企微/不用 IM，这部分就废了 —— 影响产品标准化', action: '让 AI 重构：把"同步到外部系统"抽象成接口，飞书只是其中一个实现' },
+    { id: 'r6', sev: 'low', title: 'datetime.utcnow() 已弃用', desc: 'Python 3.12+ 会警告，未来版本移除', action: '让 AI 全局替换为 datetime.now(timezone.utc)' }
+  ],
+  features: [
+    { name: '租户开通 + 套餐购买', status: '已实现' },
+    { name: '免费生成（扣免费额度）', status: '已实现' },
+    { name: '付费生成（先付钱再用）', status: '已实现' },
+    { name: '赠送生成（员工送顾客）', status: '已实现' },
+    { name: '店长加员工赠券额度', status: '已实现' },
+    { name: 'AI 推荐（基于门店候选库）', status: '已实现' },
+    { name: '顾客照片临时上传（不落库）', status: '已实现' },
+    { name: '支付订单 pending→paid', status: '已实现' },
+    { name: 'AI 转化订单标记', status: '已实现' },
+    { name: '服务完成 + 收入记账', status: '已实现' },
+    { name: '商家工作台数据', status: '已实现' },
+    { name: '平台成本 vs 客户结算价', status: '已实现' },
+    { name: '飞书数据同步 + 重试', status: '已实现' }
+  ],
+  progress: [
+    { date: '2026-05-26', title: '完成第二轮测试编写', desc: 'AI 补齐 14 个单元测试，覆盖完整商业闭环。建立 Docex 监督看板。' }
+  ]
+};
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return Object.assign({}, DEFAULTS, JSON.parse(stored));
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULTS));
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function render() {
+  renderScores();
+  renderNextSteps();
+  renderChecklist();
+  renderRisks();
+  renderFeatures();
+  renderTimeline();
+}
+
+function renderScores() {
+  const grid = document.getElementById('scoreGrid');
+  grid.innerHTML = state.scores.map(s => {
+    const pct = Math.round((s.value / s.total) * 100);
+    return `<div class="score-card">
+      <div class="score-label">${s.label}</div>
+      <div class="score-value">${s.value}<span class="total"> / ${s.total}</span></div>
+      <div class="score-bar"><div style="width:${pct}%; background:${s.color}"></div></div>
+      <div style="font-size:11px; color:#5f5e5a; margin-top:6px">${s.note}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderNextSteps() {
+  const container = document.getElementById('nextSteps');
+  const steps = [
+    { sev: 'high', text: '让 AI 立刻补"跨租户隔离测试"——SaaS 生死线' },
+    { sev: 'high', text: '让 AI 在 mark_payment_paid 加幂等保护' },
+    { sev: 'mid', text: '设计"AI 推荐质量"的衡量指标（顾客点击/预约/评分）' },
+    { sev: 'mid', text: '把所有价格硬编码抽到配置表' },
+    { sev: 'low', text: '找 1-3 家美发店做真实用户测试' }
+  ];
+  container.innerHTML = steps.map(s =>
+    `<div class="risk-card ${s.sev}">
+      <span class="severity sev-${s.sev}">${s.sev === 'high' ? '紧急' : s.sev === 'mid' ? '重要' : '常规'}</span>
+      ${s.text}
+    </div>`
+  ).join('');
+}
+
+function renderChecklist() {
+  const container = document.getElementById('checklistContainer');
+  container.innerHTML = state.checklist.map(group => {
+    const done = group.items.filter(i => state['check_' + i.id]).length;
+    return `<div class="checklist-group">
+      <div class="group-header">
+        <span>${group.group}</span>
+        <span class="count">${done} / ${group.items.length}</span>
+      </div>
+      ${group.items.map(item => `
+        <div class="check-item ${state['check_' + item.id] ? 'done' : ''}">
+          <input type="checkbox" id="${item.id}" ${state['check_' + item.id] ? 'checked' : ''} onchange="toggleCheck('${item.id}')">
+          <label for="${item.id}">
+            <span class="check-title"><span class="severity sev-${item.sev}">${item.sev === 'high' ? '高' : item.sev === 'mid' ? '中' : '低'}</span>${item.title}</span>
+            <span class="check-desc">${item.desc}</span>
+          </label>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderRisks() {
+  const container = document.getElementById('riskContainer');
+  if (state.risks.length === 0) {
+    container.innerHTML = '<div class="empty">还没有记录的风险</div>';
+    return;
+  }
+  container.innerHTML = state.risks.map(r =>
+    `<div class="risk-card ${r.sev}">
+      <div class="risk-title"><span class="severity sev-${r.sev}">${r.sev === 'high' ? '高风险' : r.sev === 'mid' ? '中风险' : '低风险'}</span>${r.title}</div>
+      <div class="risk-desc">${r.desc}</div>
+      ${r.action ? `<div class="risk-action" onclick="askAboutRisk('${r.id}')">💬 ${r.action}</div>` : ''}
+    </div>`
+  ).join('');
+}
+
+function renderFeatures() {
+  const grid = document.getElementById('featureGrid');
+  grid.innerHTML = state.features.map(f =>
+    `<div class="feature-item"><span class="status">${f.status}</span>${f.name}</div>`
+  ).join('');
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timelineContainer');
+  if (state.progress.length === 0) {
+    container.innerHTML = '<div class="empty">还没有记录的进展</div>';
+    return;
+  }
+  container.innerHTML = state.progress.map(p =>
+    `<div class="timeline-item">
+      <div class="timeline-date">${p.date}</div>
+      <div class="timeline-title">${p.title}</div>
+      <div class="timeline-desc">${p.desc || ''}</div>
+    </div>`
+  ).join('');
+}
+
+function toggleCheck(id) {
+  state['check_' + id] = !state['check_' + id];
+  saveState();
+  renderChecklist();
+}
+
+function addRisk() {
+  const input = document.getElementById('newRiskTitle');
+  const v = input.value.trim();
+  if (!v) return;
+  state.risks.push({ id: 'r' + Date.now(), sev: 'mid', title: v, desc: '（待补充详细描述）', action: '' });
+  input.value = '';
+  saveState();
+  renderRisks();
+}
+
+function addProgress() {
+  const input = document.getElementById('newProgressTitle');
+  const v = input.value.trim();
+  if (!v) return;
+  const today = new Date().toISOString().slice(0, 10);
+  state.progress.unshift({ date: today, title: v, desc: '' });
+  input.value = '';
+  saveState();
+  renderTimeline();
+}
+
+function askAboutRisk(id) {
+  const r = state.risks.find(x => x.id === id);
+  if (!r && typeof sendPrompt === 'undefined') return;
+  if (typeof sendPrompt !== 'undefined') {
+    sendPrompt('针对 Docex 项目的风险"' + r.title + '"，请帮我写一段精确的指令，让 AI 编程助手去修复。要求：1）指令明确具体 2）包含验证方法 3）不超过 100 字');
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<view class="page knowledge-page">
+  <view class="brand-row">
+    <view>
+      <view class="brand-name">客服知识库</view>
+      <view class="muted">维护活动套餐、价格说明和常见咨询回答</view>
+    </view>
+  </view>
+
+  <view class="tabs">
+    <view wx:for="{{tabs}}" wx:key="value" class="tab {{filterCategory === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="changeTab">{{item.label}}</view>
+  </view>
+
+  <button class="primary-button add-button" bindtap="addItem">新增知识</button>
+
+  <view wx:if="{{filteredItems.length === 0}}" class="empty">暂无知识内容</view>
+
+  <view wx:for="{{filteredItems}}" wx:key="id" class="knowledge-card {{item.is_enabled ? '' : 'disabled'}}">
+    <view class="card-top">
+      <view class="category-pill">{{item.categoryLabel}}</view>
+      <view class="status-pill">{{item.statusLabel}}</view>
+    </view>
+    <view class="question">{{item.question}}</view>
+    <view class="answer">{{item.answer}}</view>
+    <view wx:if="{{item.keywordsText}}" class="keywords">关键词：{{item.keywordsText}}</view>
+    <view class="card-actions">
+      <view class="action-link" data-id="{{item.id}}" bindtap="editItem">编辑</view>
+      <button class="small-button {{item.is_enabled ? 'secondary-button' : 'primary-button'}}" data-id="{{item.id}}" data-enabled="{{item.is_enabled}}" bindtap="toggleItem">{{item.is_enabled ? '停用' : '启用'}}</button>
+    </view>
+  </view>
+
+  <view wx:if="{{dialogVisible}}" class="dialog-mask" catchtap="closeDialog">
+    <view class="knowledge-dialog" catchtap="noop">
+      <view class="dialog-title">{{dialogMode === 'edit' ? '编辑知识' : '新增知识'}}</view>
+      <view class="dialog-subtitle">顾客咨询命中关键词时，会优先使用这里的回答</view>
+      <view class="dialog-field">
+        <view class="dialog-label">分类</view>
+        <picker mode="selector" range="{{categoryOptions}}" range-key="label" value="{{categoryIndex}}" bindchange="changeDialogCategory">
+          <view class="dialog-picker">{{currentCategoryLabel}}</view>
+        </picker>
+      </view>
+      <view class="dialog-field">
+        <view class="dialog-label">顾客可能会问</view>
+        <input class="dialog-input" value="{{dialogForm.question}}" bindinput="inputQuestion" placeholder="例如：端午节有什么染发套餐？" />
+      </view>
+      <view class="dialog-field">
+        <view class="dialog-label">默认回答</view>
+        <textarea class="dialog-textarea" value="{{dialogForm.answer}}" bindinput="inputAnswer" placeholder="写给顾客看的回答，可包含价格、适合人群、到店沟通提醒" />
+      </view>
+      <view class="dialog-field">
+        <view class="dialog-label">关键词</view>
+        <input class="dialog-input" value="{{dialogForm.keywordsText}}" bindinput="inputKeywords" placeholder="例如：端午、活动、套餐、染发" />
+      </view>
+      <view class="dialog-actions">
+        <view class="dialog-button secondary" bindtap="closeDialog">取消</view>
+        <view class="dialog-button primary" bindtap="saveDialog">{{dialogSubmitting ? '保存中' : '保存'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

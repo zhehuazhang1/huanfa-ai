@@ -1,0 +1,66 @@
+<view class="page">
+  <view class="header-title">素材管理</view>
+  <view class="muted">维护顾客可见的发型、发色和 AI 参考词</view>
+
+  <view class="direction-tabs">
+    <view wx:for="{{directions}}" wx:key="value" class="direction-tab {{direction === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="changeDirection">{{item.label}}</view>
+  </view>
+
+  <view class="asset-type-tabs">
+    <view class="asset-type-tab {{assetType === 'styles' ? 'active' : ''}}" data-type="styles" bindtap="changeAssetType">
+      发型 <text class="asset-count">{{styles.length}}</text>
+    </view>
+    <view class="asset-type-tab {{assetType === 'colors' ? 'active' : ''}}" data-type="colors" bindtap="changeAssetType">
+      发色 <text class="asset-count">{{colors.length}}</text>
+    </view>
+  </view>
+
+  <view class="section-head">
+    <view>
+      <view class="section-title">{{assetType === 'styles' ? '发型库' : '发色库'}}</view>
+      <view class="section-subtitle">{{assetType === 'styles' ? '维护可试发的造型参考图' : '维护可试发的发色色块和说明'}}</view>
+    </view>
+    <button class="small-button primary-button" bindtap="addCurrentAsset">{{assetType === 'styles' ? '新增发型' : '新增发色'}}</button>
+  </view>
+
+  <view wx:if="{{assetType === 'styles' && styles.length === 0}}" class="empty">暂无发型</view>
+  <view wx:if="{{assetType === 'styles'}}" wx:for="{{styles}}" wx:key="style_id" class="asset-card" data-type="style" data-id="{{item.style_id}}" bindtap="openAssetDetail">
+    <image wx:if="{{item.thumbnail_url}}" class="style-thumb" src="{{item.thumbnail_url}}" mode="aspectFit" />
+    <view class="asset-main">
+      <view class="asset-title">{{item.style_name}}</view>
+      <view wx:if="{{item.customer_description}}" class="asset-desc">{{item.customer_description}}</view>
+      <view class="asset-meta">{{item.hairLengthLabel}}</view>
+      <view class="tag-row">
+        <text wx:for="{{item.tagList}}" wx:key="*this" class="mini-tag">{{item}}</text>
+      </view>
+    </view>
+    <view class="asset-side">
+      <view class="asset-tag">{{item.need_perm ? '需烫' : '无需烫'}}</view>
+      <view class="detail-hint">详情</view>
+    </view>
+  </view>
+
+  <view wx:if="{{assetType === 'colors' && colors.length === 0}}" class="empty">暂无发色</view>
+  <view wx:if="{{assetType === 'colors'}}" wx:for="{{colors}}" wx:key="color_id" class="asset-card color-asset-card" data-type="color" data-id="{{item.color_id}}" bindtap="openAssetDetail">
+    <image wx:if="{{item.thumbnail_url}}" class="color-thumb" src="{{item.thumbnail_url}}" mode="aspectFit" />
+    <view wx:else class="color-dot" style="background: {{item.color_swatch || '#6b4a38'}}"></view>
+    <view class="asset-main">
+      <view class="asset-title">{{item.color_name}}</view>
+      <view class="tag-row">
+        <text wx:for="{{item.tagList}}" wx:key="*this" class="mini-tag">{{item}}</text>
+      </view>
+    </view>
+    <view class="asset-side">
+      <view class="asset-tag">{{item.need_bleach ? '需漂' : '无需漂'}}</view>
+      <view class="detail-hint">详情</view>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item active"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

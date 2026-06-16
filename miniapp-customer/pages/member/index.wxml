@@ -1,0 +1,56 @@
+<view class="page member-page">
+  <view class="brand-row">
+    <view>
+      <view class="brand-name">我的会员</view>
+      <view class="muted">查看储值余额、门店套餐和剩余次数</view>
+    </view>
+  </view>
+
+  <view class="member-card">
+    <view class="member-top">
+      <view>
+        <view class="member-label">会员状态</view>
+        <view class="member-level">{{membership.level_name || '普通会员'}}</view>
+      </view>
+    </view>
+    <view class="balance-label">储值余额</view>
+    <view class="balance-value">¥{{membership.balance || 0}}</view>
+    <view class="balance-row">
+      <view>累计充值 ¥{{membership.total_recharge || 0}}</view>
+      <view>累计消费 ¥{{membership.total_consume || 0}}</view>
+    </view>
+    <view wx:if="{{membership.enabled === false}}" class="member-tip">
+      当前门店暂未开通顾客储值 / 会员卡，具体权益可咨询门店。
+    </view>
+  </view>
+
+  <view class="section-title">我的套餐</view>
+  <view wx:if="{{packages.length === 0}}" class="empty-card">
+    <view class="empty-title">暂无已购套餐</view>
+    <view class="empty-desc">如需购买剪发次卡、染烫套餐或护理套餐，可到店咨询主理人。</view>
+  </view>
+  <view wx:for="{{packages}}" wx:key="id" class="package-card">
+    <view class="package-head">
+      <view class="package-name">{{item.package_name || '门店套餐'}}</view>
+      <view class="package-status">{{item.statusText}}</view>
+    </view>
+    <view class="package-line">{{item.itemText}}</view>
+    <view class="package-meta">有效期至 {{item.expires_at}}</view>
+  </view>
+
+  <view class="section-title">会员流水</view>
+  <view wx:if="{{transactions.length === 0}}" class="empty-card small">
+    <view class="empty-desc">暂无会员流水</view>
+  </view>
+  <view wx:for="{{transactions}}" wx:key="id" class="tx-card">
+    <view class="tx-title">{{item.transaction_type === 'recharge' ? '充值' : item.transaction_type === 'consume' ? '消费' : '调整'}} ¥{{item.amount}}</view>
+    <view class="tx-meta">余额 ¥{{item.balance_after}} · {{item.created_at}}</view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goHome"><text class="nav-icon">首</text>首页</view>
+    <view class="nav-item" bindtap="goStyle"><text class="nav-icon">试</text>AI试发</view>
+    <view class="nav-item" bindtap="goChat"><text class="nav-icon">咨</text>咨询师</view>
+    <view class="nav-item active" bindtap="goMe"><text class="nav-icon">我</text>我的</view>
+  </view>
+</view>

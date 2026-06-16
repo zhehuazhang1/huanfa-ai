@@ -1,0 +1,42 @@
+<view class="page">
+  <view class="header-title">主理人管理</view>
+  <view class="muted">管理在店状态、推荐状态和擅长方向</view>
+
+  <button class="primary-button add-button" bindtap="addStaff">新增主理人</button>
+
+  <view wx:if="{{staff.length === 0}}" class="empty">暂无主理人</view>
+
+  <view wx:for="{{staff}}" wx:key="staff_id" class="staff-card">
+    <view class="staff-top">
+      <view class="avatar">{{item.avatarText}}</view>
+      <view class="staff-main">
+        <view class="staff-line">
+          <view class="staff-name">{{item.display_name}}</view>
+          <view class="status-pill status-{{item.availability_status}}">{{item.statusLabel}}</view>
+        </view>
+        <view class="staff-title">{{item.title || '主理人'}}</view>
+        <view class="staff-summary">{{item.tagSummary}}<text wx:if="{{item.extraTagCount > 0}}"> +{{item.extraTagCount}}</text></view>
+      </view>
+    </view>
+
+    <view class="status-switch">
+      <view
+        wx:for="{{statusOptions}}"
+        wx:for-item="option"
+        wx:key="value"
+        class="status-button {{item.availability_status === option.value ? 'active' : ''}}"
+        data-id="{{item.staff_id}}"
+        data-status="{{option.value}}"
+        bindtap="changeStatus"
+      >{{option.label}}</view>
+    </view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item active"><text class="nav-icon">团</text>团队</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

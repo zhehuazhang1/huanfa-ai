@@ -1,0 +1,101 @@
+<view class="page result-page">
+  <view wx:if="{{!generating}}" class="brand-row">
+    <view>
+      <view class="brand-name">专属试发方案</view>
+      <view class="muted">{{saveHint}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{generating}}" class="generating-screen">
+    <view class="generating-ring">
+      <view class="generating-core">·</view>
+    </view>
+    <view class="generating-title">正在生成专属试发方案</view>
+    <view class="generating-desc">正在根据你的自拍和所选造型生成，请稍候</view>
+
+    <view class="generating-steps">
+      <view class="generating-step">
+        <view class="step-icon">析</view>
+        <view class="step-copy">
+          <view class="step-title">第一步：分析脸型与原发型</view>
+          <view class="step-desc">AI 正在观察解析五官比例...</view>
+        </view>
+      </view>
+      <view class="generating-step">
+        <view class="step-icon">配</view>
+        <view class="step-copy">
+          <view class="step-title">第二步：匹配发型发色</view>
+          <view class="step-desc">{{generationText}}</view>
+        </view>
+      </view>
+      <view class="generating-step">
+        <view class="step-icon">成</view>
+        <view class="step-copy">
+          <view class="step-title">第三步：生成试发结果</view>
+          <view class="step-desc">生成完成后会自动显示结果</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="generating-hint">生成完成后会自动显示结果</view>
+  </view>
+
+  <view wx:elif="{{generationFailed}}" class="generation-state">
+    <view class="generation-title">生成失败</view>
+    <view class="muted">{{generationText}}</view>
+    <view class="generation-refund-hint">本次未扣次数，请返回后重试</view>
+  </view>
+
+  <swiper wx:else class="result-swiper" current="{{currentIndex}}" bindchange="onSwipe">
+    <swiper-item wx:for="{{images}}" wx:key="slot">
+      <view class="result-card">
+        <view class="image-wrap">
+          <image class="result-image" src="{{item.temp_image_url}}" mode="aspectFit" bindtap="previewImage" data-url="{{item.temp_image_url}}" />
+          <view class="plan-badge {{item.slot}}">{{item.planTitle}}</view>
+          <view class="logo-watermark">LOGO</view>
+        </view>
+        <view class="result-meta">
+          <view class="meta-row">
+            <text class="meta-label">使用发型</text>
+            <text class="meta-value">{{item.style_name || '门店推荐搭配'}}</text>
+          </view>
+          <view class="meta-row">
+            <text class="meta-label">使用发色</text>
+            <text class="meta-value">{{item.color_name || '门店推荐搭配'}}</text>
+          </view>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <view wx:if="{{!generating && !generationFailed}}" class="dots">
+    <view wx:for="{{images}}" wx:key="slot" class="dot {{currentIndex === index ? 'active' : ''}}"></view>
+  </view>
+
+  <view wx:if="{{recommendationsLoading}}" class="recommendation-loading">
+    主图已生成，推荐方案生成中
+  </view>
+
+  <view wx:if="{{!generating && !generationFailed}}" class="info-panel">
+    <view class="panel-title">{{currentPlanTitle}}</view>
+    <view class="plan-desc">{{currentPlanDesc}}</view>
+    <view class="talk-point">沟通重点：可和主理人确认刘海长度、两侧层次、卷度和发尾厚薄。</view>
+    <view class="tag-row">
+      <view wx:for="{{currentPlanTags}}" wx:key="*this" class="result-tag">{{item}}</view>
+      <view wx:if="{{currentPlanTags.length === 0}}" wx:for="{{resultTags}}" wx:key="label" class="result-tag">{{item.label}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!generating && !generationFailed}}" class="info-panel">
+    <view class="panel-title">推荐主理人</view>
+    <view wx:for="{{stylists}}" wx:key="staff_id" class="stylist-row {{selectedStylistId === item.staff_id ? 'selected' : ''}}" data-id="{{item.staff_id}}" bindtap="selectStylist">
+      <image class="stylist-avatar" src="{{item.avatar_url || fallbackAvatar}}" mode="aspectFill" />
+      <view class="stylist-main">
+        <view class="stylist-name">{{item.display_name}} <text wx:if="{{item.is_default}}" class="default-mark">默认推荐</text></view>
+        <view class="stylist-reason">{{item.recommend_reason}}</view>
+      </view>
+    </view>
+  </view>
+
+  <button wx:if="{{!generating && !generationFailed}}" class="order-button primary-button" loading="{{ordering}}" bindtap="createOrder">下单</button>
+</view>

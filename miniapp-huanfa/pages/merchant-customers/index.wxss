@@ -1,0 +1,250 @@
+.customers-page {
+  padding-bottom: 156rpx;
+}
+
+.search-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 128rpx;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.search-input {
+  height: 76rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  color: #1a1c1b;
+  font-size: 25rpx;
+  box-sizing: border-box;
+  box-shadow: 0 8rpx 22rpx rgba(26, 60, 52, 0.06);
+}
+
+.search-button {
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  background: #01261f;
+  color: #fff;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.view-tabs {
+  display: flex;
+  margin-top: 22rpx;
+  background: #fff;
+  border-radius: 999rpx;
+  padding: 6rpx;
+  gap: 6rpx;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+}
+
+.view-tab {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  font-weight: 700;
+  color: #717976;
+}
+
+.view-tab.active {
+  background: #01261f;
+  color: #fff;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 22rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.status-tab {
+  flex: 0 0 auto;
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  color: #717976;
+  font-size: 24rpx;
+}
+
+.status-tab.active {
+  background: #01261f;
+  color: #fff;
+  font-weight: 800;
+}
+
+.empty-card,
+.customer-card {
+  margin-top: 22rpx;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.empty-title {
+  color: #01261f;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.customer-top {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 76rpx;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24rpx;
+  background: #01261f;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.customer-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.customer-name {
+  color: #1a1c1b;
+  font-size: 30rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-sub {
+  margin-top: 6rpx;
+  color: #717976;
+  font-size: 23rpx;
+}
+
+.state-pill {
+  flex: 0 0 auto;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #f1f2f0;
+  color: #717976;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.state-pill.active {
+  background: rgba(197, 234, 223, 0.55);
+  color: #01261f;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+  margin-top: 22rpx;
+}
+
+.info-cell {
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: #f7f8f6;
+}
+
+.info-value {
+  color: #01261f;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.info-label {
+  margin-top: 6rpx;
+  color: #717976;
+  font-size: 22rpx;
+}
+
+.customer-line {
+  margin-top: 12rpx;
+  color: #414846;
+  font-size: 24rpx;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+
+.action-button {
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.action-button.secondary {
+  background: #eef3ef;
+  color: #01261f;
+}
+
+.action-button.primary {
+  background: #01261f;
+  color: #fff;
+}
+
+/* 停用状态的卡片 */
+.disabled-card {
+  opacity: 0.7;
+  border-color: rgba(193, 200, 196, 0.3);
+}
+
+.avatar-disabled {
+  background: #b0b8b4;
+}
+
+.disabled-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  background: #ffe4e4;
+  color: #d14343;
+  font-size: 20rpx;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* 管理操作行 */
+.action-row-manage {
+  margin-top: 12rpx;
+  grid-template-columns: minmax(0, 1fr) 112rpx;
+}
+
+.btn-disable {
+  background: #f5f0e0;
+  color: #a07800;
+  font-size: 24rpx;
+}
+
+.btn-delete {
+  background: #fde8e8;
+  color: #d14343;
+  font-size: 24rpx;
+}

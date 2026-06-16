@@ -1,0 +1,85 @@
+<view class="page">
+  <view class="header-title">AI次数</view>
+  <view class="muted">给顾客增加试发次数，查看赠送去向和转化</view>
+
+  <view class="metric-grid">
+    <view class="metric-card">
+      <view class="metric-value">{{quota.free_remaining || 0}}</view>
+      <view class="metric-label">当前顾客今日免费剩余</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{conversion.totals.gifted_count || 0}}</view>
+      <view class="metric-label">门店累计赠送</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{conversion.totals.used_count || 0}}</view>
+      <view class="metric-label">已使用赠送</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-value">{{conversion.totals.order_count || 0}}</view>
+      <view class="metric-label">赠送转下单</view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">选择顾客</view>
+    <picker mode="selector" range="{{customerNames}}" value="{{selectedCustomerIndex}}" bindchange="onCustomerChange">
+      <view class="picker-field">
+        <view>
+          <view class="picker-name">{{selectedCustomer.display_name || '暂无顾客'}}</view>
+          <view class="picker-desc">顾客ID：{{selectedCustomer.user_id || '-'}}</view>
+        </view>
+        <view class="picker-arrow">选择</view>
+      </view>
+    </picker>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">给顾客赠送 AI 试发</view>
+    <view class="form-desc">会记录赠送给哪个顾客、由哪个主理人赠送，后续可统计是否使用和是否下单。</view>
+    <view class="input-row">
+      <text>赠送次数</text>
+      <input class="number-input" value="{{giftCount}}" type="number" bindinput="onGiftCountInput" />
+    </view>
+    <button class="primary-button submit-button" loading="{{gifting}}" bindtap="giftAi">赠送给当前顾客</button>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">设置顾客今日免费次数</view>
+    <view class="form-desc">用于测试或到店授权。默认顾客还是每天 2 次，只影响当前选择的顾客今天。</view>
+    <view class="input-row">
+      <text>今日上限</text>
+      <input class="number-input" value="{{freeLimit}}" type="number" bindinput="onFreeLimitInput" />
+    </view>
+    <button class="secondary-button submit-button" loading="{{savingLimit}}" bindtap="saveFreeLimit">保存免费次数</button>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">主理人赠送额度</view>
+    <view class="form-desc">这是给当前登录主理人增加“今天还能赠送给顾客”的额度，不是直接给顾客。</view>
+    <button class="secondary-button quota-button" bindtap="addQuota">给当前主理人追加 3 次额度</button>
+  </view>
+
+  <view class="section-title">最近赠送明细</view>
+  <view wx:if="{{!conversion.recent_records || conversion.recent_records.length === 0}}" class="empty-line">暂无赠送记录</view>
+  <view wx:for="{{conversion.recent_records}}" wx:key="id" class="record-card">
+    <view class="record-top">
+      <view>
+        <view class="record-title">赠给：{{item.customer_name || ('顾客C' + item.customer_id)}}</view>
+        <view class="record-desc">顾客ID：{{item.customer_id}} · {{item.masked_phone || '未留手机号'}}</view>
+      </view>
+      <view class="status-pill {{item.status === 'used' ? 'used' : ''}}">{{item.status === 'used' ? '已使用' : '未使用'}}</view>
+    </view>
+    <view class="record-line">赠送人：{{item.staff_name || '门店员工'}}（ID {{item.staff_id}}）</view>
+    <view class="record-line">赠送时间：{{item.created_at}}</view>
+    <view wx:if="{{item.order_id}}" class="record-line">已关联订单：{{item.order_id}} · 成交 ¥{{item.revenue_amount || 0}}</view>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goWorkbench"><text class="nav-icon">台</text>工作台</view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-icon">单</text>订单</view>
+    <view class="nav-item" bindtap="goAssets"><text class="nav-icon">素</text>素材</view>
+    <view class="nav-item" bindtap="goCustomers"><text class="nav-icon">客</text>顾客</view>
+    <view class="nav-item" bindtap="goPerformance"><text class="nav-icon">数</text>数据</view>
+  </view>
+</view>

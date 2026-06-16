@@ -1,0 +1,222 @@
+.knowledge-page {
+  padding-bottom: 164rpx;
+}
+
+.tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 24rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.tab {
+  flex: 0 0 auto;
+  min-height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  color: #72786f;
+  font-size: 24rpx;
+}
+
+.tab.active {
+  background: #01261f;
+  color: #fff;
+  font-weight: 800;
+}
+
+.add-button {
+  width: 100%;
+  height: 84rpx;
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.empty {
+  margin-top: 120rpx;
+  color: #72786f;
+  text-align: center;
+}
+
+.knowledge-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #fff;
+  border: 1rpx solid rgba(193, 200, 196, 0.45);
+  box-shadow: 0 8rpx 24rpx rgba(26, 60, 52, 0.06);
+}
+
+.knowledge-card.disabled {
+  opacity: 0.62;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.category-pill,
+.status-pill {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(197, 234, 223, 0.5);
+  color: #01261f;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.status-pill {
+  background: #f4f4f2;
+  color: #717976;
+}
+
+.question {
+  margin-top: 18rpx;
+  color: #1a1c1b;
+  font-size: 29rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.answer {
+  margin-top: 12rpx;
+  color: #414846;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.keywords {
+  margin-top: 12rpx;
+  color: #717976;
+  font-size: 23rpx;
+  line-height: 1.4;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.action-link {
+  color: #01261f;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.small-button {
+  height: 62rpx;
+  min-width: 112rpx;
+  margin: 0;
+  padding: 0 22rpx;
+  font-size: 24rpx;
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36rpx;
+  box-sizing: border-box;
+  background: rgba(23, 26, 23, 0.48);
+}
+
+.knowledge-dialog {
+  width: 100%;
+  max-height: 88vh;
+  padding: 34rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-sizing: border-box;
+  overflow-y: auto;
+  box-shadow: 0 28rpx 80rpx rgba(1, 38, 31, 0.2);
+}
+
+.dialog-title {
+  color: #1a1c1b;
+  font-size: 34rpx;
+  font-weight: 900;
+  text-align: center;
+}
+
+.dialog-subtitle {
+  margin-top: 8rpx;
+  color: #717976;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.dialog-field {
+  margin-top: 22rpx;
+}
+
+.dialog-label {
+  color: #1a1c1b;
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.dialog-input,
+.dialog-picker,
+.dialog-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
+  background: #f4f4f2;
+  color: #1a1c1b;
+  font-size: 26rpx;
+}
+
+.dialog-input,
+.dialog-picker {
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-textarea {
+  min-height: 150rpx;
+  padding-top: 18rpx;
+  line-height: 1.45;
+}
+
+.dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 28rpx;
+}
+
+.dialog-button {
+  height: 78rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27rpx;
+  font-weight: 900;
+}
+
+.dialog-button.secondary {
+  background: #f0ece6;
+  color: #01261f;
+}
+
+.dialog-button.primary {
+  background: #01261f;
+  color: #fff;
+}
