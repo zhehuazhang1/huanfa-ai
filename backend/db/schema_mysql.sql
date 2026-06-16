@@ -4,6 +4,12 @@ CREATE TABLE tenants (
   name VARCHAR(100) NOT NULL,
   logo_url VARCHAR(255),
   package_plan VARCHAR(50),
+  subscription_plan VARCHAR(50) DEFAULT 'trial',
+  subscription_expires_at DATETIME,
+  monthly_ai_used INT DEFAULT 0,
+  monthly_ai_reset_at DATETIME,
+  monthly_llm_cost_fen INT DEFAULT 0,
+  notes TEXT,
   status ENUM('active','paused','expired') DEFAULT 'active',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

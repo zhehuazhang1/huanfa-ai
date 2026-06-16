@@ -428,6 +428,23 @@ class TenantPayload(BaseModel):
     initial_ai_count: int = 0
 
 
+class TenantOnboardingPayload(BaseModel):
+    tenant_code: str
+    name: str
+    package_plan: str | None = "trial"
+    initial_ai_count: int = 0
+    notes: str | None = None
+    store_code: str
+    store_name: str
+    daily_ai_limit: int = 300
+    boss_name: str | None = None
+    boss_phone: str | None = None
+    boss_openid: str | None = None
+    manager_name: str | None = None
+    manager_phone: str | None = None
+    manager_openid: str | None = None
+
+
 class TenantUpdatePayload(BaseModel):
     name: str | None = None
     logo_url: str | None = None
@@ -2331,6 +2348,31 @@ def create_tenant(payload: TenantPayload,
             name=payload.name,
             package_plan=payload.package_plan,
             initial_ai_count=payload.initial_ai_count,
+        )
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.post("/platform/tenant-onboarding")
+def create_tenant_onboarding(payload: TenantOnboardingPayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.create_tenant_onboarding(
+            tenant_code=payload.tenant_code,
+            name=payload.name,
+            package_plan=payload.package_plan,
+            initial_ai_count=payload.initial_ai_count,
+            notes=payload.notes,
+            store_code=payload.store_code,
+            store_name=payload.store_name,
+            daily_ai_limit=payload.daily_ai_limit,
+            boss_name=payload.boss_name,
+            boss_phone=payload.boss_phone,
+            boss_openid=payload.boss_openid,
+            manager_name=payload.manager_name,
+            manager_phone=payload.manager_phone,
+            manager_openid=payload.manager_openid,
         )
     except BusinessError as exc:
         raise handle_business_error(exc) from exc

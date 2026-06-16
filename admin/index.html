@@ -894,13 +894,61 @@
           <input type="text" id="newTenantName" placeholder="如：张老师美发 / 某某造型">
         </div>
         <div class="field">
+          <label>套餐</label>
+          <select id="newTenantPlan">
+            <option value="trial">试用版</option>
+            <option value="basic">基础版</option>
+            <option value="pro">专业版</option>
+            <option value="enterprise">连锁版</option>
+          </select>
+        </div>
+        <div class="field">
           <label>初始 AI 次数</label>
-          <input type="number" id="newTenantAiCount" value="0" min="0" placeholder="如 100">
+          <input type="number" id="newTenantAiCount" value="50" min="0" placeholder="如 50">
+        </div>
+        <div class="field">
+          <label>门店名称</label>
+          <input type="text" id="newStoreName" placeholder="默认同商家名称">
+        </div>
+        <div class="field">
+          <label>门店编码</label>
+          <input type="text" id="newStoreCode" placeholder="如 store_001">
+        </div>
+        <div class="field">
+          <label>门店日额度</label>
+          <input type="number" id="newStoreDailyLimit" value="300" min="0">
+        </div>
+        <div class="field">
+          <label>老板姓名</label>
+          <input type="text" id="newBossName" placeholder="可选">
+        </div>
+        <div class="field">
+          <label>老板手机号</label>
+          <input type="text" id="newBossPhone" placeholder="可选，便于识别">
+        </div>
+        <div class="field">
+          <label>老板 OpenID</label>
+          <input type="text" id="newBossOpenid" placeholder="可后续绑定，空则自动生成">
+        </div>
+        <div class="field">
+          <label>店长姓名</label>
+          <input type="text" id="newManagerName" placeholder="可选">
+        </div>
+        <div class="field">
+          <label>店长手机号</label>
+          <input type="text" id="newManagerPhone" placeholder="可选，便于识别">
+        </div>
+        <div class="field">
+          <label>店长 OpenID</label>
+          <input type="text" id="newManagerOpenid" placeholder="测试可空，正式需绑定微信">
         </div>
         <div class="field">
           <label>备注</label>
           <input type="text" id="newTenantNotes" placeholder="可选，内部备注">
         </div>
+      </div>
+      <div class="notice" style="margin-top:12px">
+        开户会同时创建：商家、默认门店、老板账号、店长账号、AI额度账户。OpenID 为空时会生成占位账号，后续再绑定真实微信。
       </div>
       <div id="addTenantErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -1583,7 +1631,17 @@
 
     function openAddTenantModal() {
       document.getElementById("newTenantName").value = "";
-      document.getElementById("newTenantAiCount").value = 0;
+      document.getElementById("newTenantPlan").value = "trial";
+      document.getElementById("newTenantAiCount").value = 50;
+      document.getElementById("newStoreName").value = "";
+      document.getElementById("newStoreCode").value = "";
+      document.getElementById("newStoreDailyLimit").value = 300;
+      document.getElementById("newBossName").value = "";
+      document.getElementById("newBossPhone").value = "";
+      document.getElementById("newBossOpenid").value = "";
+      document.getElementById("newManagerName").value = "";
+      document.getElementById("newManagerPhone").value = "";
+      document.getElementById("newManagerOpenid").value = "";
       document.getElementById("newTenantNotes").value = "";
       document.getElementById("addTenantErr").classList.add("hidden");
       document.getElementById("addTenantModal").classList.remove("hidden");
@@ -1598,32 +1656,59 @@
       return "t" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
     }
 
+    function makeCodeFromName(name, fallback) {
+      const base = (name || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return base || fallback;
+    }
+
     async function doCreateTenant() {
       const name  = document.getElementById("newTenantName").value.trim();
+      const plan = document.getElementById("newTenantPlan").value;
       const aiCount = parseInt(document.getElementById("newTenantAiCount").value) || 0;
+      const storeName = document.getElementById("newStoreName").value.trim() || name;
+      const storeCode = document.getElementById("newStoreCode").value.trim() || makeCodeFromName(storeName, "store_001");
+      const dailyLimit = parseInt(document.getElementById("newStoreDailyLimit").value) || 0;
       const notes = document.getElementById("newTenantNotes").value.trim();
       const btn   = document.getElementById("doAddTenantBtn");
       const errEl = document.getElementById("addTenantErr");
       errEl.classList.add("hidden");
       if (!name) {
         errEl.textContent = "请填写商家名称";
-        errEl.classList.remove("hidden");
-        return;
+          errEl.classList.remove("hidden");
+          return;
       }
       btn.textContent = "提交中…"; btn.disabled = true;
       try {
-        const data = await apiFetch("/platform/tenants", {
+        const tenantCode = generateTenantCode();
+        const data = await apiFetch("/platform/tenant-onboarding", {
           method: "POST",
-          body: JSON.stringify({ tenant_code: generateTenantCode(), name: name, initial_ai_count: aiCount })
+          body: JSON.stringify({
+            tenant_code: tenantCode,
+            name,
+            package_plan: plan,
+            initial_ai_count: aiCount,
+            notes,
+            store_code: storeCode,
+            store_name: storeName,
+            daily_ai_limit: dailyLimit,
+            boss_name: document.getElementById("newBossName").value.trim() || null,
+            boss_phone: document.getElementById("newBossPhone").value.trim() || null,
+            boss_openid: document.getElementById("newBossOpenid").value.trim() || null,
+            manager_name: document.getElementById("newManagerName").value.trim() || null,
+            manager_phone: document.getElementById("newManagerPhone").value.trim() || null,
+            manager_openid: document.getElementById("newManagerOpenid").value.trim() || null
+          })
         });
         if (data.detail) throw new Error(data.detail);
-        if (notes && data.id) {
-          await apiFetch(`/platform/tenants/${data.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ notes })
-          });
-        }
         closeAddTenantModal();
+        const tenant = data.tenant || {};
+        const store = data.store || {};
+        const manager = data.manager || {};
+        alert(`开户成功：${tenant.name || name}\n商家ID：${tenant.id || "—"}\n门店ID：${store.id || "—"}\n店长账号：${manager.nickname || "—"}\n店长OpenID：${manager.openid || "—"}`);
         loadTenants();
         loadDashboard();
       } catch (e) {

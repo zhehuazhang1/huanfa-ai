@@ -4058,6 +4058,119 @@ class HairAiService:
             )
         return dict(self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,)))
 
+    def create_tenant_onboarding(
+        self,
+        *,
+        tenant_code: str,
+        name: str,
+        package_plan: str | None = "trial",
+        initial_ai_count: int = 0,
+        notes: str | None = None,
+        store_code: str,
+        store_name: str,
+        daily_ai_limit: int = 300,
+        boss_name: str | None = None,
+        boss_phone: str | None = None,
+        boss_openid: str | None = None,
+        manager_name: str | None = None,
+        manager_phone: str | None = None,
+        manager_openid: str | None = None,
+    ) -> dict:
+        clean_tenant_code = tenant_code.strip()
+        clean_name = name.strip()
+        clean_store_code = store_code.strip()
+        clean_store_name = store_name.strip()
+        if not clean_tenant_code or not clean_name:
+            raise BusinessError("tenant_code and name are required")
+        if not clean_store_code or not clean_store_name:
+            raise BusinessError("store_code and store_name are required")
+        if initial_ai_count < 0:
+            raise BusinessError("initial_ai_count cannot be negative")
+        if daily_ai_limit < 0:
+            raise BusinessError("daily_ai_limit cannot be negative")
+        clean_plan = package_plan or "trial"
+        clean_boss_name = (boss_name or f"{clean_name} 老板").strip()
+        clean_manager_name = (manager_name or f"{clean_store_name} 店长").strip()
+        clean_boss_openid = (boss_openid or f"{clean_tenant_code}_boss").strip()
+        clean_manager_openid = (manager_openid or f"{clean_tenant_code}_{clean_store_code}_manager").strip()
+
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO tenants (tenant_code, name, package_plan)
+                VALUES (?, ?, ?)
+                """,
+                (clean_tenant_code, clean_name, clean_plan),
+            )
+            tenant_id = cur.lastrowid
+            try:
+                conn.execute(
+                    """
+                    UPDATE tenants
+                    SET subscription_plan = ?, notes = ?
+                    WHERE id = ?
+                    """,
+                    (clean_plan, notes, tenant_id),
+                )
+            except Exception:
+                pass
+            conn.execute(
+                """
+                INSERT INTO tenant_ai_accounts
+                (tenant_id, total_purchased, total_used, total_gifted_adjustment)
+                VALUES (?, ?, 0, 0)
+                """,
+                (tenant_id, initial_ai_count),
+            )
+            store_cur = conn.execute(
+                """
+                INSERT INTO stores (tenant_id, store_code, name, daily_ai_limit)
+                VALUES (?, ?, ?, ?)
+                """,
+                (tenant_id, clean_store_code, clean_store_name, daily_ai_limit),
+            )
+            store_id = store_cur.lastrowid
+            boss_cur = conn.execute(
+                """
+                INSERT INTO users (tenant_id, store_id, openid, phone, nickname, role)
+                VALUES (?, NULL, ?, ?, ?, 'boss')
+                """,
+                (tenant_id, clean_boss_openid, boss_phone, clean_boss_name),
+            )
+            boss_id = boss_cur.lastrowid
+            manager_cur = conn.execute(
+                """
+                INSERT INTO users (tenant_id, store_id, openid, phone, nickname, role)
+                VALUES (?, ?, ?, ?, ?, 'manager')
+                """,
+                (tenant_id, store_id, clean_manager_openid, manager_phone, clean_manager_name),
+            )
+            manager_id = manager_cur.lastrowid
+            conn.execute(
+                """
+                INSERT INTO staff_profiles
+                (tenant_id, store_id, staff_id, display_name, title, directions,
+                 skill_tags, availability_status, is_enabled, is_recommended, sort_order)
+                VALUES (?, ?, ?, ?, '店长', ?, ?, 'available', 1, 1, 10)
+                """,
+                (
+                    tenant_id,
+                    store_id,
+                    manager_id,
+                    clean_manager_name,
+                    json.dumps(["female", "male", "neutral"], ensure_ascii=False),
+                    json.dumps(["剪发", "染发", "烫发", "造型"], ensure_ascii=False),
+                ),
+            )
+
+        return {
+            "tenant": dict(self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,))),
+            "store": dict(self.store.row("SELECT * FROM stores WHERE id = ?", (store_id,))),
+            "boss": self.get_user(tenant_id, boss_id),
+            "manager": self.get_user(tenant_id, manager_id),
+            "ai_account": dict(self.store.row("SELECT * FROM tenant_ai_accounts WHERE tenant_id = ?", (tenant_id,))),
+        }
+
     def update_tenant(
         self,
         *,
