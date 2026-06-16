@@ -1039,7 +1039,7 @@
   </div>
 
   <script>
-    const API = "/api";
+    const API = location.protocol === "file:" ? "https://api.huanfaai.com" : "/api";
     let token = sessionStorage.getItem("platform_token") || "";
 
     // ── 工具函数 ──
