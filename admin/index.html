@@ -319,6 +319,8 @@
       border-radius: 16px;
       padding: 28px;
       width: min(480px, 95vw);
+      max-height: 92vh;
+      overflow-y: auto;
       box-shadow: var(--shadow);
     }
     .modal-head {
@@ -330,6 +332,30 @@
       font-size: 18px; color: var(--muted);
     }
     .field-group { display: flex; flex-direction: column; gap: 12px; }
+    .form-section {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fbfcfb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .form-section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--green);
+    }
+    .form-section-note {
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--muted);
+      margin-top: -4px;
+    }
 
     /* ── 登录遮罩 ── */
     .login-mask {
@@ -906,70 +932,79 @@
         <button class="modal-close" onclick="closeAddTenantModal()">✕</button>
       </div>
       <div class="field-group">
-        <div class="field">
-          <label>商家名称</label>
-          <input type="text" id="newTenantName" placeholder="如：张老师美发 / 某某造型">
+        <div class="form-section">
+          <div class="form-section-title">商家前端展示信息</div>
+          <div class="form-section-note">这些内容会用于顾客端、商家端页面展示，尽量填写顾客能看懂的名称。</div>
+          <div class="field">
+            <label>商家名称</label>
+            <input type="text" id="newTenantName" placeholder="如：张老师美发 / 某某造型">
+          </div>
+          <div class="field">
+            <label>门店名称</label>
+            <input type="text" id="newStoreName" placeholder="默认同商家名称">
+          </div>
         </div>
-        <div class="field">
-          <label>套餐</label>
-          <select id="newTenantPlan">
-            <option value="trial">试用版</option>
-            <option value="basic">基础版</option>
-            <option value="pro">专业版</option>
-            <option value="enterprise">连锁版</option>
-          </select>
+
+        <div class="form-section">
+          <div class="form-section-title">平台后台配置</div>
+          <div class="form-section-note">这些是你管理套餐、额度和内部识别用的配置，顾客端不会直接展示。</div>
+          <div class="field">
+            <label>套餐</label>
+            <select id="newTenantPlan">
+              <option value="trial">试用版</option>
+              <option value="basic">基础版</option>
+              <option value="pro">专业版</option>
+              <option value="enterprise">连锁版</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>初始 AI 次数</label>
+            <input type="number" id="newTenantAiCount" value="50" min="0" placeholder="如 50">
+          </div>
+          <div class="field">
+            <label>门店编码</label>
+            <input type="text" id="newStoreCode" placeholder="可不填，系统会自动生成">
+          </div>
+          <div class="field">
+            <label>门店每日 AI 上限</label>
+            <input type="number" id="newStoreDailyLimit" value="300" min="0">
+          </div>
+          <div class="form-section-note">每日上限用于防止某家门店一天内异常消耗 AI 次数；开户后仍可以在后台调整。</div>
+          <div class="field">
+            <label>备注</label>
+            <input type="text" id="newTenantNotes" placeholder="可选，内部备注">
+          </div>
         </div>
-        <div class="field">
-          <label>初始 AI 次数</label>
-          <input type="number" id="newTenantAiCount" value="50" min="0" placeholder="如 50">
-        </div>
-        <div class="field">
-          <label>门店名称</label>
-          <input type="text" id="newStoreName" placeholder="默认同商家名称">
-        </div>
-        <div class="field">
-          <label>门店编码</label>
-          <input type="text" id="newStoreCode" placeholder="如 store_001">
-        </div>
-        <div class="field">
-          <label>门店日额度</label>
-          <input type="number" id="newStoreDailyLimit" value="300" min="0">
-        </div>
-        <div class="field">
-          <label>老板姓名</label>
-          <input type="text" id="newBossName" placeholder="可选">
-        </div>
-        <div class="field">
-          <label>老板手机号</label>
-          <input type="text" id="newBossPhone" placeholder="可选，便于识别">
-        </div>
-        <div class="field">
-          <label>老板 OpenID</label>
-          <input type="text" id="newBossOpenid" placeholder="可后续绑定，空则自动生成">
-        </div>
-        <label class="check-row">
-          <input type="checkbox" id="newBossIsManager" checked onchange="toggleManagerFields()">
-          <span>老板兼任店长，单店默认选这个</span>
-        </label>
-        <div class="field manager-field">
-          <label>店长姓名</label>
-          <input type="text" id="newManagerName" placeholder="可选">
-        </div>
-        <div class="field manager-field">
-          <label>店长手机号</label>
-          <input type="text" id="newManagerPhone" placeholder="可选，便于识别">
-        </div>
-        <div class="field manager-field">
-          <label>店长 OpenID</label>
-          <input type="text" id="newManagerOpenid" placeholder="测试可空，正式需绑定微信">
-        </div>
-        <div class="field">
-          <label>备注</label>
-          <input type="text" id="newTenantNotes" placeholder="可选，内部备注">
+
+        <div class="form-section">
+          <div class="form-section-title">老板登录与权限</div>
+          <div class="form-section-note">现在先记录老板信息，正式登录以微信绑定为准；手机号用于你识别是谁，不直接当密码登录。</div>
+          <div class="field">
+            <label>老板姓名</label>
+            <input type="text" id="newBossName" placeholder="可选">
+          </div>
+          <div class="field">
+            <label>老板手机号</label>
+            <input type="text" id="newBossPhone" placeholder="可选，便于识别">
+          </div>
+          <input type="hidden" id="newBossOpenid">
+          <label class="check-row">
+            <input type="checkbox" id="newBossIsManager" checked onchange="toggleManagerFields()">
+            <span>老板兼任店长，单店默认选这个</span>
+          </label>
+          <div class="field manager-field">
+            <label>店长姓名</label>
+            <input type="text" id="newManagerName" placeholder="可选">
+          </div>
+          <div class="field manager-field">
+            <label>店长手机号</label>
+            <input type="text" id="newManagerPhone" placeholder="可选，便于识别">
+          </div>
+          <input type="hidden" id="newManagerOpenid">
         </div>
       </div>
       <div class="notice" style="margin-top:12px">
-        开户会同时创建：商家、默认门店、老板账号、AI额度账户。单店可让老板兼任店长；OpenID 为空时会生成占位账号，后续再绑定真实微信。
+        开户会同时创建：商家、默认门店、老板权限和 AI 额度账户。老板进入小程序后再绑定真实微信身份；单店老板可以兼任店长。
       </div>
       <div id="addTenantErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -1741,8 +1776,8 @@
         const boss = data.boss || {};
         const manager = data.manager || {};
         const roleLine = data.boss_is_manager
-          ? `老板兼店长：${boss.nickname || "—"}\n老板OpenID：${boss.openid || "—"}`
-          : `老板账号：${boss.nickname || "—"}\n店长账号：${manager.nickname || "—"}\n店长OpenID：${manager.openid || "—"}`;
+          ? `老板兼店长：${boss.nickname || "—"}\n登录方式：老板进入小程序后绑定微信身份`
+          : `老板账号：${boss.nickname || "—"}\n店长账号：${manager.nickname || "—"}\n登录方式：进入小程序后绑定微信身份`;
         alert(`开户成功：${tenant.name || name}\n商家ID：${tenant.id || "—"}\n门店ID：${store.id || "—"}\n${roleLine}`);
         loadTenants();
         loadDashboard();
