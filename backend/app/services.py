@@ -4194,8 +4194,8 @@ class HairAiService:
         existing = self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,))
         if existing is None:
             raise BusinessError("Tenant not found")
-        if status is not None and status not in {"active", "disabled"}:
-            raise BusinessError("status must be active or disabled")
+        if status is not None and status not in {"active", "paused", "expired"}:
+            raise BusinessError("status must be active, paused or expired")
         if package_plan:
             plan = self.store.row("SELECT id FROM package_plans WHERE plan_code = ?", (package_plan,))
             if plan is None:
@@ -4420,6 +4420,7 @@ class HairAiService:
         tenant = self.store.row("SELECT * FROM tenants WHERE id = ? AND status = 'active'", (tenant_id,))
         if tenant is None:
             raise BusinessError("Tenant not found or inactive")
+        self.check_store_limit(tenant_id)
         existing = self.store.row(
             "SELECT id FROM stores WHERE tenant_id = ? AND store_code = ?",
             (tenant_id, store_code),
@@ -4451,8 +4452,8 @@ class HairAiService:
             raise BusinessError("Store not found")
         if daily_ai_limit is not None and daily_ai_limit < 0:
             raise BusinessError("daily_ai_limit cannot be negative")
-        if status is not None and status not in {"active", "disabled"}:
-            raise BusinessError("status must be active or disabled")
+        if status is not None and status not in {"active", "paused"}:
+            raise BusinessError("status must be active or paused")
         with self.store.transaction() as conn:
             conn.execute(
                 """

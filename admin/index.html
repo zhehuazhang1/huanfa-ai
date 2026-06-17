@@ -356,6 +356,42 @@
       color: var(--muted);
       margin-top: -4px;
     }
+    .store-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .store-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+    }
+    .store-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .store-card-title {
+      font-weight: 900;
+      color: var(--ink);
+    }
+    .store-card-meta {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .store-edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 120px 110px auto;
+      gap: 8px;
+      align-items: end;
+    }
+    @media (max-width: 720px) {
+      .store-edit-grid { grid-template-columns: 1fr; }
+    }
 
     /* ── 登录遮罩 ── */
     .login-mask {
@@ -1014,6 +1050,52 @@
     </div>
   </div>
 
+  <!-- 商家详情 / 门店管理弹窗 -->
+  <div class="modal-overlay hidden" id="tenantDetailModal">
+    <div class="modal-box" style="width:min(760px,96vw)">
+      <div class="modal-head">
+        <div>
+          <span class="section-title" id="tenantDetailTitle">商家详情</span>
+          <div class="subtitle" id="tenantDetailSubtitle">管理该商家的门店、额度和状态</div>
+        </div>
+        <button class="modal-close" onclick="closeTenantDetailModal()">✕</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">门店列表</div>
+        <div class="form-section-note">同一个商家主体下的门店共享商家级 AI 次数池；每家门店可以单独设置每日 AI 上限。</div>
+        <div class="store-list" id="tenantStoreList">
+          <div style="text-align:center;color:var(--muted);padding:18px">加载中…</div>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-top:12px">
+        <div class="form-section-title">新增门店</div>
+        <div class="store-edit-grid">
+          <div class="field">
+            <label>门店名称</label>
+            <input type="text" id="detailNewStoreName" placeholder="如：人民广场店">
+          </div>
+          <div class="field">
+            <label>门店编码</label>
+            <input type="text" id="detailNewStoreCode" placeholder="可自动">
+          </div>
+          <div class="field">
+            <label>每日上限</label>
+            <input type="number" id="detailNewStoreDailyLimit" value="300" min="0">
+          </div>
+          <button class="btn" id="detailAddStoreBtn" onclick="createTenantStore()">新增门店</button>
+        </div>
+        <div class="form-section-note">新增后仍属于同一个商家，数据不会和其它商家混在一起。</div>
+      </div>
+
+      <div id="tenantDetailErr" class="notice hidden" style="background:#fdf0ee;color:var(--red);margin-top:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn secondary" onclick="closeTenantDetailModal()">关 闭</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 新增密钥弹窗 -->
   <div class="modal-overlay hidden" id="addKeyModal">
     <div class="modal-box">
@@ -1076,6 +1158,9 @@
   <script>
     const API = location.protocol === "file:" ? "https://api.huanfaai.com" : "/api";
     let token = sessionStorage.getItem("platform_token") || "";
+    let _tenantList = [];
+    let _tenantDetail = null;
+    let _tenantStores = [];
 
     // ── 工具函数 ──
     function curMonth() {
@@ -1092,6 +1177,14 @@
     }
     function fmt(n, decimals=0) {
       return Number(n || 0).toLocaleString("zh-CN", {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+    }
+    function esc(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     // ── 鉴权请求封装 ──
@@ -1248,17 +1341,20 @@
         const billingMap = {};
         (billing.tenants || []).forEach(t => { billingMap[t.tenant_id] = t; });
         if (!(tenants || []).length) {
+          _tenantList = [];
           tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">暂无数据</td></tr>`;
           return;
         }
+        _tenantList = tenants || [];
         tbody.innerHTML = (tenants || []).map(item => {
           const bl = billingMap[item.id] || {};
           const active = item.status === "active";
           const cls = active ? "tag" : "tag red";
           const llmYuan = (item.monthly_llm_cost_fen || 0) / 100;
           const notes = item.notes || "";
+          const tenantName = esc(item.name);
           return `<tr>
-            <td><b>${item.name}</b><div style="font-size:12px;color:var(--muted)">#${item.id}</div></td>
+            <td><b>${tenantName}</b><div style="font-size:12px;color:var(--muted)">#${item.id}</div></td>
             <td>${item.stores?.total ?? 0} 家</td>
             <td>${planBadge(item.subscription_plan, item.subscription_expires_at)}</td>
             <td>${fmt(item.ai?.balance ?? 0)} 次</td>
@@ -1273,8 +1369,9 @@
             </td>
             <td><span class="${cls}">${active ? "启用" : "停用"}</span></td>
             <td style="display:flex;gap:6px;flex-wrap:wrap">
-              <button onclick="openRechargeModal(${item.id},'${item.name}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">充值</button>
-              <button onclick="openSubModal(${item.id},'${item.name}','${item.subscription_plan||'trial'}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">改套餐</button>
+              <button onclick="openTenantDetailById(${item.id})" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--ink);border-radius:6px;background:white;color:var(--ink);cursor:pointer">详情</button>
+              <button onclick="openRechargeModal(${item.id},'${tenantName}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">充值</button>
+              <button onclick="openSubModal(${item.id},'${tenantName}','${item.subscription_plan||'trial'}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">改套餐</button>
             </td>
           </tr>`;
         }).join("");
@@ -1291,6 +1388,155 @@
         });
       } catch (e) {
         alert("备注保存失败：" + e.message);
+      }
+    }
+
+    function openTenantDetailById(tenantId) {
+      const item = (_tenantList || []).find(t => Number(t.id) === Number(tenantId));
+      if (!item) {
+        alert("没有找到这个商家，请刷新后重试");
+        return;
+      }
+      openTenantDetailModal(item);
+    }
+
+    function openTenantDetailModal(item) {
+      _tenantDetail = item;
+      _tenantStores = [];
+      document.getElementById("tenantDetailTitle").textContent = `${item.name || "商家"} · 商家详情`;
+      document.getElementById("tenantDetailSubtitle").textContent =
+        `商家ID：${item.id} · ${item.subscription_plan || "trial"} · 当前 ${item.stores?.total ?? 0} 家门店`;
+      document.getElementById("detailNewStoreName").value = "";
+      document.getElementById("detailNewStoreCode").value = "";
+      document.getElementById("detailNewStoreDailyLimit").value = 300;
+      document.getElementById("tenantDetailErr").classList.add("hidden");
+      document.getElementById("tenantDetailModal").classList.remove("hidden");
+      loadTenantStores();
+    }
+
+    function closeTenantDetailModal() {
+      document.getElementById("tenantDetailModal").classList.add("hidden");
+    }
+    document.getElementById("tenantDetailModal").addEventListener("click", function(e){
+      if(e.target===this) closeTenantDetailModal();
+    });
+
+    async function loadTenantStores() {
+      const list = document.getElementById("tenantStoreList");
+      if (!_tenantDetail) return;
+      list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:18px">加载中…</div>`;
+      try {
+        _tenantStores = await apiFetch(`/platform/stores?tenant_id=${_tenantDetail.id}`);
+        renderTenantStores();
+      } catch (e) {
+        list.innerHTML = `<div style="color:var(--red);padding:12px">门店加载失败：${esc(e.message)}</div>`;
+      }
+    }
+
+    function renderTenantStores() {
+      const list = document.getElementById("tenantStoreList");
+      if (!(_tenantStores || []).length) {
+        list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:18px">暂无门店，下面可以新增第一家门店</div>`;
+        return;
+      }
+      list.innerHTML = _tenantStores.map(store => {
+        const status = store.status || "active";
+        const active = status === "active";
+        return `
+          <div class="store-card">
+            <div class="store-card-head">
+              <div>
+                <div class="store-card-title">${esc(store.name)}</div>
+                <div class="store-card-meta">门店ID：${store.id} · 编码：${esc(store.store_code)} · 创建：${esc((store.created_at || "").slice(0, 10))}</div>
+              </div>
+              <span class="${active ? "tag" : "tag red"}">${active ? "启用" : "暂停"}</span>
+            </div>
+            <div class="store-edit-grid">
+              <div class="field">
+                <label>门店名称</label>
+                <input type="text" id="storeName_${store.id}" value="${esc(store.name)}">
+              </div>
+              <div class="field">
+                <label>每日上限</label>
+                <input type="number" id="storeLimit_${store.id}" value="${Number(store.daily_ai_limit || 0)}" min="0">
+              </div>
+              <div class="field">
+                <label>状态</label>
+                <select id="storeStatus_${store.id}">
+                  <option value="active" ${status === "active" ? "selected" : ""}>启用</option>
+                  <option value="paused" ${status === "paused" ? "selected" : ""}>暂停</option>
+                </select>
+              </div>
+              <button class="btn secondary" onclick="saveTenantStore(${store.id})">保存</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function createTenantStore() {
+      if (!_tenantDetail) return;
+      const errEl = document.getElementById("tenantDetailErr");
+      const btn = document.getElementById("detailAddStoreBtn");
+      const name = document.getElementById("detailNewStoreName").value.trim();
+      const codeInput = document.getElementById("detailNewStoreCode").value.trim();
+      const dailyLimit = parseInt(document.getElementById("detailNewStoreDailyLimit").value) || 0;
+      errEl.classList.add("hidden");
+      if (!name) {
+        errEl.textContent = "请填写门店名称";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      const storeCode = codeInput || makeCodeFromName(name, `store_${Date.now().toString(36)}`);
+      btn.textContent = "新增中…";
+      btn.disabled = true;
+      try {
+        await apiFetch("/platform/stores", {
+          method: "POST",
+          body: JSON.stringify({
+            tenant_id: _tenantDetail.id,
+            store_code: storeCode,
+            name,
+            daily_ai_limit: dailyLimit
+          })
+        });
+        document.getElementById("detailNewStoreName").value = "";
+        document.getElementById("detailNewStoreCode").value = "";
+        document.getElementById("detailNewStoreDailyLimit").value = 300;
+        await loadTenantStores();
+        await loadTenants();
+        await loadDashboard();
+      } catch (e) {
+        errEl.textContent = "新增门店失败：" + e.message;
+        errEl.classList.remove("hidden");
+      }
+      btn.textContent = "新增门店";
+      btn.disabled = false;
+    }
+
+    async function saveTenantStore(storeId) {
+      if (!_tenantDetail) return;
+      const errEl = document.getElementById("tenantDetailErr");
+      const name = document.getElementById(`storeName_${storeId}`).value.trim();
+      const dailyLimit = parseInt(document.getElementById(`storeLimit_${storeId}`).value) || 0;
+      const status = document.getElementById(`storeStatus_${storeId}`).value;
+      errEl.classList.add("hidden");
+      if (!name) {
+        errEl.textContent = "门店名称不能为空";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      try {
+        await apiFetch(`/platform/stores/${storeId}?tenant_id=${_tenantDetail.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ name, daily_ai_limit: dailyLimit, status })
+        });
+        await loadTenantStores();
+        await loadTenants();
+        await loadDashboard();
+      } catch (e) {
+        errEl.textContent = "保存门店失败：" + e.message;
+        errEl.classList.remove("hidden");
       }
     }
 
