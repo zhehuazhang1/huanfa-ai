@@ -549,6 +549,26 @@ class PlatformLeadUpdatePayload(BaseModel):
     tenant_id: int | None = None
 
 
+class AnnouncementPayload(BaseModel):
+    title: str
+    content: str
+    level: str = "info"            # info / important / maintenance
+    audience: str = "all"          # all / tenant
+    tenant_id: int | None = None   # audience=tenant 时指定哪个商家
+    status: str = "published"      # draft / published / archived
+    pinned: bool = False
+    expires_at: str | None = None
+
+
+class AnnouncementUpdatePayload(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    level: str | None = None
+    status: str | None = None
+    pinned: bool | None = None
+    expires_at: str | None = None
+
+
 class StoreHomeConfigPayload(BaseModel):
     tenant_id: int = 1
     store_id: int = 1
@@ -2491,16 +2511,43 @@ def merchant_subscription(
 def merchant_plans(
     principal: Principal = Depends(require_merchant),
 ) -> dict:
-    from .plans import PLANS, plan_summary
-    return {k: plan_summary(k) for k in PLANS}
+    from .plans import PLANS
+    return {k: service._plan_summary(k) for k in PLANS}
 
 
 @app.get("/platform/plans")
 def list_plans(
     principal: Principal = Depends(require_platform_admin),
 ) -> dict:
-    from .plans import PLANS, plan_summary
-    return {k: plan_summary(k) for k in PLANS}
+    from .plans import PLANS
+    return {k: service._plan_summary(k) for k in PLANS}
+
+
+class PlanOverridePayload(BaseModel):
+    annual_price_yuan: float | None = None       # 年费（元），不传=不改
+    annual_included_ai_quota: int | None = None  # 每年赠送次数
+    overage_price_yuan: float | None = None      # 超出后每次价格（元）
+    max_stores: int | None = None                # 门店数上限（-1=不限）
+
+
+@app.post("/platform/plans/{plan_code}")
+def set_plan_override(plan_code: str, payload: PlanOverridePayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    """后台改套餐价格/赠送次数（立即对计费与配额生效，无需重部署）。"""
+    try:
+        return service.set_plan_override(
+            plan_code=plan_code,
+            annual_price_fen=(round(payload.annual_price_yuan * 100)
+                              if payload.annual_price_yuan is not None else None),
+            annual_included_ai_quota=payload.annual_included_ai_quota,
+            overage_price_fen=(round(payload.overage_price_yuan * 100)
+                               if payload.overage_price_yuan is not None else None),
+            max_stores=payload.max_stores,
+            actor_user_id=principal.user_id,
+        )
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
 
 
 @app.get("/platform/stores")
@@ -2604,6 +2651,60 @@ def list_platform_finance_transactions(tenant_id: int | None = None, limit: int 
     principal: Principal = Depends(require_platform_admin),
 ) -> list[dict]:
     return service.list_finance_transactions(tenant_id=tenant_id, limit=limit)
+
+
+# ---- 系统公告 ----
+@app.post("/platform/announcements")
+def create_announcement(payload: AnnouncementPayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.create_announcement(
+            title=payload.title, content=payload.content, level=payload.level,
+            audience=payload.audience, tenant_id=payload.tenant_id, status=payload.status,
+            pinned=payload.pinned, expires_at=payload.expires_at, actor_user_id=principal.user_id,
+        )
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/announcements")
+def list_announcements(status: str | None = None, limit: int = 100,
+    principal: Principal = Depends(require_platform_admin),
+) -> list[dict]:
+    return service.list_announcements(status=status, limit=limit)
+
+
+@app.put("/platform/announcements/{ann_id}")
+def update_announcement(ann_id: int, payload: AnnouncementUpdatePayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.update_announcement(
+            ann_id=ann_id, title=payload.title, content=payload.content, level=payload.level,
+            status=payload.status, pinned=payload.pinned, expires_at=payload.expires_at,
+            actor_user_id=principal.user_id,
+        )
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.delete("/platform/announcements/{ann_id}")
+def delete_announcement(ann_id: int,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.delete_announcement(ann_id, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/merchant/announcements")
+def merchant_announcements(tenant_id: int = 1,
+    principal: Principal = Depends(require_merchant),
+) -> list[dict]:
+    # 多租户安全：用登录身份的 tenant，忽略前端传的 tenant_id
+    return service.list_announcements_for_merchant(principal.tenant_id)
 
 
 @app.get("/platform/api-keys")

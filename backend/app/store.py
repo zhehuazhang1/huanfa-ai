@@ -587,6 +587,31 @@ class AppStore:
               created_by_user_id INTEGER,
               created_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS platform_announcements (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              title TEXT NOT NULL,
+              content TEXT NOT NULL,
+              level TEXT DEFAULT 'info',
+              audience TEXT DEFAULT 'all',
+              tenant_id INTEGER,
+              status TEXT DEFAULT 'published',
+              pinned INTEGER DEFAULT 0,
+              created_by_user_id INTEGER,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              published_at TEXT,
+              expires_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS plan_overrides (
+              plan_code TEXT PRIMARY KEY,
+              annual_price_fen INTEGER,
+              annual_included_ai_quota INTEGER,
+              overage_price_fen INTEGER,
+              max_stores INTEGER,
+              updated_by_user_id INTEGER,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         self._run_lightweight_migrations()

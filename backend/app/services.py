@@ -1914,7 +1914,7 @@ class HairAiService:
         quota_info = self.check_monthly_ai_quota(req.tenant_id)
         if quota_info["remaining"] <= 0:
             from .plans import get_plan
-            plan_name = get_plan(quota_info["plan"])["display_name"]
+            plan_name = self._plan(quota_info["plan"])["display_name"]
             raise BusinessError(
                 f"本月AI生成次数已用完（{plan_name}套餐 {quota_info['quota']} 次/月），"
                 "请升级套餐或等待下月重置。"
@@ -4263,7 +4263,7 @@ class HairAiService:
         except (ValueError, TypeError):
             pass
 
-        plan = get_plan(plan_key)
+        plan = self._plan(plan_key)
         used = int(tenant.get("monthly_ai_used") or 0)
         quota = plan["monthly_ai_quota"]
         expires_at = tenant.get("subscription_expires_at")
@@ -4281,8 +4281,72 @@ class HairAiService:
             "monthly_ai_used": used,
             "monthly_ai_quota": quota,
             "monthly_ai_remaining": max(0, quota - used),
-            "plan_info": plan_summary(plan_key),
+            "plan_info": self._plan_summary(plan_key),
         }
+
+    # ---- 年费套餐：后台可覆盖价格/次数（改了不用重部署，立即对计费/配额生效）----
+    _PLAN_OVERRIDE_FIELDS = ("annual_price_fen", "annual_included_ai_quota", "overage_price_fen", "max_stores")
+
+    def _plan(self, plan_code: str | None) -> dict:
+        """套餐定义 = plans.py 默认值 叠加 后台覆盖值。"""
+        base = dict(get_plan(plan_code))
+        try:
+            row = self.store.row("SELECT * FROM plan_overrides WHERE plan_code = ?", (plan_code or "trial",))
+        except Exception:
+            row = None
+        if row:
+            ov = dict(row)
+            for f in self._PLAN_OVERRIDE_FIELDS:
+                if ov.get(f) is not None:
+                    base[f] = ov[f]
+            # 系统按月度额度检查，赠送次数变化时同步 monthly_ai_quota
+            if ov.get("annual_included_ai_quota") is not None:
+                base["monthly_ai_quota"] = ov["annual_included_ai_quota"]
+        return base
+
+    def _plan_summary(self, plan_code: str | None) -> dict:
+        s = plan_summary(plan_code)
+        p = self._plan(plan_code)
+        s["annual_price_yuan"] = p["annual_price_fen"] / 100
+        s["annual_included_ai_quota"] = p["annual_included_ai_quota"]
+        s["overage_price_yuan"] = p["overage_price_fen"] / 100
+        s["monthly_ai_quota"] = p["monthly_ai_quota"]
+        s["max_stores"] = p["max_stores"]
+        return s
+
+    def list_effective_plans(self) -> list[dict]:
+        return [self._plan_summary(code) | {"plan_code": code} for code in PLANS.keys()]
+
+    def set_plan_override(self, *, plan_code: str, annual_price_fen: int | None = None,
+                          annual_included_ai_quota: int | None = None, overage_price_fen: int | None = None,
+                          max_stores: int | None = None, actor_user_id: int | None = None) -> dict:
+        if plan_code not in PLANS:
+            raise BusinessError(f"未知套餐 {plan_code!r}")
+        for label, val in (("年费", annual_price_fen), ("赠送次数", annual_included_ai_quota),
+                           ("超出单价", overage_price_fen)):
+            if val is not None and val < 0:
+                raise BusinessError(f"{label}不能为负")
+        before = self._plan_summary(plan_code)
+        with self.store.transaction() as conn:
+            conn.execute(
+                """
+                INSERT INTO plan_overrides (plan_code, annual_price_fen, annual_included_ai_quota,
+                    overage_price_fen, max_stores, updated_by_user_id, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(plan_code) DO UPDATE SET
+                    annual_price_fen = COALESCE(excluded.annual_price_fen, plan_overrides.annual_price_fen),
+                    annual_included_ai_quota = COALESCE(excluded.annual_included_ai_quota, plan_overrides.annual_included_ai_quota),
+                    overage_price_fen = COALESCE(excluded.overage_price_fen, plan_overrides.overage_price_fen),
+                    max_stores = COALESCE(excluded.max_stores, plan_overrides.max_stores),
+                    updated_by_user_id = excluded.updated_by_user_id,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (plan_code, annual_price_fen, annual_included_ai_quota, overage_price_fen, max_stores, actor_user_id),
+            )
+        after = self._plan_summary(plan_code)
+        self.record_audit_log(action="plan.override", target_type="plan", target_id=plan_code,
+                              actor_user_id=actor_user_id, before=before, after=after)
+        return after
 
     def set_tenant_subscription(
         self,
@@ -4336,7 +4400,7 @@ class HairAiService:
             tenant_id=tenant_id,
             store_id=None,
             transaction_type="subscription_renewal",
-            amount=float(get_plan(plan)["annual_price_fen"]) / 100 / 12 * max(months, 0),
+            amount=float(self._plan(plan)["annual_price_fen"]) / 100 / 12 * max(months, 0),
             related_type="tenant",
             related_id=tenant_id,
             note=f"{plan} renewal for {months} month(s)",
@@ -4444,7 +4508,7 @@ class HairAiService:
                 used = int(row["monthly_ai_used"] or 0)
         except (ValueError, TypeError):
             used = int(row["monthly_ai_used"] or 0)
-        plan = get_plan(plan_key)
+        plan = self._plan(plan_key)
         quota = plan["monthly_ai_quota"]
         remaining = quota - used
         return {"used": used, "quota": quota, "remaining": remaining, "plan": plan_key}
@@ -4463,7 +4527,7 @@ class HairAiService:
         """新建门店前调用，超出计划门店数时抛 BusinessError。"""
         row = self.store.row("SELECT subscription_plan FROM tenants WHERE id = ?", (tenant_id,))
         plan_key = (row["subscription_plan"] if row else None) or "trial"
-        plan = get_plan(plan_key)
+        plan = self._plan(plan_key)
         max_stores = plan["max_stores"]
         if max_stores == -1:
             return  # 不限
@@ -4776,6 +4840,110 @@ class HairAiService:
             after=updated,
         )
         return updated
+
+    # ---- 系统公告（平台 → 商家） ----
+    def get_announcement(self, ann_id: int) -> dict:
+        row = self.store.row("SELECT * FROM platform_announcements WHERE id = ?", (ann_id,))
+        if row is None:
+            raise BusinessError("公告不存在")
+        return dict(row)
+
+    def create_announcement(self, *, title: str, content: str, level: str = "info",
+                            audience: str = "all", tenant_id: int | None = None,
+                            status: str = "published", pinned: bool = False,
+                            expires_at: str | None = None, actor_user_id: int | None = None) -> dict:
+        if not (title or "").strip() or not (content or "").strip():
+            raise BusinessError("标题和内容不能为空")
+        if level not in {"info", "important", "maintenance"}:
+            raise BusinessError("无效的级别")
+        if status not in {"draft", "published", "archived"}:
+            raise BusinessError("无效的状态")
+        published_at = datetime.utcnow().isoformat() if status == "published" else None
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO platform_announcements
+                (title, content, level, audience, tenant_id, status, pinned,
+                 created_by_user_id, published_at, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (title.strip(), content.strip(), level, audience,
+                 tenant_id if audience == "tenant" else None,
+                 status, 1 if pinned else 0, actor_user_id, published_at, expires_at),
+            )
+            ann_id = cur.lastrowid
+        self.record_audit_log(action="announcement.create", target_type="announcement",
+                              target_id=str(ann_id), tenant_id=tenant_id,
+                              actor_user_id=actor_user_id, after={"title": title, "status": status})
+        return self.get_announcement(ann_id)
+
+    def list_announcements(self, *, status: str | None = None, limit: int = 100) -> list[dict]:
+        limit = max(1, min(int(limit or 100), 300))
+        if status and status != "all":
+            rows = self.store.rows(
+                "SELECT * FROM platform_announcements WHERE status = ? ORDER BY pinned DESC, id DESC LIMIT ?",
+                (status, limit))
+        else:
+            rows = self.store.rows(
+                "SELECT * FROM platform_announcements ORDER BY pinned DESC, id DESC LIMIT ?", (limit,))
+        return [dict(r) for r in rows]
+
+    def update_announcement(self, *, ann_id: int, title: str | None = None, content: str | None = None,
+                            level: str | None = None, status: str | None = None,
+                            pinned: bool | None = None, expires_at: str | None = None,
+                            actor_user_id: int | None = None) -> dict:
+        existing = self.get_announcement(ann_id)
+        if level is not None and level not in {"info", "important", "maintenance"}:
+            raise BusinessError("无效的级别")
+        if status is not None and status not in {"draft", "published", "archived"}:
+            raise BusinessError("无效的状态")
+        published_at = existing.get("published_at")
+        if status == "published" and not existing.get("published_at"):
+            published_at = datetime.utcnow().isoformat()
+        with self.store.transaction() as conn:
+            conn.execute(
+                """
+                UPDATE platform_announcements
+                SET title = COALESCE(?, title), content = COALESCE(?, content),
+                    level = COALESCE(?, level), status = COALESCE(?, status),
+                    pinned = COALESCE(?, pinned), expires_at = COALESCE(?, expires_at),
+                    published_at = ?
+                WHERE id = ?
+                """,
+                (title, content, level, status,
+                 (1 if pinned else 0) if pinned is not None else None,
+                 expires_at, published_at, ann_id),
+            )
+        updated = self.get_announcement(ann_id)
+        self.record_audit_log(action="announcement.update", target_type="announcement",
+                              target_id=str(ann_id), actor_user_id=actor_user_id,
+                              before=existing, after=updated)
+        return updated
+
+    def delete_announcement(self, ann_id: int, *, actor_user_id: int | None = None) -> dict:
+        existing = self.get_announcement(ann_id)
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM platform_announcements WHERE id = ?", (ann_id,))
+        self.record_audit_log(action="announcement.delete", target_type="announcement",
+                              target_id=str(ann_id), actor_user_id=actor_user_id, before=existing)
+        return {"deleted": True, "id": ann_id}
+
+    def list_announcements_for_merchant(self, tenant_id: int) -> list[dict]:
+        """商家端读取：已发布、面向全部或本商家、未过期。"""
+        now = datetime.utcnow().isoformat()
+        rows = self.store.rows(
+            """
+            SELECT id, title, content, level, pinned, published_at
+            FROM platform_announcements
+            WHERE status = 'published'
+              AND (audience = 'all' OR (audience = 'tenant' AND tenant_id = ?))
+              AND (expires_at IS NULL OR expires_at > ?)
+            ORDER BY pinned DESC, id DESC
+            LIMIT 50
+            """,
+            (tenant_id, now),
+        )
+        return [dict(r) for r in rows]
 
     def record_audit_log(
         self,
