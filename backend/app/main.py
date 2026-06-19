@@ -527,6 +527,28 @@ class PlatformStoreUpdatePayload(BaseModel):
     status: str | None = None
 
 
+class DeletePayload(BaseModel):
+    reason: str | None = None
+
+
+class PlatformLeadPayload(BaseModel):
+    source: str = "website"
+    name: str | None = None
+    phone: str | None = None
+    wechat: str | None = None
+    city: str | None = None
+    store_count: int = 1
+    interest: str | None = None
+    message: str | None = None
+
+
+class PlatformLeadUpdatePayload(BaseModel):
+    status: str | None = None
+    follow_note: str | None = None
+    assigned_to: str | None = None
+    tenant_id: int | None = None
+
+
 class StoreHomeConfigPayload(BaseModel):
     tenant_id: int = 1
     store_id: int = 1
@@ -2397,6 +2419,16 @@ def update_tenant(tenant_id: int, payload: TenantUpdatePayload,
         raise handle_business_error(exc) from exc
 
 
+@app.delete("/platform/tenants/{tenant_id}")
+def delete_tenant(tenant_id: int, payload: DeletePayload | None = None,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.delete_tenant(tenant_id, reason=payload.reason if payload else None)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
 ## ── 订阅计划管理 ──────────────────────────────────────────────
 
 class SubscriptionPayload(BaseModel):
@@ -2422,6 +2454,21 @@ def set_tenant_subscription(tenant_id: int, payload: SubscriptionPayload,
         )
     except BusinessError as exc:
         raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/subscription-alerts")
+def platform_subscription_alerts(days: int = 30, balance_threshold: int = 50,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    return service.subscription_alerts(days=days, balance_threshold=balance_threshold)
+
+
+@app.post("/platform/subscription-alerts/push")
+def platform_push_subscription_alerts(days: int = 14, balance_threshold: int = 50,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    """把续费 / 余额预警分类推送到飞书（手动触发，后续可接定时任务）。"""
+    return service.push_subscription_alerts(days=days, balance_threshold=balance_threshold)
 
 
 @app.get("/merchant/subscription")
@@ -2487,6 +2534,71 @@ def update_store(store_id: int, payload: PlatformStoreUpdatePayload, tenant_id: 
         )
     except BusinessError as exc:
         raise handle_business_error(exc) from exc
+
+
+@app.delete("/platform/stores/{store_id}")
+def delete_store(store_id: int, tenant_id: int = 1, payload: DeletePayload | None = None,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.delete_store(tenant_id=tenant_id, store_id=store_id, reason=payload.reason if payload else None)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.post("/leads")
+def create_public_lead(payload: PlatformLeadPayload) -> dict:
+    try:
+        return service.create_platform_lead(
+            source=payload.source,
+            name=payload.name,
+            phone=payload.phone,
+            wechat=payload.wechat,
+            city=payload.city,
+            store_count=payload.store_count,
+            interest=payload.interest,
+            message=payload.message,
+        )
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/leads")
+def list_platform_leads(status: str | None = None, limit: int = 100,
+    principal: Principal = Depends(require_platform_admin),
+) -> list[dict]:
+    return service.list_platform_leads(status=status, limit=limit)
+
+
+@app.put("/platform/leads/{lead_id}")
+def update_platform_lead(lead_id: int, payload: PlatformLeadUpdatePayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.update_platform_lead(
+            lead_id=lead_id,
+            status=payload.status,
+            follow_note=payload.follow_note,
+            assigned_to=payload.assigned_to,
+            tenant_id=payload.tenant_id,
+            actor_user_id=principal.user_id,
+        )
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/audit-logs")
+def list_platform_audit_logs(tenant_id: int | None = None, action: str | None = None, limit: int = 100,
+    principal: Principal = Depends(require_platform_admin),
+) -> list[dict]:
+    return service.list_audit_logs(tenant_id=tenant_id, action=action, limit=limit)
+
+
+@app.get("/platform/finance-transactions")
+def list_platform_finance_transactions(tenant_id: int | None = None, limit: int = 100,
+    principal: Principal = Depends(require_platform_admin),
+) -> list[dict]:
+    return service.list_finance_transactions(tenant_id=tenant_id, limit=limit)
 
 
 @app.get("/platform/api-keys")

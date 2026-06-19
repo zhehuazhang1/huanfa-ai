@@ -6,6 +6,7 @@ import json
 import os
 import threading
 import time
+import urllib.request
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
@@ -14,7 +15,7 @@ from uuid import uuid4
 
 from .deepseek_client import build_deepseek_from_env, build_system_prompt
 from .dify_client import MockDifyClient
-from .feishu import FeishuSyncProvider, MockFeishuSyncProvider
+from .feishu import FeishuSyncProvider, FeishuWebhookSyncProvider, MockFeishuSyncProvider
 from .models import BillingType, Direction, GenerateRequest, JobStatus
 from .payments import MockPaymentProvider, PaymentError, PaymentProvider
 from .plans import check_feature, get_plan, plan_summary, PLANS
@@ -4194,8 +4195,8 @@ class HairAiService:
         existing = self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,))
         if existing is None:
             raise BusinessError("Tenant not found")
-        if status is not None and status not in {"active", "paused", "expired"}:
-            raise BusinessError("status must be active, paused or expired")
+        if status is not None and status not in {"active", "paused", "expired", "disabled", "deleted"}:
+            raise BusinessError("status must be active, paused, expired, disabled or deleted")
         if package_plan:
             plan = self.store.row("SELECT id FROM package_plans WHERE plan_code = ?", (package_plan,))
             if plan is None:
@@ -4213,7 +4214,35 @@ class HairAiService:
                 """,
                 (name, logo_url, package_plan, status, notes, tenant_id),
             )
-        return dict(self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,)))
+        updated = dict(self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,)))
+        self.record_audit_log(
+            action="tenant.update",
+            target_type="tenant",
+            target_id=str(tenant_id),
+            tenant_id=tenant_id,
+            before=dict(existing),
+            after=updated,
+        )
+        return updated
+
+    def delete_tenant(self, tenant_id: int, reason: str | None = None) -> dict:
+        tenant = self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,))
+        if tenant is None:
+            raise BusinessError("Tenant not found")
+        with self.store.transaction() as conn:
+            conn.execute("UPDATE tenants SET status = 'deleted', notes = COALESCE(?, notes) WHERE id = ?", (reason, tenant_id))
+            conn.execute("UPDATE stores SET status = 'paused' WHERE tenant_id = ?", (tenant_id,))
+            conn.execute("UPDATE users SET status = 'disabled' WHERE tenant_id = ? AND role != 'customer'", (tenant_id,))
+        updated = dict(self.store.row("SELECT * FROM tenants WHERE id = ?", (tenant_id,)))
+        self.record_audit_log(
+            action="tenant.delete",
+            target_type="tenant",
+            target_id=str(tenant_id),
+            tenant_id=tenant_id,
+            before=dict(tenant),
+            after=updated | {"reason": reason},
+        )
+        return updated
 
     # ── 订阅计划管理 ──────────────────────────────────────────────
 
@@ -4294,7 +4323,63 @@ class HairAiService:
                 """,
                 (plan, new_expires, tenant_id),
             )
-        return self.get_tenant_subscription(tenant_id)
+        result = self.get_tenant_subscription(tenant_id)
+        self.record_audit_log(
+            action="subscription.renew",
+            target_type="tenant",
+            target_id=str(tenant_id),
+            tenant_id=tenant_id,
+            before=tenant,
+            after=result | {"months": months},
+        )
+        self.record_finance_transaction(
+            tenant_id=tenant_id,
+            store_id=None,
+            transaction_type="subscription_renewal",
+            amount=float(get_plan(plan)["annual_price_fen"]) / 100 / 12 * max(months, 0),
+            related_type="tenant",
+            related_id=tenant_id,
+            note=f"{plan} renewal for {months} month(s)",
+        )
+        return result
+
+    def subscription_alerts(self, *, days: int = 30, balance_threshold: int = 50) -> dict:
+        today = date.today()
+        until = today + timedelta(days=max(1, min(days, 365)))
+        rows = self.store.rows(
+            """
+            SELECT id, name, status, subscription_plan, subscription_expires_at, notes
+            FROM tenants
+            WHERE status IN ('active', 'paused', 'expired')
+            ORDER BY subscription_expires_at IS NULL ASC, subscription_expires_at ASC, id ASC
+            """
+        )
+        expiring: list[dict] = []
+        expired: list[dict] = []
+        low_balance: list[dict] = []
+        for row in rows:
+            item = dict(row)
+            expires_at = item.get("subscription_expires_at")
+            if expires_at:
+                try:
+                    expire_date = datetime.fromisoformat(str(expires_at)).date()
+                    item["days_to_expire"] = (expire_date - today).days
+                    if expire_date < today:
+                        expired.append(item)
+                    elif expire_date <= until:
+                        expiring.append(item)
+                except ValueError:
+                    item["days_to_expire"] = None
+            balance = self.account_balance(int(item["id"]))
+            if balance <= balance_threshold:
+                low_balance.append(item | {"balance_remaining": balance})
+        return {
+            "days": days,
+            "balance_threshold": balance_threshold,
+            "expired": expired,
+            "expiring": expiring,
+            "low_balance": low_balance,
+        }
 
     def _reset_monthly_ai_usage(self, tenant_id: int) -> None:
         with self.store.transaction() as conn:
@@ -4452,8 +4537,8 @@ class HairAiService:
             raise BusinessError("Store not found")
         if daily_ai_limit is not None and daily_ai_limit < 0:
             raise BusinessError("daily_ai_limit cannot be negative")
-        if status is not None and status not in {"active", "paused"}:
-            raise BusinessError("status must be active or paused")
+        if status is not None and status not in {"active", "paused", "disabled"}:
+            raise BusinessError("status must be active, paused or disabled")
         with self.store.transaction() as conn:
             conn.execute(
                 """
@@ -4465,7 +4550,353 @@ class HairAiService:
                 """,
                 (name, daily_ai_limit, status, tenant_id, store_id),
             )
-        return dict(self.store.row("SELECT * FROM stores WHERE tenant_id = ? AND id = ?", (tenant_id, store_id)))
+        updated = dict(self.store.row("SELECT * FROM stores WHERE tenant_id = ? AND id = ?", (tenant_id, store_id)))
+        self.record_audit_log(
+            action="store.update",
+            target_type="store",
+            target_id=str(store_id),
+            tenant_id=tenant_id,
+            store_id=store_id,
+            before=dict(existing),
+            after=updated,
+        )
+        return updated
+
+    def delete_store(self, *, tenant_id: int, store_id: int, reason: str | None = None) -> dict:
+        existing = self.store.row("SELECT * FROM stores WHERE tenant_id = ? AND id = ?", (tenant_id, store_id))
+        if existing is None:
+            raise BusinessError("Store not found")
+        with self.store.transaction() as conn:
+            conn.execute("UPDATE stores SET status = 'paused' WHERE tenant_id = ? AND id = ?", (tenant_id, store_id))
+        updated = dict(self.store.row("SELECT * FROM stores WHERE tenant_id = ? AND id = ?", (tenant_id, store_id)))
+        self.record_audit_log(
+            action="store.delete",
+            target_type="store",
+            target_id=str(store_id),
+            tenant_id=tenant_id,
+            store_id=store_id,
+            before=dict(existing),
+            after=updated | {"reason": reason},
+        )
+        return updated
+
+    def create_platform_lead(
+        self,
+        *,
+        source: str = "website",
+        name: str | None = None,
+        phone: str | None = None,
+        wechat: str | None = None,
+        city: str | None = None,
+        store_count: int = 1,
+        interest: str | None = None,
+        message: str | None = None,
+    ) -> dict:
+        if not (name or phone or wechat or message):
+            raise BusinessError("Lead requires at least name, phone, wechat or message")
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO platform_leads
+                (source, name, phone, wechat, city, store_count, interest, message)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    (source or "website").strip()[:60],
+                    (name or "").strip() or None,
+                    (phone or "").strip() or None,
+                    (wechat or "").strip() or None,
+                    (city or "").strip() or None,
+                    max(int(store_count or 1), 1),
+                    (interest or "").strip() or None,
+                    (message or "").strip() or None,
+                ),
+            )
+            lead_id = cur.lastrowid
+        self.record_audit_log(
+            action="lead.create",
+            target_type="lead",
+            target_id=str(lead_id),
+            after={"source": source, "name": name, "phone": phone, "wechat": wechat},
+        )
+        lead = self.get_platform_lead(lead_id)
+        self._push_lead_to_feishu(lead)
+        return lead
+
+    def get_platform_lead(self, lead_id: int) -> dict:
+        row = self.store.row("SELECT * FROM platform_leads WHERE id = ?", (lead_id,))
+        if row is None:
+            raise BusinessError("Lead not found")
+        return dict(row)
+
+    # ---- 飞书分类推送 ----
+    FEISHU_CATEGORIES = {
+        "lead": "📨 营销线索",
+        "subscription": "⏰ 续费预警",
+        "balance": "🔋 余额预警",
+        "business": "📊 经营动态",
+        "system": "🚨 系统告警",
+    }
+
+    def push_notification(self, *, category: str, title: str, lines: list[str] | None = None) -> bool:
+        """统一飞书推送入口，按种类带分类标签。尽力而为，失败返回 False。"""
+        webhook = (
+            os.getenv("FEISHU_LEAD_WEBHOOK")
+            or "https://open.feishu.cn/open-apis/bot/v2/hook/6f2b2d04-6aa9-40b0-a179-74be15ca985e"
+        )
+        if not webhook:
+            return False
+        label = self.FEISHU_CATEGORIES.get(category, "🔔 通知")
+        text_lines = [f"{label}｜{title}"]
+        if lines:
+            text_lines.extend(lines)
+        try:
+            body = json.dumps(
+                {"msg_type": "text", "content": {"text": "\n".join(text_lines)}},
+                ensure_ascii=False,
+            ).encode("utf-8")
+            req = urllib.request.Request(
+                webhook, data=body, method="POST",
+                headers={"Content-Type": "application/json"},
+            )
+            urllib.request.urlopen(req, timeout=6)
+            return True
+        except Exception:
+            return False
+
+    def _push_lead_to_feishu(self, lead: dict) -> None:
+        """新留资推送（分类：营销线索）。失败不影响入库。"""
+        lines = [f"来源：{lead.get('source') or '官网'}"]
+        for label, key in (
+            ("姓名", "name"),
+            ("电话", "phone"),
+            ("微信", "wechat"),
+            ("城市", "city"),
+            ("门店数", "store_count"),
+            ("意向", "interest"),
+            ("留言", "message"),
+        ):
+            val = lead.get(key)
+            if val not in (None, "", 0):
+                lines.append(f"{label}：{val}")
+        lines.append(f"时间：{lead.get('created_at')}")
+        self.push_notification(category="lead", title="新留资", lines=lines)
+
+    def push_subscription_alerts(self, *, days: int = 14, balance_threshold: int = 50) -> dict:
+        """续费 / 余额预警按分类汇总推送飞书（可手动触发或定时调用）。"""
+        data = self.subscription_alerts(days=days, balance_threshold=balance_threshold)
+        sent: list[str] = []
+        if data["expired"]:
+            lines = [
+                f"· {x.get('name')}（{x.get('subscription_plan')}）已过期 {abs(x.get('days_to_expire') or 0)} 天"
+                for x in data["expired"]
+            ]
+            if self.push_notification(category="subscription", title=f"已过期 {len(data['expired'])} 家", lines=lines):
+                sent.append("expired")
+        if data["expiring"]:
+            lines = [
+                f"· {x.get('name')}（{x.get('subscription_plan')}）剩 {x.get('days_to_expire')} 天到期"
+                for x in data["expiring"]
+            ]
+            if self.push_notification(category="subscription", title=f"{days} 天内到期 {len(data['expiring'])} 家", lines=lines):
+                sent.append("expiring")
+        if data["low_balance"]:
+            lines = [
+                f"· {x.get('name')} 剩 {x.get('balance_remaining')} 次"
+                for x in data["low_balance"]
+            ]
+            if self.push_notification(category="balance", title=f"次数不足 {len(data['low_balance'])} 家", lines=lines):
+                sent.append("low_balance")
+        return {
+            "sent_categories": sent,
+            "counts": {k: len(data[k]) for k in ("expired", "expiring", "low_balance")},
+        }
+
+    def list_platform_leads(self, *, status: str | None = None, limit: int = 100) -> list[dict]:
+        clean_limit = max(1, min(int(limit or 100), 300))
+        if status and status != "all":
+            rows = self.store.rows(
+                """
+                SELECT * FROM platform_leads
+                WHERE status = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (status, clean_limit),
+            )
+        else:
+            rows = self.store.rows(
+                """
+                SELECT * FROM platform_leads
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (clean_limit,),
+            )
+        return [dict(row) for row in rows]
+
+    def update_platform_lead(
+        self,
+        *,
+        lead_id: int,
+        status: str | None = None,
+        follow_note: str | None = None,
+        assigned_to: str | None = None,
+        tenant_id: int | None = None,
+        actor_user_id: int | None = None,
+    ) -> dict:
+        existing = self.get_platform_lead(lead_id)
+        if status is not None and status not in {"new", "contacted", "won", "lost", "invalid"}:
+            raise BusinessError("Invalid lead status")
+        followed_at_expr = "CURRENT_TIMESTAMP" if status in {"contacted", "won", "lost"} or follow_note else "followed_at"
+        converted_at_expr = "CURRENT_TIMESTAMP" if status == "won" else "converted_at"
+        with self.store.transaction() as conn:
+            conn.execute(
+                f"""
+                UPDATE platform_leads
+                SET status = COALESCE(?, status),
+                    follow_note = COALESCE(?, follow_note),
+                    assigned_to = COALESCE(?, assigned_to),
+                    tenant_id = COALESCE(?, tenant_id),
+                    updated_at = CURRENT_TIMESTAMP,
+                    followed_at = {followed_at_expr},
+                    converted_at = {converted_at_expr}
+                WHERE id = ?
+                """,
+                (status, follow_note, assigned_to, tenant_id, lead_id),
+            )
+        updated = self.get_platform_lead(lead_id)
+        self.record_audit_log(
+            action="lead.update",
+            target_type="lead",
+            target_id=str(lead_id),
+            tenant_id=tenant_id,
+            actor_user_id=actor_user_id,
+            before=existing,
+            after=updated,
+        )
+        return updated
+
+    def record_audit_log(
+        self,
+        *,
+        action: str,
+        target_type: str,
+        target_id: str | None = None,
+        tenant_id: int | None = None,
+        store_id: int | None = None,
+        before: dict | None = None,
+        after: dict | None = None,
+        actor_user_id: int | None = None,
+        actor_role: str = "platform_admin",
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> dict:
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO platform_audit_logs
+                (actor_user_id, actor_role, action, target_type, target_id, tenant_id, store_id,
+                 before_json, after_json, ip_address, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    actor_user_id,
+                    actor_role,
+                    action,
+                    target_type,
+                    target_id,
+                    tenant_id,
+                    store_id,
+                    json.dumps(before, ensure_ascii=False) if before is not None else None,
+                    json.dumps(after, ensure_ascii=False) if after is not None else None,
+                    ip_address,
+                    user_agent,
+                ),
+            )
+            log_id = cur.lastrowid
+        return dict(self.store.row("SELECT * FROM platform_audit_logs WHERE id = ?", (log_id,)))
+
+    def list_audit_logs(self, *, tenant_id: int | None = None, action: str | None = None, limit: int = 100) -> list[dict]:
+        filters: list[str] = []
+        params: list[object] = []
+        if tenant_id is not None:
+            filters.append("tenant_id = ?")
+            params.append(tenant_id)
+        if action:
+            filters.append("action = ?")
+            params.append(action)
+        where = "WHERE " + " AND ".join(filters) if filters else ""
+        params.append(max(1, min(int(limit or 100), 300)))
+        rows = self.store.rows(
+            f"""
+            SELECT * FROM platform_audit_logs
+            {where}
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            tuple(params),
+        )
+        result: list[dict] = []
+        for row in rows:
+            item = dict(row)
+            for key in ("before_json", "after_json"):
+                try:
+                    item[key.replace("_json", "")] = json.loads(item.get(key) or "null")
+                except json.JSONDecodeError:
+                    item[key.replace("_json", "")] = None
+            result.append(item)
+        return result
+
+    def record_finance_transaction(
+        self,
+        *,
+        tenant_id: int | None,
+        store_id: int | None,
+        transaction_type: str,
+        amount: float,
+        related_type: str | None = None,
+        related_id: int | None = None,
+        payment_status: str = "paid",
+        note: str | None = None,
+        created_by_user_id: int | None = None,
+    ) -> dict:
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO platform_finance_transactions
+                (tenant_id, store_id, transaction_type, amount, related_type, related_id,
+                 payment_status, note, created_by_user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    tenant_id,
+                    store_id,
+                    transaction_type,
+                    amount,
+                    related_type,
+                    related_id,
+                    payment_status,
+                    note,
+                    created_by_user_id,
+                ),
+            )
+            tx_id = cur.lastrowid
+        return dict(self.store.row("SELECT * FROM platform_finance_transactions WHERE id = ?", (tx_id,)))
+
+    def list_finance_transactions(self, *, tenant_id: int | None = None, limit: int = 100) -> list[dict]:
+        clean_limit = max(1, min(int(limit or 100), 300))
+        if tenant_id is None:
+            rows = self.store.rows(
+                "SELECT * FROM platform_finance_transactions ORDER BY id DESC LIMIT ?",
+                (clean_limit,),
+            )
+        else:
+            rows = self.store.rows(
+                "SELECT * FROM platform_finance_transactions WHERE tenant_id = ? ORDER BY id DESC LIMIT ?",
+                (tenant_id, clean_limit),
+            )
+        return [dict(row) for row in rows]
 
     def upsert_api_key_config(
         self,
@@ -4626,6 +5057,41 @@ class HairAiService:
         except Exception:
             pass
         return os.getenv(fallback_env, "")
+
+    def _resolve_tenant_secret(self, *, tenant_id: int, provider: str, key_name: str) -> str | None:
+        """取某个商家自己配置的密钥/地址（如飞书 webhook）。没配返回 None。"""
+        try:
+            row = self.store.row(
+                """
+                SELECT secret_ciphertext FROM api_key_configs
+                WHERE provider = ? AND key_name = ? AND status = 'active' AND tenant_id = ?
+                ORDER BY updated_at DESC LIMIT 1
+                """,
+                (provider, key_name, tenant_id),
+            )
+            if row and row["secret_ciphertext"]:
+                enc_key = os.getenv("PLATFORM_SECRET_ENCRYPTION_KEY", "local-dev-key")
+                ks = hashlib.sha256(enc_key.encode("utf-8")).digest()
+                raw = base64.urlsafe_b64decode(row["secret_ciphertext"].encode("utf-8"))
+                return bytes(b ^ ks[i % len(ks)] for i, b in enumerate(raw)).decode("utf-8")
+        except Exception:
+            pass
+        return None
+
+    def feishu_provider_for_tenant(self, tenant_id: int | None):
+        """按商家路由飞书：商家配了自己的 webhook 就推它自己的群；
+        没配则回退到全局（平台群），绝不会串到别的商家群。"""
+        if tenant_id:
+            # 后台「密钥管理」保存飞书时 key_name 用的是 "webhook"（见 admin 的 feishu|webhook）
+            webhook = self._resolve_tenant_secret(
+                tenant_id=tenant_id, provider="feishu", key_name="webhook"
+            )
+            if webhook:
+                secret = self._resolve_tenant_secret(
+                    tenant_id=tenant_id, provider="feishu", key_name="webhook_secret"
+                ) or ""
+                return FeishuWebhookSyncProvider(webhook_url=webhook, secret=secret)
+        return self.feishu
 
     def _mask_secret(self, secret_value: str) -> str:
         if len(secret_value) <= 8:
@@ -4902,7 +5368,26 @@ class HairAiService:
                     """,
                     (purchased_count, tenant_id),
                 )
-        return dict(self.store.row("SELECT * FROM tenant_ai_package_orders WHERE id = ?", (order_id,)))
+        order = dict(self.store.row("SELECT * FROM tenant_ai_package_orders WHERE id = ?", (order_id,)))
+        self.record_audit_log(
+            action="ai_package.purchase",
+            target_type="tenant_ai_package_order",
+            target_id=str(order_id),
+            tenant_id=tenant_id,
+            after=order,
+        )
+        if payment_status == "paid":
+            self.record_finance_transaction(
+                tenant_id=tenant_id,
+                store_id=None,
+                transaction_type="ai_package_purchase",
+                amount=total_amount,
+                related_type="tenant_ai_package_order",
+                related_id=order_id,
+                payment_status=payment_status,
+                note=package_name,
+            )
+        return order
 
     def list_ai_package_orders(self, tenant_id: int | None = None) -> list[dict]:
         if tenant_id is None:
@@ -4977,7 +5462,16 @@ class HairAiService:
                     (tenant_id, store_id, user_id, usage_type, change_count, after_balance, remark),
                 )
                 log_id = cur.lastrowid
-        return dict(self.store.row("SELECT * FROM tenant_ai_usage_logs WHERE id = ?", (log_id,)))
+        log = dict(self.store.row("SELECT * FROM tenant_ai_usage_logs WHERE id = ?", (log_id,)))
+        self.record_audit_log(
+            action="ai_balance.adjust",
+            target_type="tenant_ai_usage_log",
+            target_id=str(log_id),
+            tenant_id=tenant_id,
+            store_id=store_id,
+            after=log,
+        )
+        return log
 
     def merchant_workbench(self, tenant_id: int, store_id: int) -> dict:
         start_date, end_date, period_label = self._performance_period_range("day", 0)
@@ -5749,6 +6243,7 @@ class HairAiService:
         return event_type
 
     def retry_sync_events(self, tenant_id: int) -> dict:
+        provider = self.feishu_provider_for_tenant(tenant_id)
         with self.store.transaction() as conn:
             pending = conn.execute(
                 """
@@ -5762,7 +6257,7 @@ class HairAiService:
             failed_count = 0
             for event in pending:
                 payload = json.loads(event["payload"])
-                result = self.feishu.sync_event(event_type=event["event_type"], payload=payload)
+                result = provider.sync_event(event_type=event["event_type"], payload=payload)
                 if result.get("ok"):
                     synced_count += 1
                     conn.execute(
@@ -5787,7 +6282,7 @@ class HairAiService:
             "tenant_id": tenant_id,
             "synced_count": synced_count,
             "failed_count": failed_count,
-            "provider": self.feishu.provider_name,
+            "provider": provider.provider_name,
         }
 
     def platform_usage(self, tenant_id: int, month: str | None = None) -> dict:

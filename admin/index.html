@@ -521,6 +521,7 @@
       <nav class="nav" id="nav">
         <button class="active" data-tab="overview">总览</button>
         <button data-tab="tenants">客户与门店</button>
+        <button data-tab="ops">运营</button>
         <button data-tab="stats">用量统计</button>
         <button data-tab="jobs">生成记录</button>
         <button data-tab="packages">AI次数包</button>
@@ -628,6 +629,96 @@
               </thead>
               <tbody id="tenantRows"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="ops" class="tab-panel hidden">
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">续费与跟进提醒</div>
+              <div class="subtitle">自动列出快到期、已到期、AI 次数快用完的商家，方便你催续费和补次数。</div>
+            </div>
+            <button class="btn secondary" onclick="loadOps()">刷新</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>类型</th><th>商家</th><th>套餐/到期</th><th>剩余</th><th>备注</th><th>操作</th></tr>
+              </thead>
+              <tbody id="opsAlertRows"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">切换到本页后自动加载</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">客户线索 CRM</div>
+              <div class="subtitle">官网咨询、活动留资、人工录入都统一进入这里，按待跟进/已成交流转。</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+              <div class="field">
+                <label>状态</label>
+                <select id="leadStatus" style="min-height:42px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fbfcfa">
+                  <option value="all">全部</option>
+                  <option value="new">待跟进</option>
+                  <option value="contacted">已联系</option>
+                  <option value="won">已成交</option>
+                  <option value="lost">未成交</option>
+                  <option value="invalid">无效</option>
+                </select>
+              </div>
+              <button class="btn secondary" onclick="loadLeads()">查询</button>
+            </div>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px">
+            <input id="newLeadName" placeholder="姓名/店名" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="newLeadPhone" placeholder="手机号" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="newLeadCity" placeholder="城市" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="newLeadInterest" placeholder="意向：试用/专业版/连锁版" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <button class="btn" onclick="createLead()">新增线索</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>时间</th><th>客户</th><th>联系方式</th><th>城市/门店</th><th>意向</th><th>状态</th><th>跟进备注</th><th>操作</th></tr>
+              </thead>
+              <tbody id="leadRows"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">操作日志</div>
+                <div class="subtitle">记录续费、充值、编辑、停用等关键动作，出问题能追溯。</div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>时间</th><th>动作</th><th>对象</th><th>商家</th></tr></thead>
+                <tbody id="auditRows"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">资金流水</div>
+                <div class="subtitle">年费续费、AI 次数包充值先统一入账，退款和开票后续接这里。</div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>时间</th><th>类型</th><th>商家</th><th>金额</th><th>备注</th></tr></thead>
+                <tbody id="financeRows"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -1250,6 +1341,7 @@
       // “刷新数据”“新增客户”按钮只在“客户与门店”页显示
       document.getElementById("topActions").classList.toggle("hidden", tab !== "tenants");
       if (tab === "keys")    loadApiKeys();
+      if (tab === "ops")     loadOps();
       if (tab === "billing") loadBilling();
       if (tab === "stats")   { initStatsDefaults(); loadStats(); loadCustomerStats(); }
       if (tab === "jobs")    { initJobsDefaults(); loadJobs(1); }
@@ -1537,6 +1629,134 @@
       } catch (e) {
         errEl.textContent = "保存门店失败：" + e.message;
         errEl.classList.remove("hidden");
+      }
+    }
+
+    async function loadOps() {
+      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions()]);
+    }
+
+    async function loadAlerts() {
+      const tbody = document.getElementById("opsAlertRows");
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        const data = await apiFetch("/platform/subscription-alerts?days=30&balance_threshold=50");
+        const rows = [];
+        (data.expired || []).forEach(t => rows.push({ type: "已到期", item: t }));
+        (data.expiring || []).forEach(t => rows.push({ type: "30天内到期", item: t }));
+        (data.low_balance || []).forEach(t => rows.push({ type: "次数不足", item: t }));
+        if (!rows.length) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">暂无续费或余额提醒</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = rows.map(row => {
+          const t = row.item || {};
+          const tenantName = esc(t.name || "");
+          return `<tr>
+            <td><span class="${row.type === "已到期" ? "tag red" : "tag gold"}">${row.type}</span></td>
+            <td><b>${tenantName}</b><div style="font-size:12px;color:var(--muted)">#${t.id || t.tenant_id || "—"}</div></td>
+            <td>${planBadge(t.subscription_plan || "trial", t.subscription_expires_at)}</td>
+            <td>${t.balance_remaining != null ? fmt(t.balance_remaining) + " 次" : (t.days_to_expire != null ? t.days_to_expire + " 天" : "—")}</td>
+            <td>${esc(t.notes || "")}</td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="openSubModal(${t.id || t.tenant_id},'${tenantName}','${t.subscription_plan || "trial"}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">续费</button>
+              <button onclick="openRechargeModal(${t.id || t.tenant_id},'${tenantName}')" style="height:28px;padding:0 10px;font-size:12px;font-weight:700;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">充值次数</button>
+            </td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function loadLeads() {
+      const status = document.getElementById("leadStatus")?.value || "all";
+      const tbody = document.getElementById("leadRows");
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr>`;
+      try {
+        const rows = await apiFetch(`/platform/leads?status=${encodeURIComponent(status)}&limit=100`);
+        if (!(rows || []).length) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">暂无线索</td></tr>`;
+          return;
+        }
+        const statusText = { new: "待跟进", contacted: "已联系", won: "已成交", lost: "未成交", invalid: "无效" };
+        tbody.innerHTML = rows.map(item => `<tr>
+          <td>${esc((item.created_at || "").slice(0, 16))}</td>
+          <td><b>${esc(item.name || "未填写")}</b><div style="font-size:12px;color:var(--muted)">${esc(item.source || "website")}</div></td>
+          <td>${esc(item.phone || item.wechat || "—")}</td>
+          <td>${esc(item.city || "—")} / ${fmt(item.store_count || 1)} 家</td>
+          <td>${esc(item.interest || item.message || "—")}</td>
+          <td><span class="${item.status === "won" ? "tag" : item.status === "lost" ? "tag red" : "tag gold"}">${statusText[item.status] || item.status}</span></td>
+          <td><input id="leadNote_${item.id}" value="${esc(item.follow_note || "")}" placeholder="跟进备注" style="width:160px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px"></td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="updateLead(${item.id}, 'contacted')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">已联系</button>
+            <button onclick="updateLead(${item.id}, 'won')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">成交</button>
+            <button onclick="updateLead(${item.id}, 'lost')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--red);border-radius:6px;background:white;color:var(--red);cursor:pointer">未成交</button>
+          </td>
+        </tr>`).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function createLead() {
+      const payload = {
+        source: "manual",
+        name: document.getElementById("newLeadName").value.trim(),
+        phone: document.getElementById("newLeadPhone").value.trim(),
+        city: document.getElementById("newLeadCity").value.trim(),
+        interest: document.getElementById("newLeadInterest").value.trim()
+      };
+      try {
+        await apiFetch("/leads", { method: "POST", body: JSON.stringify(payload) });
+        ["newLeadName","newLeadPhone","newLeadCity","newLeadInterest"].forEach(id => document.getElementById(id).value = "");
+        await loadLeads();
+      } catch (e) {
+        alert("新增线索失败：" + e.message);
+      }
+    }
+
+    async function updateLead(id, status) {
+      const note = document.getElementById(`leadNote_${id}`)?.value || "";
+      try {
+        await apiFetch(`/platform/leads/${id}`, {
+          method: "PUT",
+          body: JSON.stringify({ status, follow_note: note })
+        });
+        await loadLeads();
+      } catch (e) {
+        alert("更新线索失败：" + e.message);
+      }
+    }
+
+    async function loadAuditLogs() {
+      const tbody = document.getElementById("auditRows");
+      try {
+        const rows = await apiFetch("/platform/audit-logs?limit=30");
+        tbody.innerHTML = (rows || []).length ? rows.map(item => `<tr>
+          <td>${esc((item.created_at || "").slice(0, 16))}</td>
+          <td>${esc(item.action || "")}</td>
+          <td>${esc(item.target_type || "")} #${esc(item.target_id || "")}</td>
+          <td>${item.tenant_id || "—"}</td>
+        </tr>`).join("") : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">暂无操作日志</td></tr>`;
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function loadFinanceTransactions() {
+      const tbody = document.getElementById("financeRows");
+      try {
+        const rows = await apiFetch("/platform/finance-transactions?limit=30");
+        tbody.innerHTML = (rows || []).length ? rows.map(item => `<tr>
+          <td>${esc((item.created_at || "").slice(0, 16))}</td>
+          <td>${esc(item.transaction_type || "")}</td>
+          <td>${item.tenant_id || "—"}</td>
+          <td>¥${fmt(item.amount || 0, 2)}</td>
+          <td>${esc(item.note || "")}</td>
+        </tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">暂无资金流水</td></tr>`;
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`;
       }
     }
 

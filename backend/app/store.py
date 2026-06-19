@@ -536,6 +536,57 @@ class AppStore:
               updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
               UNIQUE (tenant_id, store_id)
             );
+
+            CREATE TABLE IF NOT EXISTS platform_leads (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              source TEXT DEFAULT 'website',
+              name TEXT,
+              phone TEXT,
+              wechat TEXT,
+              city TEXT,
+              store_count INTEGER DEFAULT 1,
+              interest TEXT,
+              message TEXT,
+              status TEXT DEFAULT 'new',
+              follow_note TEXT,
+              assigned_to TEXT,
+              tenant_id INTEGER,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              followed_at TEXT,
+              converted_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS platform_audit_logs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              actor_user_id INTEGER,
+              actor_role TEXT DEFAULT 'platform_admin',
+              action TEXT NOT NULL,
+              target_type TEXT NOT NULL,
+              target_id TEXT,
+              tenant_id INTEGER,
+              store_id INTEGER,
+              before_json TEXT,
+              after_json TEXT,
+              ip_address TEXT,
+              user_agent TEXT,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS platform_finance_transactions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              tenant_id INTEGER,
+              store_id INTEGER,
+              transaction_type TEXT NOT NULL,
+              amount REAL NOT NULL,
+              currency TEXT DEFAULT 'CNY',
+              related_type TEXT,
+              related_id INTEGER,
+              payment_status TEXT DEFAULT 'paid',
+              note TEXT,
+              created_by_user_id INTEGER,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         self._run_lightweight_migrations()
