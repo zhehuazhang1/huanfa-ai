@@ -640,7 +640,10 @@
               <div class="section-title">续费与跟进提醒</div>
               <div class="subtitle">自动列出快到期、已到期、AI 次数快用完的商家，方便你催续费和补次数。</div>
             </div>
-            <button class="btn secondary" onclick="loadOps()">刷新</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn secondary" onclick="pushAlerts()">推送到飞书</button>
+              <button class="btn secondary" onclick="loadOps()">刷新</button>
+            </div>
           </div>
           <div class="table-wrap">
             <table>
@@ -719,6 +722,48 @@
                 <tbody id="financeRows"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">系统公告</div>
+              <div class="subtitle">发布给商家的通知（维护、活动、政策）。商家端会看到已发布、未过期的公告。</div>
+            </div>
+            <button class="btn secondary" onclick="loadAnnouncements()">刷新</button>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr 2fr auto auto;gap:8px;align-items:end">
+            <input id="annTitle" placeholder="标题" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="annContent" placeholder="公告内容" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <select id="annLevel" style="min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fbfcfa">
+              <option value="info">普通</option>
+              <option value="important">重要</option>
+              <option value="maintenance">维护</option>
+            </select>
+            <button class="btn" onclick="createAnnouncement()">发布</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>时间</th><th>标题</th><th>级别</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="annRows"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">年费套餐定价</div>
+              <div class="subtitle">改这里的价格 / 赠送次数，立即对续费计费和配额生效，无需重新部署。</div>
+            </div>
+            <button class="btn secondary" onclick="loadPlanPricing()">刷新</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>套餐</th><th>年费(元)</th><th>每年赠送次数</th><th>超出单价(元)</th><th>门店上限</th><th>操作</th></tr></thead>
+              <tbody id="planRows"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -1633,7 +1678,7 @@
     }
 
     async function loadOps() {
-      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions()]);
+      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing()]);
     }
 
     async function loadAlerts() {
@@ -1727,6 +1772,96 @@
       } catch (e) {
         alert("更新线索失败：" + e.message);
       }
+    }
+
+    async function pushAlerts() {
+      try {
+        const r = await apiFetch("/platform/subscription-alerts/push?days=14&balance_threshold=50", { method: "POST" });
+        const cats = (r.sent_categories || []);
+        alert(cats.length ? "已推送到飞书：" + cats.join("、") : "暂无可推送的预警");
+      } catch (e) { alert("推送失败：" + e.message); }
+    }
+
+    async function loadAnnouncements() {
+      const tbody = document.getElementById("annRows");
+      try {
+        const rows = await apiFetch("/platform/announcements?limit=50");
+        const lvl = { info: "普通", important: "重要", maintenance: "维护" };
+        const st = { published: "已发布", draft: "草稿", archived: "已下架" };
+        tbody.innerHTML = (rows || []).length ? rows.map(a => `<tr>
+          <td>${esc((a.created_at || "").slice(0,16))}</td>
+          <td><b>${esc(a.title)}</b><div style="font-size:12px;color:var(--muted)">${esc((a.content||"").slice(0,30))}</div></td>
+          <td>${lvl[a.level] || a.level}</td>
+          <td><span class="${a.status==='published'?'tag':'tag gold'}">${st[a.status]||a.status}</span></td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            ${a.status==='published'
+              ? `<button onclick="toggleAnnouncement(${a.id},'archived')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--muted);border-radius:6px;background:white;cursor:pointer">下架</button>`
+              : `<button onclick="toggleAnnouncement(${a.id},'published')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">发布</button>`}
+            <button onclick="deleteAnnouncement(${a.id})" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--red);border-radius:6px;background:white;color:var(--red);cursor:pointer">删除</button>
+          </td>
+        </tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">暂无公告</td></tr>`;
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function createAnnouncement() {
+      const title = document.getElementById("annTitle").value.trim();
+      const content = document.getElementById("annContent").value.trim();
+      const level = document.getElementById("annLevel").value;
+      if (!title || !content) { alert("请填写标题和内容"); return; }
+      try {
+        await apiFetch("/platform/announcements", { method: "POST", body: JSON.stringify({ title, content, level }) });
+        document.getElementById("annTitle").value = "";
+        document.getElementById("annContent").value = "";
+        await loadAnnouncements();
+      } catch (e) { alert("发布失败：" + e.message); }
+    }
+
+    async function toggleAnnouncement(id, status) {
+      try { await apiFetch(`/platform/announcements/${id}`, { method: "PUT", body: JSON.stringify({ status }) }); await loadAnnouncements(); }
+      catch (e) { alert("操作失败：" + e.message); }
+    }
+
+    async function deleteAnnouncement(id) {
+      if (!confirm("确定删除这条公告？")) return;
+      try { await apiFetch(`/platform/announcements/${id}`, { method: "DELETE" }); await loadAnnouncements(); }
+      catch (e) { alert("删除失败：" + e.message); }
+    }
+
+    async function loadPlanPricing() {
+      const tbody = document.getElementById("planRows");
+      try {
+        const plans = await apiFetch("/platform/plans");
+        const order = ["trial", "basic", "pro", "enterprise"];
+        tbody.innerHTML = order.filter(c => plans[c]).map(code => {
+          const p = plans[code];
+          return `<tr>
+            <td><b>${esc(p.display_name || code)}</b></td>
+            <td><input id="pp_price_${code}" type="number" value="${p.annual_price_yuan}" style="width:90px;border:1px solid var(--line);border-radius:6px;padding:4px 6px"></td>
+            <td><input id="pp_quota_${code}" type="number" value="${p.annual_included_ai_quota}" style="width:80px;border:1px solid var(--line);border-radius:6px;padding:4px 6px"></td>
+            <td><input id="pp_over_${code}" type="number" step="0.1" value="${p.overage_price_yuan}" style="width:80px;border:1px solid var(--line);border-radius:6px;padding:4px 6px"></td>
+            <td><input id="pp_stores_${code}" type="number" value="${p.max_stores}" style="width:70px;border:1px solid var(--line);border-radius:6px;padding:4px 6px"></td>
+            <td><button onclick="savePlanPrice('${code}')" style="height:28px;padding:0 12px;font-size:12px;font-weight:700;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">保存</button></td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function savePlanPrice(code) {
+      const payload = {
+        annual_price_yuan: parseFloat(document.getElementById(`pp_price_${code}`).value),
+        annual_included_ai_quota: parseInt(document.getElementById(`pp_quota_${code}`).value),
+        overage_price_yuan: parseFloat(document.getElementById(`pp_over_${code}`).value),
+        max_stores: parseInt(document.getElementById(`pp_stores_${code}`).value)
+      };
+      try {
+        await apiFetch(`/platform/plans/${code}`, { method: "POST", body: JSON.stringify(payload) });
+        await loadPlanPricing();
+        alert("已保存，立即生效");
+      } catch (e) { alert("保存失败：" + e.message); }
     }
 
     async function loadAuditLogs() {
