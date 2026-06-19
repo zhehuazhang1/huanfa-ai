@@ -446,6 +446,15 @@ class HairAiService:
             return
         raise BusinessError("Unknown role")
 
+    _PLAN_RANK = {"trial": 0, "basic": 1, "pro": 2, "enterprise": 3}
+
+    def _unlocked_official_plans(self, tenant_id: int) -> list[str]:
+        """该商家按档次能解锁的官方素材档位列表（含本档及以下）。"""
+        row = self.store.row("SELECT subscription_plan FROM tenants WHERE id = ?", (tenant_id,))
+        plan = (dict(row).get("subscription_plan") if row else None) or "trial"
+        rank = self._PLAN_RANK.get(plan, 0)
+        return [code for code, r in self._PLAN_RANK.items() if r <= rank]
+
     def list_styles(
         self,
         tenant_id: int,
@@ -455,30 +464,34 @@ class HairAiService:
         recommended_only: bool = False,
         limit: int | None = None,
     ) -> list[dict]:
-        params: tuple = (tenant_id,)
-        where = "tenant_id = ? AND is_enabled = 1"
+        if hair_length and hair_length not in {"short", "medium", "long"}:
+            raise BusinessError("hair_length must be short, medium or long")
+        unlocked = self._unlocked_official_plans(tenant_id)
+        placeholders = ",".join(["?"] * len(unlocked))
+        # 商家自己的素材(tenant_id=?) 或 平台官方素材(tenant_id=0 且档次已解锁)
+        where = (f"(tenant_id = ? OR (tenant_id = 0 AND COALESCE(NULLIF(min_plan,''),'trial') IN ({placeholders}))) "
+                 "AND is_enabled = 1")
+        where_params: list = [tenant_id, *unlocked]
         order_prefix = ""
+        order_params: list = []
         if store_id is not None:
             where += " AND (store_id IS NULL OR store_id = ?)"
-            params = (*params, store_id)
+            where_params.append(store_id)
             order_prefix = "CASE WHEN store_id = ? THEN 0 ELSE 1 END, "
+            order_params.append(store_id)
         if direction:
             where += " AND direction = ?"
-            params = (*params, direction)
+            where_params.append(direction)
         if hair_length:
-            if hair_length not in {"short", "medium", "long"}:
-                raise BusinessError("hair_length must be short, medium or long")
             where += " AND hair_length = ?"
-            params = (*params, hair_length)
+            where_params.append(hair_length)
         if recommended_only:
             where += " AND is_recommended = 1"
         limit_clause = ""
+        tail_params: list = []
         if limit is not None:
-            clean_limit = max(1, min(int(limit or 24), 100))
             limit_clause = " LIMIT ?"
-        query_params = ((*params, store_id) if store_id is not None else params)
-        if limit is not None:
-            query_params = (*query_params, clean_limit)
+            tail_params.append(max(1, min(int(limit or 24), 100)))
         rows = self.store.rows(
             f"""
             SELECT style_id, name AS style_name, direction, hair_length, thumbnail_url, display_tags,
@@ -488,7 +501,7 @@ class HairAiService:
             ORDER BY {order_prefix}is_recommended DESC, sort_order ASC
             {limit_clause}
             """,
-            query_params,
+            tuple(where_params + order_params + tail_params),
         )
         return [dict(row) | parse_hairstyle_display_metadata(row["display_tags"]) for row in rows]
 
@@ -538,6 +551,56 @@ class HairAiService:
             )
             item_id = cur.lastrowid
         return dict(self.store.row("SELECT * FROM hairstyles WHERE id = ?", (item_id,)))
+
+    # ---- 平台官方发型库（tenant_id=0，按档次解锁）----
+    def create_official_hairstyle(self, *, name: str, direction: str, hair_length: str = "medium",
+                                  thumbnail_url: str | None = None, min_plan: str = "trial",
+                                  is_recommended: bool = True, sort_order: int = 0,
+                                  actor_user_id: int | None = None) -> dict:
+        if direction not in {"male", "female", "neutral"}:
+            raise BusinessError("direction must be male, female or neutral")
+        if hair_length not in {"short", "medium", "long"}:
+            raise BusinessError("hair_length must be short, medium or long")
+        if min_plan not in self._PLAN_RANK:
+            raise BusinessError("无效的档次")
+        if not (name or "").strip():
+            raise BusinessError("名称不能为空")
+        style_id = "official_" + uuid4().hex[:10]
+        with self.store.transaction() as conn:
+            conn.execute(
+                """INSERT INTO hairstyles
+                (tenant_id, store_id, style_id, name, direction, hair_length, thumbnail_url,
+                 display_tags, need_perm, is_enabled, is_recommended, sort_order, min_plan)
+                VALUES (0, NULL, ?, ?, ?, ?, ?, '[]', 0, 1, ?, ?, ?)""",
+                (style_id, name.strip(), direction, hair_length, thumbnail_url,
+                 int(is_recommended), sort_order, min_plan))
+        self.record_audit_log(action="official_style.create", target_type="hairstyle", target_id=style_id,
+                              actor_user_id=actor_user_id, after={"name": name, "min_plan": min_plan})
+        return dict(self.store.row("SELECT * FROM hairstyles WHERE tenant_id = 0 AND style_id = ?", (style_id,)))
+
+    def list_official_hairstyles(self) -> list[dict]:
+        rows = self.store.rows(
+            "SELECT id, style_id, name, direction, hair_length, thumbnail_url, "
+            "COALESCE(NULLIF(min_plan,''),'trial') AS min_plan, is_enabled, is_recommended, sort_order "
+            "FROM hairstyles WHERE tenant_id = 0 ORDER BY sort_order ASC, id DESC")
+        return [dict(r) for r in rows]
+
+    def delete_official_hairstyle(self, style_id: str, *, actor_user_id: int | None = None) -> dict:
+        if not self.store.row("SELECT id FROM hairstyles WHERE tenant_id = 0 AND style_id = ?", (style_id,)):
+            raise BusinessError("官方素材不存在")
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM hairstyles WHERE tenant_id = 0 AND style_id = ?", (style_id,))
+        self.record_audit_log(action="official_style.delete", target_type="hairstyle",
+                              target_id=style_id, actor_user_id=actor_user_id)
+        return {"deleted": True, "style_id": style_id}
+
+    def delete_hairstyle(self, *, tenant_id: int, style_id: str) -> dict:
+        """商家删除自己的素材（删不到平台官方 tenant_id=0）。"""
+        if not self.store.row("SELECT id FROM hairstyles WHERE tenant_id = ? AND style_id = ?", (tenant_id, style_id)):
+            raise BusinessError("素材不存在或无权删除")
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM hairstyles WHERE tenant_id = ? AND style_id = ?", (tenant_id, style_id))
+        return {"deleted": True, "style_id": style_id}
 
     def update_hairstyle(
         self,

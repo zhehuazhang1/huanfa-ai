@@ -663,6 +663,9 @@ class AppStore:
     def _run_lightweight_migrations(self) -> None:
         self._add_column_if_missing("hairstyles", "thumbnail_url", "TEXT")
         self._add_column_if_missing("hair_colors", "thumbnail_url", "TEXT")
+        # 官方素材库：最低可用档次（NULL/'trial'=所有商家可见；tenant_id=0 即平台官方素材）
+        self._add_column_if_missing("hairstyles", "min_plan", "TEXT")
+        self._add_column_if_missing("hair_colors", "min_plan", "TEXT")
         self._add_column_if_missing("ai_generation_jobs", "images_json", "TEXT")
         self._add_column_if_missing("users", "status", "TEXT DEFAULT 'active'")
         self._add_column_if_missing("users", "birthday", "TEXT")

@@ -2660,6 +2660,55 @@ def export_tickets_csv(principal: Principal = Depends(require_platform_admin)) -
           r.get("category"), r.get("priority"), r.get("status"), r.get("reply")] for r in rows])
 
 
+# ---- 平台官方发型库（按档次解锁）----
+class OfficialHairstylePayload(BaseModel):
+    name: str
+    direction: str = "female"
+    hair_length: str = "medium"
+    thumbnail_url: str | None = None
+    min_plan: str = "trial"      # trial/basic/pro/enterprise
+    is_recommended: bool = True
+    sort_order: int = 0
+
+
+@app.post("/platform/official-hairstyles")
+def create_official_hairstyle(payload: OfficialHairstylePayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.create_official_hairstyle(name=payload.name, direction=payload.direction,
+            hair_length=payload.hair_length, thumbnail_url=payload.thumbnail_url, min_plan=payload.min_plan,
+            is_recommended=payload.is_recommended, sort_order=payload.sort_order, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/official-hairstyles")
+def list_official_hairstyles(principal: Principal = Depends(require_platform_admin)) -> list[dict]:
+    return service.list_official_hairstyles()
+
+
+@app.delete("/platform/official-hairstyles/{style_id}")
+def delete_official_hairstyle(style_id: str,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.delete_official_hairstyle(style_id, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.delete("/merchant/hairstyles/{style_id}")
+def delete_merchant_hairstyle(style_id: str, store_id: int = 1,
+    principal: Principal = Depends(require_merchant),
+) -> dict:
+    tenant_id, _ = merchant_scope(principal, store_id)
+    try:
+        return service.delete_hairstyle(tenant_id=tenant_id, style_id=style_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
 @app.put("/platform/invoices/{invoice_id}")
 def update_platform_invoice(invoice_id: int, status: str,
     principal: Principal = Depends(require_platform_admin),
