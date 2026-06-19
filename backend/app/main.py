@@ -652,6 +652,17 @@ def merchant_scope(principal: Principal, requested_store_id: int | None = None) 
     return principal.tenant_id, store_id
 
 
+def require_platform_role(*allowed: str):
+    """平台子账号角色门禁：超级管理员/admin 全权；其它角色须在 allowed 内。
+    allowed 为空 = 仅超级管理员/admin。用于给敏感操作(改价、建子账号等)限权。"""
+    def _dep(principal: Principal = Depends(require_platform_admin)) -> Principal:
+        role = service.get_admin_user_role(principal.user_id)
+        if role == "admin" or (role is not None and role in allowed):
+            return principal
+        raise HTTPException(status_code=403, detail="当前账号无此操作权限")
+    return _dep
+
+
 @app.get("/health")
 def health() -> dict:
     return {
@@ -834,7 +845,7 @@ class AdminUserPayload(BaseModel):
 
 @app.post("/platform/admin-users")
 def create_admin_user(payload: AdminUserPayload,
-    principal: Principal = Depends(require_platform_admin),
+    principal: Principal = Depends(require_platform_role()),
 ) -> dict:
     try:
         return service.create_admin_user(username=payload.username, password=payload.password,
@@ -850,7 +861,7 @@ def list_admin_users(principal: Principal = Depends(require_platform_admin)) -> 
 
 @app.put("/platform/admin-users/{uid}/status")
 def set_admin_user_status(uid: int, status: str,
-    principal: Principal = Depends(require_platform_admin),
+    principal: Principal = Depends(require_platform_role()),
 ) -> dict:
     try:
         return service.set_admin_user_status(uid=uid, status=status, actor_user_id=principal.user_id)
@@ -2603,7 +2614,7 @@ class InvoicePayload(BaseModel):
 
 @app.post("/platform/invoices")
 def create_platform_invoice(payload: InvoicePayload,
-    principal: Principal = Depends(require_platform_admin),
+    principal: Principal = Depends(require_platform_role("finance")),
 ) -> dict:
     try:
         return service.create_invoice(tenant_id=payload.tenant_id, amount=payload.amount, title=payload.title,
@@ -2709,9 +2720,60 @@ def delete_merchant_hairstyle(style_id: str, store_id: int = 1,
         raise handle_business_error(exc) from exc
 
 
+# ---- 平台官方发色库（按档次解锁）----
+class OfficialHaircolorPayload(BaseModel):
+    name: str
+    direction: str = "female"
+    color_swatch: str | None = None
+    thumbnail_url: str | None = None
+    min_plan: str = "trial"
+    need_bleach: bool = False
+    is_recommended: bool = True
+    sort_order: int = 0
+
+
+@app.post("/platform/official-haircolors")
+def create_official_haircolor(payload: OfficialHaircolorPayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.create_official_haircolor(name=payload.name, direction=payload.direction,
+            color_swatch=payload.color_swatch, thumbnail_url=payload.thumbnail_url, min_plan=payload.min_plan,
+            need_bleach=payload.need_bleach, is_recommended=payload.is_recommended,
+            sort_order=payload.sort_order, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/official-haircolors")
+def list_official_haircolors(principal: Principal = Depends(require_platform_admin)) -> list[dict]:
+    return service.list_official_haircolors()
+
+
+@app.delete("/platform/official-haircolors/{color_id}")
+def delete_official_haircolor(color_id: str,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.delete_official_haircolor(color_id, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.delete("/merchant/hair-colors/{color_id}")
+def delete_merchant_haircolor(color_id: str, store_id: int = 1,
+    principal: Principal = Depends(require_merchant),
+) -> dict:
+    tenant_id, _ = merchant_scope(principal, store_id)
+    try:
+        return service.delete_haircolor(tenant_id=tenant_id, color_id=color_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
 @app.put("/platform/invoices/{invoice_id}")
 def update_platform_invoice(invoice_id: int, status: str,
-    principal: Principal = Depends(require_platform_admin),
+    principal: Principal = Depends(require_platform_role("finance")),
 ) -> dict:
     try:
         return service.update_invoice_status(invoice_id=invoice_id, status=status, actor_user_id=principal.user_id)
@@ -2755,7 +2817,7 @@ class PlanOverridePayload(BaseModel):
 
 @app.post("/platform/plans/{plan_code}")
 def set_plan_override(plan_code: str, payload: PlanOverridePayload,
-    principal: Principal = Depends(require_platform_admin),
+    principal: Principal = Depends(require_platform_role()),
 ) -> dict:
     """后台改套餐价格/赠送次数（立即对计费与配额生效，无需重部署）。"""
     try:

@@ -669,25 +669,28 @@ class HairAiService:
         recommended_only: bool = False,
         limit: int | None = None,
     ) -> list[dict]:
-        params: tuple = (tenant_id,)
-        where = "tenant_id = ? AND is_enabled = 1"
+        unlocked = self._unlocked_official_plans(tenant_id)
+        placeholders = ",".join(["?"] * len(unlocked))
+        where = (f"(tenant_id = ? OR (tenant_id = 0 AND COALESCE(NULLIF(min_plan,''),'trial') IN ({placeholders}))) "
+                 "AND is_enabled = 1")
+        where_params: list = [tenant_id, *unlocked]
         order_prefix = ""
+        order_params: list = []
         if store_id is not None:
             where += " AND (store_id IS NULL OR store_id = ?)"
-            params = (*params, store_id)
+            where_params.append(store_id)
             order_prefix = "CASE WHEN store_id = ? THEN 0 ELSE 1 END, "
+            order_params.append(store_id)
         if direction:
             where += " AND direction = ?"
-            params = (*params, direction)
+            where_params.append(direction)
         if recommended_only:
             where += " AND is_recommended = 1"
         limit_clause = ""
+        tail_params: list = []
         if limit is not None:
-            clean_limit = max(1, min(int(limit or 30), 100))
             limit_clause = " LIMIT ?"
-        query_params = ((*params, store_id) if store_id is not None else params)
-        if limit is not None:
-            query_params = (*query_params, clean_limit)
+            tail_params.append(max(1, min(int(limit or 30), 100)))
         rows = self.store.rows(
             f"""
             SELECT color_id, name AS color_name, direction, color_swatch, thumbnail_url, display_tags,
@@ -697,9 +700,57 @@ class HairAiService:
             ORDER BY {order_prefix}is_recommended DESC, sort_order ASC
             {limit_clause}
             """,
-            query_params,
+            tuple(where_params + order_params + tail_params),
         )
         return [dict(row) | {"tags": json.loads(row["display_tags"])} for row in rows]
+
+    # ---- 平台官方发色库（tenant_id=0，按档次解锁）----
+    def create_official_haircolor(self, *, name: str, direction: str = "female", color_swatch: str | None = None,
+                                  thumbnail_url: str | None = None, min_plan: str = "trial", need_bleach: bool = False,
+                                  is_recommended: bool = True, sort_order: int = 0,
+                                  actor_user_id: int | None = None) -> dict:
+        if direction not in {"male", "female", "neutral"}:
+            raise BusinessError("direction must be male, female or neutral")
+        if min_plan not in self._PLAN_RANK:
+            raise BusinessError("无效的档次")
+        if not (name or "").strip():
+            raise BusinessError("名称不能为空")
+        color_id = "official_" + uuid4().hex[:10]
+        with self.store.transaction() as conn:
+            conn.execute(
+                """INSERT INTO hair_colors
+                (tenant_id, store_id, color_id, name, direction, color_swatch, thumbnail_url,
+                 display_tags, need_bleach, is_enabled, is_recommended, sort_order, min_plan)
+                VALUES (0, NULL, ?, ?, ?, ?, ?, '[]', ?, 1, ?, ?, ?)""",
+                (color_id, name.strip(), direction, color_swatch, thumbnail_url,
+                 int(need_bleach), int(is_recommended), sort_order, min_plan))
+        self.record_audit_log(action="official_color.create", target_type="haircolor", target_id=color_id,
+                              actor_user_id=actor_user_id, after={"name": name, "min_plan": min_plan})
+        return dict(self.store.row("SELECT * FROM hair_colors WHERE tenant_id = 0 AND color_id = ?", (color_id,)))
+
+    def list_official_haircolors(self) -> list[dict]:
+        rows = self.store.rows(
+            "SELECT id, color_id, name, direction, color_swatch, thumbnail_url, need_bleach, "
+            "COALESCE(NULLIF(min_plan,''),'trial') AS min_plan, is_enabled, is_recommended, sort_order "
+            "FROM hair_colors WHERE tenant_id = 0 ORDER BY sort_order ASC, id DESC")
+        return [dict(r) for r in rows]
+
+    def delete_official_haircolor(self, color_id: str, *, actor_user_id: int | None = None) -> dict:
+        if not self.store.row("SELECT id FROM hair_colors WHERE tenant_id = 0 AND color_id = ?", (color_id,)):
+            raise BusinessError("官方发色不存在")
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM hair_colors WHERE tenant_id = 0 AND color_id = ?", (color_id,))
+        self.record_audit_log(action="official_color.delete", target_type="haircolor",
+                              target_id=color_id, actor_user_id=actor_user_id)
+        return {"deleted": True, "color_id": color_id}
+
+    def delete_haircolor(self, *, tenant_id: int, color_id: str) -> dict:
+        """商家删除自己的发色（删不到平台官方）。"""
+        if not self.store.row("SELECT id FROM hair_colors WHERE tenant_id = ? AND color_id = ?", (tenant_id, color_id)):
+            raise BusinessError("发色不存在或无权删除")
+        with self.store.transaction() as conn:
+            conn.execute("DELETE FROM hair_colors WHERE tenant_id = ? AND color_id = ?", (tenant_id, color_id))
+        return {"deleted": True, "color_id": color_id}
 
     def hairstyle_inspiration(self, tenant_id: int, direction: str) -> dict:
         if direction not in {"male", "female", "neutral"}:
@@ -5220,6 +5271,15 @@ class HairAiService:
             conn.execute("UPDATE platform_admin_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?", (row["id"],))
         u = dict(row); u.pop("password_hash", None)
         return u
+
+    def get_admin_user_role(self, user_id: int) -> str | None:
+        """解析登录平台用户的角色。user_id=0=超级管理员(admin)；子账号停用/不存在返回 None。"""
+        if not user_id:
+            return "admin"
+        row = self.store.row("SELECT role, status FROM platform_admin_users WHERE id = ?", (user_id,))
+        if not row or dict(row).get("status") != "active":
+            return None
+        return dict(row).get("role") or "operator"
 
     def record_audit_log(
         self,

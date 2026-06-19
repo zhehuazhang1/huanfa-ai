@@ -872,6 +872,30 @@
             <tbody id="osRows"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
           </table></div>
         </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div><div class="section-title">官方发色库（按档次解锁）</div>
+            <div class="subtitle">你上传的官方发色，商家按档次解锁用；商家也可在商家端加删自己的私有发色。</div></div>
+            <button class="btn secondary" onclick="loadOfficialColors()">刷新</button>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px">
+            <input id="ocName" placeholder="发色名称" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="ocSwatch" placeholder="色值 #如 8B4513" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <select id="ocDir" style="min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fbfcfa">
+              <option value="female">女</option><option value="male">男</option><option value="neutral">通用</option>
+            </select>
+            <select id="ocPlan" style="min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fbfcfa">
+              <option value="trial">试用版起</option><option value="basic">基础版起</option>
+              <option value="pro">专业版起</option><option value="enterprise">连锁版起</option>
+            </select>
+            <button class="btn" onclick="createOfficialColor()">新增官方</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>名称</th><th>色值</th><th>性别</th><th>最低档次</th><th>操作</th></tr></thead>
+            <tbody id="ocRows"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+          </table></div>
+        </div>
       </section>
 
       <section id="packages" class="tab-panel hidden">
@@ -1784,7 +1808,7 @@
     }
 
     async function loadOps() {
-      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing(), loadFailureStats(), loadTickets(), loadInvoices(), loadAdminUsers(), loadOfficialStyles()]);
+      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing(), loadFailureStats(), loadTickets(), loadInvoices(), loadAdminUsers(), loadOfficialStyles(), loadOfficialColors()]);
     }
 
     async function loadAlerts() {
@@ -2134,6 +2158,40 @@
     async function deleteOfficialStyle(styleId) {
       if (!confirm("确定删除这个官方素材？")) return;
       try { await apiFetch(`/platform/official-hairstyles/${styleId}`, { method: "DELETE" }); await loadOfficialStyles(); }
+      catch (e) { alert("删除失败：" + e.message); }
+    }
+
+    async function loadOfficialColors() {
+      const tbody = document.getElementById("ocRows");
+      try {
+        const rows = await apiFetch("/platform/official-haircolors");
+        const dir = { female: "女", male: "男", neutral: "通用" };
+        const plan = { trial: "试用版", basic: "基础版", pro: "专业版", enterprise: "连锁版" };
+        tbody.innerHTML = (rows || []).length ? rows.map(c => `<tr>
+          <td><b>${esc(c.name)}</b></td>
+          <td>${c.color_swatch ? `<span style="display:inline-block;width:16px;height:16px;border-radius:3px;border:1px solid #ccc;vertical-align:middle;background:${esc(c.color_swatch)}"></span> ${esc(c.color_swatch)}` : "—"}</td>
+          <td>${dir[c.direction] || c.direction}</td>
+          <td><span class="tag gold">${plan[c.min_plan] || c.min_plan} 起</span></td>
+          <td><button onclick="deleteOfficialColor('${esc(c.color_id)}')" style="height:28px;padding:0 10px;font-size:12px;border:1px solid var(--red);border-radius:6px;background:white;color:var(--red);cursor:pointer">删除</button></td>
+        </tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">暂无官方发色</td></tr>`;
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`; }
+    }
+
+    async function createOfficialColor() {
+      const name = document.getElementById("ocName").value.trim();
+      if (!name) { alert("请填写发色名称"); return; }
+      try {
+        await apiFetch("/platform/official-haircolors", { method: "POST", body: JSON.stringify({
+          name, direction: document.getElementById("ocDir").value, min_plan: document.getElementById("ocPlan").value,
+          color_swatch: document.getElementById("ocSwatch").value.trim() || null }) });
+        document.getElementById("ocName").value = ""; document.getElementById("ocSwatch").value = "";
+        await loadOfficialColors();
+      } catch (e) { alert("新增失败：" + e.message); }
+    }
+
+    async function deleteOfficialColor(colorId) {
+      if (!confirm("确定删除这个官方发色？")) return;
+      try { await apiFetch(`/platform/official-haircolors/${colorId}`, { method: "DELETE" }); await loadOfficialColors(); }
       catch (e) { alert("删除失败：" + e.message); }
     }
 
