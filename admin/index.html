@@ -783,6 +783,71 @@
             </table>
           </div>
         </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div><div class="section-title">数据导出</div>
+            <div class="subtitle">一键导出 CSV（Excel 直接打开），方便对账、备份、汇报。</div></div>
+          </div>
+          <div style="padding:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn secondary" onclick="exportCsv('leads')">导出客户线索</button>
+            <button class="btn secondary" onclick="exportCsv('finance')">导出资金流水</button>
+            <button class="btn secondary" onclick="exportCsv('tickets')">导出工单</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div><div class="section-title">工单 / 客服</div>
+            <div class="subtitle">商家在商家端提交的问题，这里回复和跟踪处理。</div></div>
+            <button class="btn secondary" onclick="loadTickets()">刷新</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>时间</th><th>商家</th><th>标题</th><th>优先级</th><th>状态</th><th>回复</th><th>操作</th></tr></thead>
+            <tbody id="ticketRows"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+          </table></div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div><div class="section-title">开票 / 对账</div>
+            <div class="subtitle">登记发票申请，开具后标记状态，配合资金流水对账。</div></div>
+            <button class="btn secondary" onclick="loadInvoices()">刷新</button>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:8px">
+            <input id="invTenant" type="number" placeholder="商家ID" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="invAmount" type="number" placeholder="金额(元)" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="invTitle" placeholder="抬头" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="invTaxNo" placeholder="税号" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <button class="btn" onclick="createInvoice()">登记</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>时间</th><th>商家</th><th>抬头</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="invoiceRows"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+          </table></div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div><div class="section-title">平台子账号</div>
+            <div class="subtitle">给财务/客服开后台登录账号（当前为完整权限+角色标识，后续可按角色限权）。</div></div>
+            <button class="btn secondary" onclick="loadAdminUsers()">刷新</button>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto auto;gap:8px">
+            <input id="auUser" placeholder="用户名" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="auPass" type="password" placeholder="密码(≥6位)" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <input id="auName" placeholder="显示名" style="min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px">
+            <select id="auRole" style="min-height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fbfcfa">
+              <option value="operator">运营</option><option value="finance">财务</option>
+              <option value="support">客服</option><option value="admin">管理员</option>
+            </select>
+            <button class="btn" onclick="createAdminUser()">新增</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>最近登录</th><th>操作</th></tr></thead>
+            <tbody id="adminUserRows"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+          </table></div>
+        </div>
       </section>
 
       <section id="packages" class="tab-panel hidden">
@@ -1695,7 +1760,7 @@
     }
 
     async function loadOps() {
-      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing(), loadFailureStats()]);
+      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing(), loadFailureStats(), loadTickets(), loadInvoices(), loadAdminUsers()]);
     }
 
     async function loadAlerts() {
@@ -1900,6 +1965,118 @@
         sum.innerHTML = `<span style="color:var(--red)">加载失败：${esc(e.message)}</span>`;
         tbody.innerHTML = "";
       }
+    }
+
+    async function exportCsv(kind) {
+      try {
+        const res = await fetch(API + `/platform/export/${kind}.csv`, { headers: { "Authorization": `Bearer ${token}` } });
+        if (!res.ok) throw new Error("导出失败(" + res.status + ")");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `${kind}.csv`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      } catch (e) { alert("导出失败：" + e.message); }
+    }
+
+    async function loadTickets() {
+      const tbody = document.getElementById("ticketRows");
+      try {
+        const rows = await apiFetch("/platform/tickets?limit=100");
+        const st = { open: "待处理", in_progress: "处理中", resolved: "已解决", closed: "已关闭" };
+        tbody.innerHTML = (rows || []).length ? rows.map(t => `<tr>
+          <td>${esc((t.created_at||"").slice(0,16))}</td>
+          <td>#${t.tenant_id ?? "—"}</td>
+          <td><b>${esc(t.title)}</b><div style="font-size:12px;color:var(--muted)">${esc((t.content||"").slice(0,30))}</div></td>
+          <td>${esc(t.priority||"normal")}</td>
+          <td><span class="${t.status==='resolved'||t.status==='closed'?'tag':'tag gold'}">${st[t.status]||t.status}</span></td>
+          <td><input id="tkReply_${t.id}" value="${esc(t.reply||'')}" placeholder="回复" style="width:130px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px"></td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="updateTicket(${t.id},'in_progress')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--blue);border-radius:6px;background:white;color:var(--blue);cursor:pointer">处理中</button>
+            <button onclick="updateTicket(${t.id},'resolved')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">已解决</button>
+          </td>
+        </tr>`).join("") : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">暂无工单</td></tr>`;
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`; }
+    }
+
+    async function updateTicket(id, status) {
+      const reply = document.getElementById(`tkReply_${id}`)?.value || "";
+      try { await apiFetch(`/platform/tickets/${id}`, { method: "PUT", body: JSON.stringify({ status, reply }) }); await loadTickets(); }
+      catch (e) { alert("更新失败：" + e.message); }
+    }
+
+    async function loadInvoices() {
+      const tbody = document.getElementById("invoiceRows");
+      try {
+        const rows = await apiFetch("/platform/invoices?limit=100");
+        const st = { pending: "待开", issued: "已开", void: "已作废" };
+        tbody.innerHTML = (rows || []).length ? rows.map(v => `<tr>
+          <td>${esc((v.created_at||"").slice(0,16))}</td>
+          <td>#${v.tenant_id}</td>
+          <td>${esc(v.title||"—")}</td>
+          <td>¥${fmt(v.amount)}</td>
+          <td><span class="${v.status==='issued'?'tag':v.status==='void'?'tag red':'tag gold'}">${st[v.status]||v.status}</span></td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="updateInvoice(${v.id},'issued')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);cursor:pointer">开具</button>
+            <button onclick="updateInvoice(${v.id},'void')" style="height:28px;padding:0 8px;font-size:12px;border:1px solid var(--red);border-radius:6px;background:white;color:var(--red);cursor:pointer">作废</button>
+          </td>
+        </tr>`).join("") : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">暂无发票</td></tr>`;
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`; }
+    }
+
+    async function createInvoice() {
+      const tenant_id = parseInt(document.getElementById("invTenant").value);
+      const amount = parseFloat(document.getElementById("invAmount").value);
+      if (!tenant_id || !amount) { alert("请填写商家ID和金额"); return; }
+      try {
+        await apiFetch("/platform/invoices", { method: "POST", body: JSON.stringify({
+          tenant_id, amount, title: document.getElementById("invTitle").value.trim(),
+          tax_no: document.getElementById("invTaxNo").value.trim() }) });
+        ["invTenant","invAmount","invTitle","invTaxNo"].forEach(i => document.getElementById(i).value = "");
+        await loadInvoices();
+      } catch (e) { alert("登记失败：" + e.message); }
+    }
+
+    async function updateInvoice(id, status) {
+      try { await apiFetch(`/platform/invoices/${id}?status=${status}`, { method: "PUT" }); await loadInvoices(); }
+      catch (e) { alert("操作失败：" + e.message); }
+    }
+
+    async function loadAdminUsers() {
+      const tbody = document.getElementById("adminUserRows");
+      try {
+        const rows = await apiFetch("/platform/admin-users");
+        const roleText = { operator: "运营", finance: "财务", support: "客服", admin: "管理员" };
+        tbody.innerHTML = (rows || []).length ? rows.map(u => `<tr>
+          <td><b>${esc(u.username)}</b></td>
+          <td>${esc(u.display_name||"")}</td>
+          <td>${roleText[u.role]||u.role}</td>
+          <td><span class="${u.status==='active'?'tag':'tag red'}">${u.status==='active'?'启用':'停用'}</span></td>
+          <td style="font-size:12px;color:var(--muted)">${esc((u.last_login_at||"从未").slice(0,16))}</td>
+          <td>
+            <button onclick="toggleAdminUser(${u.id},'${u.status==='active'?'disabled':'active'}')" style="height:28px;padding:0 10px;font-size:12px;border:1px solid var(--muted);border-radius:6px;background:white;cursor:pointer">${u.status==='active'?'停用':'启用'}</button>
+          </td>
+        </tr>`).join("") : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">暂无子账号</td></tr>`;
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败：${esc(e.message)}</td></tr>`; }
+    }
+
+    async function createAdminUser() {
+      const username = document.getElementById("auUser").value.trim();
+      const password = document.getElementById("auPass").value;
+      if (!username || !password) { alert("请填写用户名和密码"); return; }
+      try {
+        await apiFetch("/platform/admin-users", { method: "POST", body: JSON.stringify({
+          username, password, display_name: document.getElementById("auName").value.trim(),
+          role: document.getElementById("auRole").value }) });
+        ["auUser","auPass","auName"].forEach(i => document.getElementById(i).value = "");
+        await loadAdminUsers();
+      } catch (e) { alert("新增失败：" + e.message); }
+    }
+
+    async function toggleAdminUser(id, status) {
+      try { await apiFetch(`/platform/admin-users/${id}/status?status=${status}`, { method: "PUT" }); await loadAdminUsers(); }
+      catch (e) { alert("操作失败：" + e.message); }
     }
 
     async function loadAuditLogs() {
