@@ -4986,6 +4986,178 @@ class HairAiService:
         )
         return [dict(r) for r in rows]
 
+    # ---- 工单 / 客服 ----
+    def create_ticket(self, *, title: str, content: str, category: str = "other", priority: str = "normal",
+                      contact: str | None = None, tenant_id: int | None = None, store_id: int | None = None,
+                      created_by_user_id: int | None = None) -> dict:
+        if not (title or "").strip() or not (content or "").strip():
+            raise BusinessError("标题和内容不能为空")
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """INSERT INTO support_tickets
+                (tenant_id, store_id, title, content, category, priority, contact, created_by_user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (tenant_id, store_id, title.strip(), content.strip(), category, priority,
+                 (contact or "").strip() or None, created_by_user_id),
+            )
+            tid = cur.lastrowid
+        return self.get_ticket(tid)
+
+    def get_ticket(self, ticket_id: int) -> dict:
+        row = self.store.row("SELECT * FROM support_tickets WHERE id = ?", (ticket_id,))
+        if row is None:
+            raise BusinessError("工单不存在")
+        return dict(row)
+
+    def list_tickets(self, *, status: str | None = None, tenant_id: int | None = None, limit: int = 100) -> list[dict]:
+        limit = max(1, min(int(limit or 100), 300))
+        filters, params = [], []
+        if status and status != "all":
+            filters.append("status = ?"); params.append(status)
+        if tenant_id:
+            filters.append("tenant_id = ?"); params.append(tenant_id)
+        where = ("WHERE " + " AND ".join(filters)) if filters else ""
+        params.append(limit)
+        rows = self.store.rows(f"SELECT * FROM support_tickets {where} ORDER BY id DESC LIMIT ?", tuple(params))
+        return [dict(r) for r in rows]
+
+    def update_ticket(self, *, ticket_id: int, status: str | None = None, reply: str | None = None,
+                      priority: str | None = None, actor_user_id: int | None = None) -> dict:
+        existing = self.get_ticket(ticket_id)
+        if status is not None and status not in {"open", "in_progress", "resolved", "closed"}:
+            raise BusinessError("无效的状态")
+        resolved_at = existing.get("resolved_at")
+        if status in {"resolved", "closed"} and not resolved_at:
+            resolved_at = datetime.utcnow().isoformat()
+        with self.store.transaction() as conn:
+            conn.execute(
+                """UPDATE support_tickets
+                SET status = COALESCE(?, status), reply = COALESCE(?, reply),
+                    priority = COALESCE(?, priority), updated_at = CURRENT_TIMESTAMP, resolved_at = ?
+                WHERE id = ?""",
+                (status, reply, priority, resolved_at, ticket_id),
+            )
+        updated = self.get_ticket(ticket_id)
+        self.record_audit_log(action="ticket.update", target_type="ticket", target_id=str(ticket_id),
+                              tenant_id=existing.get("tenant_id"), actor_user_id=actor_user_id,
+                              before=existing, after=updated)
+        return updated
+
+    def list_tickets_for_merchant(self, tenant_id: int) -> list[dict]:
+        rows = self.store.rows(
+            "SELECT * FROM support_tickets WHERE tenant_id = ? ORDER BY id DESC LIMIT 100", (tenant_id,))
+        return [dict(r) for r in rows]
+
+    # ---- 开票 / 对账 ----
+    def create_invoice(self, *, tenant_id: int, amount: float, title: str | None = None, tax_no: str | None = None,
+                       invoice_type: str = "normal", related_transaction_id: int | None = None,
+                       note: str | None = None, actor_user_id: int | None = None) -> dict:
+        if amount is None or float(amount) <= 0:
+            raise BusinessError("开票金额必须大于 0")
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                """INSERT INTO platform_invoices
+                (tenant_id, amount, title, tax_no, invoice_type, related_transaction_id, note, created_by_user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (tenant_id, float(amount), title, tax_no, invoice_type, related_transaction_id, note, actor_user_id),
+            )
+            iid = cur.lastrowid
+        self.record_audit_log(action="invoice.create", target_type="invoice", target_id=str(iid),
+                              tenant_id=tenant_id, actor_user_id=actor_user_id, after={"amount": amount})
+        return self.get_invoice(iid)
+
+    def get_invoice(self, invoice_id: int) -> dict:
+        row = self.store.row("SELECT * FROM platform_invoices WHERE id = ?", (invoice_id,))
+        if row is None:
+            raise BusinessError("发票不存在")
+        return dict(row)
+
+    def list_invoices(self, *, status: str | None = None, tenant_id: int | None = None, limit: int = 100) -> list[dict]:
+        limit = max(1, min(int(limit or 100), 300))
+        filters, params = [], []
+        if status and status != "all":
+            filters.append("status = ?"); params.append(status)
+        if tenant_id:
+            filters.append("tenant_id = ?"); params.append(tenant_id)
+        where = ("WHERE " + " AND ".join(filters)) if filters else ""
+        params.append(limit)
+        rows = self.store.rows(f"SELECT * FROM platform_invoices {where} ORDER BY id DESC LIMIT ?", tuple(params))
+        return [dict(r) for r in rows]
+
+    def update_invoice_status(self, *, invoice_id: int, status: str, actor_user_id: int | None = None) -> dict:
+        if status not in {"pending", "issued", "void"}:
+            raise BusinessError("无效的状态")
+        existing = self.get_invoice(invoice_id)
+        issued_at = existing.get("issued_at") or (datetime.utcnow().isoformat() if status == "issued" else None)
+        with self.store.transaction() as conn:
+            conn.execute("UPDATE platform_invoices SET status = ?, issued_at = ? WHERE id = ?",
+                         (status, issued_at, invoice_id))
+        updated = self.get_invoice(invoice_id)
+        self.record_audit_log(action="invoice.update", target_type="invoice", target_id=str(invoice_id),
+                              tenant_id=existing.get("tenant_id"), actor_user_id=actor_user_id,
+                              before=existing, after=updated)
+        return updated
+
+    # ---- 平台子账号 ----
+    def _hash_admin_pw(self, password: str) -> str:
+        pepper = os.getenv("PLATFORM_SECRET_ENCRYPTION_KEY", "local-dev-key")
+        return hashlib.sha256((pepper + ":" + (password or "")).encode("utf-8")).hexdigest()
+
+    def get_admin_user(self, uid: int) -> dict:
+        row = self.store.row(
+            "SELECT id, username, display_name, role, status, created_at, last_login_at "
+            "FROM platform_admin_users WHERE id = ?", (uid,))
+        if row is None:
+            raise BusinessError("子账号不存在")
+        return dict(row)
+
+    def create_admin_user(self, *, username: str, password: str, display_name: str | None = None,
+                          role: str = "operator", actor_user_id: int | None = None) -> dict:
+        username = (username or "").strip()
+        if not username or not (password or "").strip():
+            raise BusinessError("用户名和密码不能为空")
+        if len(password) < 6:
+            raise BusinessError("密码至少 6 位")
+        if role not in {"operator", "finance", "support", "admin"}:
+            raise BusinessError("无效的角色")
+        if self.store.row("SELECT id FROM platform_admin_users WHERE username = ?", (username,)):
+            raise BusinessError("用户名已存在")
+        with self.store.transaction() as conn:
+            cur = conn.execute(
+                "INSERT INTO platform_admin_users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)",
+                (username, self._hash_admin_pw(password), display_name or username, role))
+            uid = cur.lastrowid
+        self.record_audit_log(action="admin_user.create", target_type="admin_user", target_id=str(uid),
+                              actor_user_id=actor_user_id, after={"username": username, "role": role})
+        return self.get_admin_user(uid)
+
+    def list_admin_users(self) -> list[dict]:
+        rows = self.store.rows(
+            "SELECT id, username, display_name, role, status, created_at, last_login_at "
+            "FROM platform_admin_users ORDER BY id DESC")
+        return [dict(r) for r in rows]
+
+    def set_admin_user_status(self, *, uid: int, status: str, actor_user_id: int | None = None) -> dict:
+        if status not in {"active", "disabled"}:
+            raise BusinessError("无效的状态")
+        existing = self.get_admin_user(uid)
+        with self.store.transaction() as conn:
+            conn.execute("UPDATE platform_admin_users SET status = ? WHERE id = ?", (status, uid))
+        self.record_audit_log(action="admin_user.status", target_type="admin_user", target_id=str(uid),
+                              actor_user_id=actor_user_id, before=existing, after={"status": status})
+        return self.get_admin_user(uid)
+
+    def verify_admin_login(self, *, username: str, password: str) -> dict | None:
+        row = self.store.row(
+            "SELECT * FROM platform_admin_users WHERE username = ? AND status = 'active'",
+            ((username or "").strip(),))
+        if not row or dict(row).get("password_hash") != self._hash_admin_pw(password or ""):
+            return None
+        with self.store.transaction() as conn:
+            conn.execute("UPDATE platform_admin_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?", (row["id"],))
+        u = dict(row); u.pop("password_hash", None)
+        return u
+
     def record_audit_log(
         self,
         *,

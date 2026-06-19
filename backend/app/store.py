@@ -612,6 +612,49 @@ class AppStore:
               updated_by_user_id INTEGER,
               updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS support_tickets (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              tenant_id INTEGER,
+              store_id INTEGER,
+              title TEXT NOT NULL,
+              content TEXT NOT NULL,
+              category TEXT DEFAULT 'other',
+              priority TEXT DEFAULT 'normal',
+              status TEXT DEFAULT 'open',
+              contact TEXT,
+              reply TEXT,
+              created_by_user_id INTEGER,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              resolved_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS platform_invoices (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              tenant_id INTEGER NOT NULL,
+              amount REAL NOT NULL,
+              title TEXT,
+              tax_no TEXT,
+              invoice_type TEXT DEFAULT 'normal',
+              status TEXT DEFAULT 'pending',
+              related_transaction_id INTEGER,
+              note TEXT,
+              created_by_user_id INTEGER,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              issued_at TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS platform_admin_users (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              username TEXT UNIQUE NOT NULL,
+              password_hash TEXT NOT NULL,
+              display_name TEXT,
+              role TEXT DEFAULT 'operator',
+              status TEXT DEFAULT 'active',
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              last_login_at TEXT
+            );
             """
         )
         self._run_lightweight_migrations()

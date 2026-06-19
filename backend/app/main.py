@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import csv
+import io
 import json
 import urllib.parse
 import urllib.request
@@ -9,7 +11,7 @@ from concurrent.futures import as_completed
 from typing import Any
 
 try:
-    from fastapi import Depends, FastAPI, Header, HTTPException
+    from fastapi import Depends, FastAPI, Header, HTTPException, Response
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel
 except ImportError as exc:  # pragma: no cover
@@ -809,17 +811,51 @@ def platform_login(payload: PlatformLoginPayload) -> dict:
             status_code=500,
             detail="平台管理员密码未配置（PLATFORM_ADMIN_PASSWORD）",
         )
-    if payload.username != expected_user or payload.password != expected_pass:
-        raise HTTPException(status_code=401, detail="账号或密码错误")
+    # 超级管理员（环境变量）
+    if expected_pass and payload.username == expected_user and payload.password == expected_pass:
+        principal = Principal(user_id=0, tenant_id=0, role=ROLE_PLATFORM_ADMIN, store_id=None, openid=None)
+        return {"access_token": encode_token(principal), "token_type": "Bearer",
+                "role": "admin", "display_name": "超级管理员"}
+    # 平台子账号（数据库）
+    sub = service.verify_admin_login(username=payload.username, password=payload.password)
+    if sub:
+        principal = Principal(user_id=int(sub["id"]), tenant_id=0, role=ROLE_PLATFORM_ADMIN, store_id=None, openid=None)
+        return {"access_token": encode_token(principal), "token_type": "Bearer",
+                "role": sub.get("role"), "display_name": sub.get("display_name")}
+    raise HTTPException(status_code=401, detail="账号或密码错误")
 
-    principal = Principal(
-        user_id=0,
-        tenant_id=0,
-        role=ROLE_PLATFORM_ADMIN,
-        store_id=None,
-        openid=None,
-    )
-    return {"access_token": encode_token(principal), "token_type": "Bearer"}
+
+class AdminUserPayload(BaseModel):
+    username: str
+    password: str
+    display_name: str | None = None
+    role: str = "operator"   # operator/finance/support/admin
+
+
+@app.post("/platform/admin-users")
+def create_admin_user(payload: AdminUserPayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.create_admin_user(username=payload.username, password=payload.password,
+            display_name=payload.display_name, role=payload.role, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/admin-users")
+def list_admin_users(principal: Principal = Depends(require_platform_admin)) -> list[dict]:
+    return service.list_admin_users()
+
+
+@app.put("/platform/admin-users/{uid}/status")
+def set_admin_user_status(uid: int, status: str,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.set_admin_user_status(uid=uid, status=status, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
 
 
 @app.get("/auth/me")
@@ -2501,6 +2537,137 @@ def platform_ai_failure_stats(days: int = 7, tenant_id: int | None = None,
     principal: Principal = Depends(require_platform_admin),
 ) -> dict:
     return service.ai_failure_stats(days=days, tenant_id=tenant_id)
+
+
+# ---- 工单 / 客服 ----
+class TicketPayload(BaseModel):
+    title: str
+    content: str
+    category: str = "other"
+    priority: str = "normal"
+    contact: str | None = None
+
+
+class TicketUpdatePayload(BaseModel):
+    status: str | None = None
+    reply: str | None = None
+    priority: str | None = None
+
+
+@app.post("/merchant/tickets")
+def create_merchant_ticket(payload: TicketPayload, store_id: int = 1,
+    principal: Principal = Depends(require_merchant),
+) -> dict:
+    tenant_id, eff_store = merchant_scope(principal, store_id)
+    try:
+        return service.create_ticket(title=payload.title, content=payload.content, category=payload.category,
+            priority=payload.priority, contact=payload.contact, tenant_id=tenant_id, store_id=eff_store,
+            created_by_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/merchant/tickets")
+def list_merchant_tickets(principal: Principal = Depends(require_merchant)) -> list[dict]:
+    return service.list_tickets_for_merchant(principal.tenant_id)
+
+
+@app.get("/platform/tickets")
+def list_platform_tickets(status: str | None = None, tenant_id: int | None = None, limit: int = 100,
+    principal: Principal = Depends(require_platform_admin),
+) -> list[dict]:
+    return service.list_tickets(status=status, tenant_id=tenant_id, limit=limit)
+
+
+@app.put("/platform/tickets/{ticket_id}")
+def update_platform_ticket(ticket_id: int, payload: TicketUpdatePayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.update_ticket(ticket_id=ticket_id, status=payload.status, reply=payload.reply,
+            priority=payload.priority, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+# ---- 开票 / 对账 ----
+class InvoicePayload(BaseModel):
+    tenant_id: int
+    amount: float
+    title: str | None = None
+    tax_no: str | None = None
+    invoice_type: str = "normal"
+    related_transaction_id: int | None = None
+    note: str | None = None
+
+
+@app.post("/platform/invoices")
+def create_platform_invoice(payload: InvoicePayload,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.create_invoice(tenant_id=payload.tenant_id, amount=payload.amount, title=payload.title,
+            tax_no=payload.tax_no, invoice_type=payload.invoice_type,
+            related_transaction_id=payload.related_transaction_id, note=payload.note,
+            actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
+
+
+@app.get("/platform/invoices")
+def list_platform_invoices(status: str | None = None, tenant_id: int | None = None, limit: int = 100,
+    principal: Principal = Depends(require_platform_admin),
+) -> list[dict]:
+    return service.list_invoices(status=status, tenant_id=tenant_id, limit=limit)
+
+
+# ---- 数据导出 (CSV，Excel 直接打开) ----
+def _csv_response(filename: str, headers: list, rows: list) -> Response:
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(headers)
+    for r in rows:
+        writer.writerow(["" if v is None else v for v in r])
+    data = ("﻿" + buf.getvalue()).encode("utf-8")  # BOM 让 Excel 正确识别 UTF-8 中文
+    return Response(content=data, media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@app.get("/platform/export/leads.csv")
+def export_leads_csv(principal: Principal = Depends(require_platform_admin)) -> Response:
+    rows = service.list_platform_leads(limit=1000)
+    return _csv_response("leads.csv",
+        ["ID", "时间", "姓名", "电话", "微信", "城市", "门店数", "意向", "留言", "状态"],
+        [[r.get("id"), r.get("created_at"), r.get("name"), r.get("phone"), r.get("wechat"),
+          r.get("city"), r.get("store_count"), r.get("interest"), r.get("message"), r.get("status")] for r in rows])
+
+
+@app.get("/platform/export/finance.csv")
+def export_finance_csv(principal: Principal = Depends(require_platform_admin)) -> Response:
+    rows = service.list_finance_transactions(limit=2000)
+    return _csv_response("finance.csv",
+        ["ID", "时间", "类型", "商家ID", "金额", "状态", "备注"],
+        [[r.get("id"), r.get("created_at"), r.get("transaction_type"), r.get("tenant_id"),
+          r.get("amount"), r.get("payment_status"), r.get("note")] for r in rows])
+
+
+@app.get("/platform/export/tickets.csv")
+def export_tickets_csv(principal: Principal = Depends(require_platform_admin)) -> Response:
+    rows = service.list_tickets(limit=2000)
+    return _csv_response("tickets.csv",
+        ["ID", "时间", "商家ID", "标题", "分类", "优先级", "状态", "回复"],
+        [[r.get("id"), r.get("created_at"), r.get("tenant_id"), r.get("title"),
+          r.get("category"), r.get("priority"), r.get("status"), r.get("reply")] for r in rows])
+
+
+@app.put("/platform/invoices/{invoice_id}")
+def update_platform_invoice(invoice_id: int, status: str,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    try:
+        return service.update_invoice_status(invoice_id=invoice_id, status=status, actor_user_id=principal.user_id)
+    except BusinessError as exc:
+        raise handle_business_error(exc) from exc
 
 
 @app.get("/merchant/subscription")
