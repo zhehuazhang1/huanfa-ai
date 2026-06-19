@@ -2496,6 +2496,13 @@ def platform_push_subscription_alerts(days: int = 14, balance_threshold: int = 5
     return service.push_subscription_alerts(days=days, balance_threshold=balance_threshold)
 
 
+@app.get("/platform/ai-failure-stats")
+def platform_ai_failure_stats(days: int = 7, tenant_id: int | None = None,
+    principal: Principal = Depends(require_platform_admin),
+) -> dict:
+    return service.ai_failure_stats(days=days, tenant_id=tenant_id)
+
+
 @app.get("/merchant/subscription")
 def merchant_subscription(
     tenant_id: int = 1,

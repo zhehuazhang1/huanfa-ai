@@ -766,6 +766,23 @@
             </table>
           </div>
         </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">AI 失败率监控</div>
+              <div class="subtitle">近 7 天 AI 试发的失败率、平均耗时和失败原因，盯住生成质量与成本。</div>
+            </div>
+            <button class="btn secondary" onclick="loadFailureStats()">刷新</button>
+          </div>
+          <div id="failSummary" style="display:flex;gap:28px;flex-wrap:wrap;padding:16px;border-bottom:1px solid var(--line);color:var(--muted)">加载中…</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>失败原因</th><th>次数</th><th>示例信息</th></tr></thead>
+              <tbody id="failRows"><tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">加载中…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <section id="packages" class="tab-panel hidden">
@@ -1678,7 +1695,7 @@
     }
 
     async function loadOps() {
-      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing()]);
+      await Promise.all([loadAlerts(), loadLeads(), loadAuditLogs(), loadFinanceTransactions(), loadAnnouncements(), loadPlanPricing(), loadFailureStats()]);
     }
 
     async function loadAlerts() {
@@ -1862,6 +1879,27 @@
         await loadPlanPricing();
         alert("已保存，立即生效");
       } catch (e) { alert("保存失败：" + e.message); }
+    }
+
+    async function loadFailureStats() {
+      const sum = document.getElementById("failSummary");
+      const tbody = document.getElementById("failRows");
+      try {
+        const r = await apiFetch("/platform/ai-failure-stats?days=7");
+        const rateColor = r.failure_rate >= 20 ? "var(--red)" : r.failure_rate >= 10 ? "#c98a00" : "var(--green)";
+        sum.innerHTML = `
+          <div><b style="font-size:22px;color:var(--text)">${r.total}</b><div style="font-size:12px">总试发</div></div>
+          <div><b style="font-size:22px;color:${rateColor}">${r.failure_rate}%</b><div style="font-size:12px">失败率（失败 ${r.failed} 组）</div></div>
+          <div><b style="font-size:22px;color:var(--text)">${r.avg_seconds}s</b><div style="font-size:12px">平均耗时</div></div>`;
+        tbody.innerHTML = (r.by_error || []).length ? r.by_error.map(e => `<tr>
+          <td><b>${esc(e.error_code)}</b></td>
+          <td>${e.cnt}</td>
+          <td style="color:var(--muted);font-size:12px">${esc(e.sample || "—")}</td>
+        </tr>`).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">近 7 天无失败 🎉</td></tr>`;
+      } catch (e) {
+        sum.innerHTML = `<span style="color:var(--red)">加载失败：${esc(e.message)}</span>`;
+        tbody.innerHTML = "";
+      }
     }
 
     async function loadAuditLogs() {

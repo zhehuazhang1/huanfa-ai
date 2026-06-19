@@ -4776,6 +4776,47 @@ class HairAiService:
             "counts": {k: len(data[k]) for k in ("expired", "expiring", "low_balance")},
         }
 
+    def ai_failure_stats(self, *, days: int = 7, tenant_id: int | None = None) -> dict:
+        """AI 试发失败率监控：总失败率 + 平均耗时 + 按错误原因拆分。"""
+        days = max(1, min(int(days or 7), 90))
+        start = (date.today() - timedelta(days=days - 1)).isoformat()
+        tf = "AND tenant_id = ?" if tenant_id else ""
+        params = [start] + ([tenant_id] if tenant_id else [])
+        summary = self.store.row(
+            f"""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success,
+                   SUM(CASE WHEN status IN ('failed','timeout') THEN 1 ELSE 0 END) AS failed,
+                   ROUND(AVG(generate_duration_seconds), 1) AS avg_seconds
+            FROM ai_generation_jobs
+            WHERE DATE(created_at) >= ? {tf}
+            """,
+            tuple(params),
+        )
+        s = dict(summary) if summary else {}
+        total = int(s.get("total") or 0)
+        failed = int(s.get("failed") or 0)
+        by_error = self.store.rows(
+            f"""
+            SELECT COALESCE(NULLIF(error_code, ''), '其他') AS error_code,
+                   COUNT(*) AS cnt, MAX(error_message) AS sample
+            FROM ai_generation_jobs
+            WHERE DATE(created_at) >= ? AND status IN ('failed','timeout') {tf}
+            GROUP BY COALESCE(NULLIF(error_code, ''), '其他')
+            ORDER BY cnt DESC LIMIT 10
+            """,
+            tuple(params),
+        )
+        return {
+            "days": days,
+            "total": total,
+            "success": int(s.get("success") or 0),
+            "failed": failed,
+            "failure_rate": round(failed / total * 100, 1) if total else 0.0,
+            "avg_seconds": float(s.get("avg_seconds") or 0),
+            "by_error": [dict(r) for r in by_error],
+        }
+
     def list_platform_leads(self, *, status: str | None = None, limit: int = 100) -> list[dict]:
         clean_limit = max(1, min(int(limit or 100), 300))
         if status and status != "all":
