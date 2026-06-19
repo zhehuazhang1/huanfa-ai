@@ -1455,7 +1455,12 @@ def get_order(order_id: int, tenant_id: int = 1, store_id: int = 1,
     principal: Principal = Depends(require_customer),
 ) -> dict:
     try:
-        return service.get_order(tenant_id=tenant_id, store_id=store_id, order_id=order_id)
+        eff_tenant_id, eff_store_id, eff_user_id = customer_scope(principal, store_id)
+        order = service.get_order(tenant_id=eff_tenant_id, store_id=eff_store_id, order_id=order_id)
+        # 顾客只能查自己的订单：防止改 tenant_id 看别家、或猜 order_id 读到别人订单与手机号
+        if order.get("user_id") != eff_user_id:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return order
     except BusinessError as exc:
         raise handle_business_error(exc, 404) from exc
 
