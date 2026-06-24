@@ -5973,6 +5973,7 @@ class HairAiService:
             target_id=str(log_id),
             tenant_id=tenant_id,
             store_id=store_id,
+            actor_user_id=user_id,
             after=log,
         )
         return log

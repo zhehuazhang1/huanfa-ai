@@ -6,7 +6,7 @@ App({
     demoOpenid: "demo_customer_openid",
     useSyncGenerate: false,
     devAllowTrialWithoutScan: true,
-    allowDemoLoginFallback: true
+    allowDemoLoginFallback: false
   },
 
   ensureLogin(force) {

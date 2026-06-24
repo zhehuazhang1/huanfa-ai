@@ -8,7 +8,7 @@ App({
     merchantDemoOpenid: "demo_merchant_openid",
     useSyncGenerate: false,
     devAllowTrialWithoutScan: true,
-    allowDemoLoginFallback: true,
+    allowDemoLoginFallback: false,
     useDemoLogin: false,
     accessToken: ""
   },

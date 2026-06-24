@@ -3177,7 +3177,7 @@ def adjust_ai_balance(payload: AiBalanceAdjustPayload,
             change_count=payload.change_count,
             usage_type=payload.usage_type,
             remark=payload.remark,
-            user_id=payload.user_id,
+            user_id=principal.user_id,  # 用登录人做操作人，前端传的不可信
         )
     except BusinessError as exc:
         raise handle_business_error(exc) from exc
